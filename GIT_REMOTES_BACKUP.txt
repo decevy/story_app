@@ -1,0 +1,7 @@
+### StoryApp remotes
+origin	https://github.com/decevy/ChatApp.git (fetch)
+origin	https://github.com/decevy/ChatApp.git (push)
+
+### chatapp-web remotes
+origin	https://github.com/decevy/chatapp-web.git (fetch)
+origin	https://github.com/decevy/chatapp-web.git (push)

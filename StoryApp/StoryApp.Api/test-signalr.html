@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR StoryHub Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+</head>
+<body>
+    <h2>SignalR StoryHub Test</h2>
+    <div>
+        <input type="text" id="token" placeholder="JWT Token" style="width: 400px;"/>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+    </div>
+    <div>
+        <input type="number" id="storyId" placeholder="Story ID" value="1"/>
+        <button onclick="joinStory()">Join Story</button>
+        <button onclick="leaveStory()">Leave Story</button>
+    </div>
+    <div>
+        <input type="text" id="turnContent" placeholder="Turn text" style="width: 300px;"/>
+        <button onclick="sendTurn()">Send Turn</button>
+        <button onclick="startTyping()">Start Typing</button>
+        <button onclick="stopTyping()">Stop Typing</button>
+    </div>
+    <h3>Log:</h3>
+    <div id="messages" style="border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px;"></div>
+
+    <script>
+        let connection;
+
+        function connect() {
+            const token = document.getElementById('token').value;
+
+            if (!token) {
+                addMessage("ERROR: Please enter a JWT token first!");
+                return;
+            }
+
+            addMessage("Attempting to connect...");
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("http://localhost:5056/storyHub", {
+                    accessTokenFactory: () => token,
+                    skipNegotiation: false
+                })
+                .withAutomaticReconnect()
+                .configureLogging(signalR.LogLevel.Debug)
+                .build();
+
+            connection.on("ReceiveTurn", (data) => {
+                addMessage(`[${data.createdAt}] ${data.user.username}: ${data.content}`);
+            });
+
+            connection.on("UserJoinedStory", (data) => {
+                addMessage(`User ${data.userId} joined story ${data.storyId}`);
+            });
+
+            connection.on("UserLeftStory", (data) => {
+                addMessage(`User ${data.userId} left story ${data.storyId}`);
+            });
+
+            connection.on("UserStartedTyping", (data) => {
+                addMessage(`${data.username} is typing...`);
+            });
+
+            connection.on("UserStoppedTyping", (data) => {
+                addMessage(`${data.username} stopped typing`);
+            });
+
+            connection.on("UserStatusChanged", (data) => {
+                addMessage(`User ${data.userId} is ${data.isOnline ? 'online' : 'offline'}`);
+            });
+
+            connection.on("TurnEdited", (data) => {
+                addMessage(`Turn ${data.id} edited: ${data.content}`);
+            });
+
+            connection.on("TurnDeleted", (data) => {
+                addMessage(`Turn ${data.id} deleted (story ${data.storyId})`);
+            });
+
+            connection.start()
+                .then(() => {
+                    addMessage("✅ Connected successfully!");
+                    console.log("SignalR Connected");
+                })
+                .catch(err => {
+                    addMessage(`❌ Connection Error: ${err.message}`);
+                    console.error("SignalR Error:", err);
+                });
+
+            connection.onclose((error) => {
+                addMessage("Connection closed");
+                if (error) {
+                    console.error("Close error:", error);
+                }
+            });
+        }
+
+        function disconnect() {
+            if (connection) {
+                connection.stop();
+                addMessage("Disconnected");
+            }
+        }
+
+        function joinStory() {
+            const storyId = parseInt(document.getElementById('storyId').value);
+            connection.invoke("JoinStory", storyId)
+                .then(() => addMessage(`✅ Joined story ${storyId}`))
+                .catch(err => addMessage(`❌ Error joining story: ${err}`));
+        }
+
+        function leaveStory() {
+            const storyId = parseInt(document.getElementById('storyId').value);
+            connection.invoke("LeaveStory", storyId)
+                .then(() => addMessage(`Left story ${storyId}`))
+                .catch(err => addMessage(`❌ Error leaving story: ${err}`));
+        }
+
+        function sendTurn() {
+            const storyId = parseInt(document.getElementById('storyId').value);
+            const content = document.getElementById('turnContent').value;
+
+            if (!content) {
+                addMessage("ERROR: Please enter turn text");
+                return;
+            }
+
+            connection.invoke("SendTurn", storyId, content)
+                .then(() => {
+                    document.getElementById('turnContent').value = '';
+                    addMessage("✅ Turn sent");
+                })
+                .catch(err => addMessage(`❌ Error: ${err}`));
+        }
+
+        function startTyping() {
+            const storyId = parseInt(document.getElementById('storyId').value);
+            connection.invoke("StartTyping", storyId)
+                .catch(err => addMessage(`❌ Error: ${err}`));
+        }
+
+        function stopTyping() {
+            const storyId = parseInt(document.getElementById('storyId').value);
+            connection.invoke("StopTyping", storyId)
+                .catch(err => addMessage(`❌ Error: ${err}`));
+        }
+
+        function addMessage(msg) {
+            const div = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            div.innerHTML += `<div>[${timestamp}] ${msg}</div>`;
+            div.scrollTop = div.scrollHeight;
+        }
+
+        window.addEventListener('load', () => {
+            addMessage("Page loaded. Enter JWT token and click Connect.");
+        });
+    </script>
+</body>
+</html>
