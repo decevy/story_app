@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Chrome (Vite dev)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/chatapp-web"
+    },
+    {
+      "name": "StoryApp.Api (.NET)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-storyapp-api",
+      "program": "${workspaceFolder}/StoryApp/StoryApp.Api/bin/Debug/net9.0/StoryApp.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/StoryApp/StoryApp.Api",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "API + Chrome (Vite)",
+      "configurations": ["StoryApp.Api (.NET)", "Chrome (Vite dev)"],
+      "stopAll": true
+    }
+  ]
+}
