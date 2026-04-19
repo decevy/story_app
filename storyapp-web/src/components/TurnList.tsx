@@ -4,10 +4,10 @@ import { format } from 'date-fns';
 import { useEffect, useRef } from 'react';
 import { Turn } from '../types/story.types';
 import { useAuth } from '../contexts/AuthContext';
-import { useChat } from '../contexts/ChatContext';
+import { useStory } from '../contexts/StoryContext';
 
 export function TurnList() {
-  const { turns } = useChat();
+  const { turns } = useStory();
   const { user } = useAuth();
   const turnListRef = useRef<HTMLDivElement>(null);
 

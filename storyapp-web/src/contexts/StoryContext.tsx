@@ -1,4 +1,4 @@
-// src/contexts/ChatContext.tsx
+// src/contexts/StoryContext.tsx
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { storiesApi } from '../api/stories.api';
@@ -6,7 +6,7 @@ import { signalRService } from '../services/signalr.services';
 import { StorySummary, Story, Turn } from '../types/story.types';
 import { useAuth } from './AuthContext';
 
-interface ChatContextType {
+interface StoryContextType {
   stories: StorySummary[];
   currentStory: Story | null;
   turns: Turn[];
@@ -20,13 +20,13 @@ interface ChatContextType {
   leaveCurrentStory: () => Promise<void>;
 }
 
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
+const StoryContext = createContext<StoryContextType | undefined>(undefined);
 
-interface ChatProviderProps {
+interface StoryProviderProps {
   children: ReactNode;
 }
 
-export function ChatProvider({ children }: ChatProviderProps) {
+export function StoryProvider({ children }: StoryProviderProps) {
   const { user } = useAuth();
 
   const [stories, setStories] = useState<StorySummary[]>([]);
@@ -164,7 +164,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   }, [currentStory]);
 
-  const value: ChatContextType = {
+  const value: StoryContextType = {
     stories,
     currentStory,
     turns,
@@ -178,17 +178,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
   };
 
   return (
-    <ChatContext.Provider value={value}>
+    <StoryContext.Provider value={value}>
       {children}
-    </ChatContext.Provider>
+    </StoryContext.Provider>
   );
 }
 
-export function useChat(): ChatContextType {
-  const context = useContext(ChatContext);
+export function useStory(): StoryContextType {
+  const context = useContext(StoryContext);
 
   if (context === undefined) {
-    throw new Error('useChat must be used within a ChatProvider');
+    throw new Error('useStory must be used within a StoryProvider');
   }
 
   return context;

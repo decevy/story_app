@@ -5,8 +5,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { ChatPage } from './pages/ChatPage';
-import { ChatProvider } from './contexts/ChatContext';
+import { StoryPage } from './pages/StoryPage';
+import { StoryProvider } from './contexts/StoryContext';
 
 function App() {
   return (
@@ -22,9 +22,9 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <ChatProvider>
-                  <ChatPage />
-                </ChatProvider>
+                <StoryProvider>
+                  <StoryPage />
+                </StoryProvider>
               </ProtectedRoute>
             }
           />

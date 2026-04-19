@@ -22,7 +22,7 @@
       "type": "shell",
       "command": "npm run dev",
       "options": {
-        "cwd": "${workspaceFolder}/chatapp-web"
+        "cwd": "${workspaceFolder}/storyapp-web"
       },
       "isBackground": true,
       "problemMatcher": {

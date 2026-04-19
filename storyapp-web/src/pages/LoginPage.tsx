@@ -32,7 +32,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-5">
       <div className="bg-white p-10 arounded-lg corner-squircle shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">ChatApp</h1>
+        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">StoryApp</h1>
         <h2 className="text-2xl text-center mb-8 text-gray-600">Sign In</h2>
 
         {error && (

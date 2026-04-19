@@ -1,6 +1,6 @@
-# ChatApp Web
+# StoryApp Web
 
-A real-time chat application built with React, TypeScript, Vite, and SignalR.
+A collaborative story application built with React, TypeScript, Vite, and SignalR.
 
 ## Environment Configuration
 

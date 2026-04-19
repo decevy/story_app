@@ -1,18 +1,18 @@
-// src/pages/ChatPage.tsx
+// src/pages/StoryPage.tsx
 
 import { TurnInput } from '../components/TurnInput';
-import { ChatLayout } from '../components/ChatLayout';
+import { StoryLayout } from '../components/StoryLayout';
 import { StoryList } from '../components/StoryList';
-import { useChat } from '../contexts/ChatContext';
+import { useStory } from '../contexts/StoryContext';
 import { TurnList } from '../components/TurnList';
 
-export function ChatPage() {
-  const { currentStory } = useChat();
+export function StoryPage() {
+  const { currentStory } = useStory();
 
   return (
-    <ChatLayout
+    <StoryLayout
       sidebar={<StoryList />}
-      chatArea={
+      mainContent={
         currentStory ? (
           <div className="flex flex-col h-full">
             <TurnList />
@@ -21,7 +21,7 @@ export function ChatPage() {
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-gray-500">
-              <p className="text-xl mb-2">Select a story to start chatting</p>
+              <p className="text-xl mb-2">Select a story to get started</p>
               <p className="text-sm">Choose from the list on the left</p>
             </div>
           </div>

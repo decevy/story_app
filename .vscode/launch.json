@@ -7,7 +7,7 @@
       "request": "launch",
       "preLaunchTask": "vite-dev",
       "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/chatapp-web"
+      "webRoot": "${workspaceFolder}/storyapp-web"
     },
     {
       "name": "StoryApp.Api (.NET)",

@@ -1,18 +1,18 @@
-// src/components/ChatLayout.tsx
+// src/components/StoryLayout.tsx
 
 import { ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useChat } from '../contexts/ChatContext';
+import { useStory } from '../contexts/StoryContext';
 import { useNavigate } from 'react-router-dom';
 
-interface ChatLayoutProps {
+interface StoryLayoutProps {
   sidebar: ReactNode;    // Left side - story list
-  chatArea: ReactNode;   // Right side - turns + input
+  mainContent: ReactNode;   // Right side - turns + input
 }
 
-export function ChatLayout({ sidebar, chatArea }: ChatLayoutProps) {
+export function StoryLayout({ sidebar, mainContent }: StoryLayoutProps) {
   const { user, logout } = useAuth();
-  const { isConnected } = useChat();
+  const { isConnected } = useStory();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -26,7 +26,7 @@ export function ChatLayout({ sidebar, chatArea }: ChatLayoutProps) {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-gray-800">ChatApp</h1>
+          <h1 className="text-2xl font-bold text-gray-800">StoryApp</h1>
           
           {/* Connection Status Indicator (left) */}
           <div className="flex items-center gap-2">
@@ -60,9 +60,9 @@ export function ChatLayout({ sidebar, chatArea }: ChatLayoutProps) {
           {sidebar}
         </aside>
 
-        {/* Chat Area (right side) */}
+        {/* Turns + input (right side) */}
         <main className="flex-1 flex flex-col bg-gray-50">
-          {chatArea}
+          {mainContent}
         </main>
       </div>
     </div>

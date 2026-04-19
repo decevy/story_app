@@ -1,4 +1,4 @@
-# Agent instructions — ChatApp Web
+# Agent instructions — StoryApp Web
 
 This file orients coding agents and automated tools working in this repository.
 
@@ -8,7 +8,7 @@ This file orients coding agents and automated tools working in this repository.
 
 ## What this project is
 
-- **React 19 + TypeScript** SPA for real-time chat: auth (JWT in `localStorage`), stories, turns.
+- **React 19 + TypeScript** SPA for collaborative stories: auth (JWT in `localStorage`), stories, turns.
 - **REST** via Axios (`VITE_API_URL`, base path `/api`).
 - **Real-time** via **SignalR** (`VITE_HUB_URL`, hub path `/storyHub`).
 - **Styling**: Tailwind CSS 4, `@toolwind/corner-shape`.
@@ -19,7 +19,7 @@ This file orients coding agents and automated tools working in this repository.
 |------|------|------|
 | API calls | `src/api/` | Auth, stories, users; Axios setup |
 | UI | `src/components/`, `src/pages/` | Layout, lists, inputs, routes |
-| State | `src/contexts/` | `AuthContext`, `ChatContext` |
+| State | `src/contexts/` | `AuthContext`, `StoryContext` |
 | Real-time | `src/services/` | SignalR, token helpers |
 | Types | `src/types/` | Shared TypeScript types |
 | Config | `src/config/` | Env and constants |
@@ -42,7 +42,7 @@ The backend is expected to run separately (per proxy target, typically **HTTPS p
 
 - Match existing patterns: functional components, Context for cross-cutting state, thin API modules.
 - Preserve auth flow: token injection, refresh on 401, redirect on hard failure (see `src/api/axios-config.ts` and auth context).
-- SignalR lifecycle should stay tied to authenticated session and story join/leave (see `src/services/signalr.services.ts` and `ChatContext`).
+- SignalR lifecycle should stay tied to authenticated session and story join/leave (see `src/services/signalr.services.ts` and `StoryContext`).
 - **SPEC.md** lists API endpoints and SignalR methods that exist but are **not yet used in the UI**; extending the UI may wire those up without inventing new contracts unless the backend differs.
 
 ## Cursor rules

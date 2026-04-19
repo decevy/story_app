@@ -1,11 +1,11 @@
 // src/components/StoryList.tsx
 
-import { useChat } from '../contexts/ChatContext';
+import { useStory } from '../contexts/StoryContext';
 import { StorySummary } from '../types/story.types';
 import { formatDistanceToNow } from 'date-fns';
 
 export function StoryList() {
-  const { stories, currentStory, selectStory } = useChat();
+  const { stories, currentStory, selectStory } = useStory();
 
   const handleStoryClick = (storyId: number) => {
     selectStory(storyId);
@@ -21,7 +21,7 @@ export function StoryList() {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
         <p className="text-gray-500 mb-2">No stories available</p>
-        <p className="text-sm text-gray-400">Create or join a story to start chatting</p>
+        <p className="text-sm text-gray-400">Create or join a story to add turns</p>
       </div>
     );
   }

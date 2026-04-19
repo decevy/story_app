@@ -1,8 +1,8 @@
-# ChatApp Web - Application Specification
+# StoryApp Web - Application Specification
 
 ## Overview
 
-ChatApp Web is a real-time chat application built as a single-page application (SPA) that enables users to collaborate in **stories** (shared threads) through a web interface. The application provides user authentication, story-based **turns** (messages in a story), and real-time delivery via WebSocket connections.
+StoryApp Web is a collaborative story application built as a single-page application (SPA) that enables users to work together in **stories** (shared threads) through a web interface. The application provides user authentication, story-based **turns** (messages in a story), and real-time delivery via WebSocket connections.
 
 ## Technology Stack
 
@@ -13,7 +13,7 @@ ChatApp Web is a real-time chat application built as a single-page application (
 
 ### Routing & State Management
 - **React Router DOM 7.9.4** - Client-side routing
-- **React Context API** - State management (AuthContext, ChatContext)
+- **React Context API** - State management (AuthContext, StoryContext)
 
 ### Real-time Communication
 - **Microsoft SignalR 9.0.6** - WebSocket-based real-time messaging
@@ -53,7 +53,7 @@ ChatApp Web is a real-time chat application built as a single-page application (
 - Logout functionality that clears tokens and redirects to login
 
 #### Protected Routes
-- Main chat interface is protected and requires authentication
+- Main story interface is protected and requires authentication
 - Unauthenticated users are redirected to login page
 - Loading state shown during authentication check
 
@@ -151,16 +151,16 @@ ChatApp Web is a real-time chat application built as a single-page application (
 
 #### Layout Structure
 - **Header Bar**:
-  - Application title ("ChatApp")
+  - Application title ("StoryApp")
   - Connection status indicator
   - Current user information (username, email)
   - Logout button
 - **Sidebar** (left):
   - Story list (fixed width: 320px)
   - Scrollable story list
-- **Main chat area** (right):
+- **Main content area** (right):
   - Turn list (scrollable)
-  - Message input at bottom (sends a turn)
+  - Turn input at bottom
   - Empty state when no story is selected
 
 #### Styling
@@ -286,14 +286,14 @@ ChatApp Web is a real-time chat application built as a single-page application (
 1. **Initial Load**:
    - Check for stored authentication tokens
    - If tokens exist, validate by fetching current user
-   - If valid, proceed to chat interface; if invalid, redirect to login
+   - If valid, proceed to the main app; if invalid, redirect to login
 
 2. **Authentication Flow**:
    - User visits `/login` or `/register`
    - After successful auth, tokens stored and user redirected to `/`
    - Protected routes check authentication before rendering
 
-3. **Chat flow**:
+3. **Story collaboration flow**:
    - On authenticated load, SignalR connection established
    - User's stories are fetched and displayed
    - User selects a story from the list

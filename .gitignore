@@ -1,6 +1,6 @@
-# Monorepo root .gitignore (StoryApp + chatapp-web)
+# Monorepo root .gitignore (StoryApp + storyapp-web)
 
-# --- chatapp-web (Node / Vite) ---
+# --- storyapp-web (Node / Vite) ---
 logs
 *.log
 npm-debug.log*
@@ -57,7 +57,7 @@ storybook-static/
 *.pid.lock
 
 # Frontend local editor (use root .vscode for shared launch)
-chatapp-web/.vscode/
+storyapp-web/.vscode/
 
 # --- StoryApp (.NET) — from StoryApp/.gitignore (trimmed duplicate .vscode rules) ---
 # Build results

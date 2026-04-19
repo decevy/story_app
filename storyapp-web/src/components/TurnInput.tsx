@@ -1,10 +1,10 @@
 // src/components/TurnInput.tsx
 
 import { KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
-import { useChat } from '../contexts/ChatContext';
+import { useStory } from '../contexts/StoryContext';
 
 export function TurnInput() {
-  const { isConnected, sendTurn } = useChat();
+  const { isConnected, sendTurn } = useStory();
 
   const [text, setText] = useState('');
   const [isSending, setIsSending] = useState(false);
