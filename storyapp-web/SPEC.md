@@ -88,26 +88,19 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ### 3. Turns (messages in a story)
 
 #### Turn display
-- Turns are displayed in a scrollable list
-- Turns show:
-  - Content (text)
-  - Sender username
-  - Timestamp (formatted as HH:mm)
-  - Visual distinction between own turns (blue background) and others (white background)
-- Timestamps are shown:
-  - For the first turn
-  - When more than 5 minutes have passed since the previous turn
-- Turns are aligned right for own turns, left for others
-- Auto-scroll to bottom when new turns arrive
-- Empty state shown when no turns exist
+- Turns are shown as **continuous book-style prose** in a single scrollable page (centered column)
+- Flowing text: each turn’s content wraps inline with the rest of the story; a **space** separates turns
+- When the **author changes** from the previous turn, a **subtle username line** appears before that passage (no chat bubbles or timestamps in the body)
+- After new turns arrive (sent by you or received from others), the view **scrolls smoothly** so the stitch point before the composer sits near the **vertical center** of the viewport
+- Empty state: short guidance text when the story has no turns yet
 
 #### Turn sending
-- Text input area with multi-line support
-- Send button (disabled when disconnected or input is empty)
-- Enter key sends a turn (Shift+Enter for new line)
+- **Inline composer**: a borderless multi-line field directly after the last committed text (not a separate chat bar)
+- **End turn** button (disabled when disconnected or empty); **Enter** ends the turn (**Shift+Enter** inserts a newline; blank lines in the draft render as paragraph breaks via `pre-wrap`)
 - Turns are sent via SignalR to the current story
-- Input is cleared after successful send
-- Connection status indicator shows if SignalR is connected
+- Draft is cleared after a successful send
+- **Reading font**: a dropdown (Inter, Source Serif 4, EB Garamond, IBM Plex Mono); choice is stored in `localStorage` under `story-font`
+- Connection status indicator remains in the app header
 
 #### Turn data model
 - Turns contain:
@@ -159,8 +152,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
   - Story list (fixed width: 320px)
   - Scrollable story list
 - **Main content area** (right):
-  - Turn list (scrollable)
-  - Turn input at bottom
+  - **Story book view** when a story is selected: story title bar with font picker, scrollable page column, inline composer
   - Empty state when no story is selected
 
 #### Styling

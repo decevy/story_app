@@ -16,7 +16,7 @@ Supplements the repository root **[AGENTS.md](../AGENTS.md)** and **[SPEC.md](..
 |------|------------|
 | Login / register UI or validation | `pages/LoginPage.tsx`, `pages/RegisterPage.tsx` |
 | Auth state, tokens, user | `contexts/AuthContext.tsx`, `services/token.service.ts` |
-| Story list, turn list, input, layout | `components/StoryList.tsx`, `TurnList.tsx`, `TurnInput.tsx`, `StoryLayout.tsx` |
+| Story list, book view, layout | `components/StoryList.tsx`, `StoryBookView.tsx`, `StoryLayout.tsx` |
 | Stories/turns loading, SignalR wiring | `contexts/StoryContext.tsx` |
 | Hub connection / hub methods | `services/signalr.services.ts` |
 | REST endpoints | `api/*.api.ts` (keep aligned with **SPEC.md**); shared HTTP behavior in `api/axios-config.ts` |

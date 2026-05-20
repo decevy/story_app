@@ -1,10 +1,9 @@
 // src/pages/StoryPage.tsx
 
-import { TurnInput } from '../components/TurnInput';
 import { StoryLayout } from '../components/StoryLayout';
 import { StoryList } from '../components/StoryList';
+import { StoryBookView } from '../components/StoryBookView';
 import { useStory } from '../contexts/StoryContext';
-import { TurnList } from '../components/TurnList';
 
 export function StoryPage() {
   const { currentStory } = useStory();
@@ -14,10 +13,7 @@ export function StoryPage() {
       sidebar={<StoryList />}
       mainContent={
         currentStory ? (
-          <div className="flex flex-col h-full">
-            <TurnList />
-            <TurnInput />
-          </div>
+          <StoryBookView />
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-gray-500">

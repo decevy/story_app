@@ -22,6 +22,8 @@ coverage/
 .env*.local
 .env.local
 .env.development
+# Safe defaults for Vite dev (committed); override with `.env.development.local` if needed.
+!storyapp-web/.env.development
 .env.production
 .env.development.local
 .env.test.local

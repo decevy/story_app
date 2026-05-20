@@ -24,11 +24,11 @@ coverage/
 .nyc_output/
 
 # Environment variables
-# Keep .env.example tracked for documentation
+# Keep .env.example tracked for documentation.
+# `.env.development` is tracked with safe defaults for `npm run dev` (same-origin proxy).
 .env
 .env*.local
 .env.local
-.env.development
 .env.production
 .env.development.local
 .env.test.local
