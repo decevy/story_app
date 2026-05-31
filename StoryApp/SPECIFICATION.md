@@ -1,16 +1,16 @@
 # StoryApp - Application Specification
 
 ## Overview
-StoryApp is a collaborative storytelling backend: a .NET 9 Web API with PostgreSQL and SignalR. Users join **stories**, add sequential **turns** (text contributions), and see updates in real time. JWT secures both REST and the SignalR hub.
+StoryApp is a collaborative storytelling backend: a .NET 9 Web API with PostgreSQL and SignalR. Users join **pulses**, add sequential **beats** (text contributions), and see updates in real time. JWT secures both REST and the SignalR hub.
 
-This repository contains the **backend solution** only; a separate React (or other) client would consume these APIs and connect to **`/storyHub`**.
+This repository contains the **backend solution** only; a separate React (or other) client would consume these APIs and connect to **`/pulseHub`**.
 
 ## Architecture
 
 **Backend Stack:**
 - .NET 9 Web API
 - PostgreSQL with Entity Framework Core
-- SignalR for real-time turns, typing, and presence-style user status
+- SignalR for real-time beats, typing, and presence-style user status
 - JWT Bearer authentication (HTTP header and hub query string)
 - Clean Architecture: Core, Infrastructure, Services, Api
 
@@ -19,9 +19,9 @@ This repository contains the **backend solution** only; a separate React (or oth
 
 **Project Structure:**
 - `StoryApp.Core` — Entities, DTOs, interfaces, exceptions, query builders
-- `StoryApp.Infrastructure` — DbContext, repositories, migrations, seeding
-- `StoryApp.Services` — Auth, user, and story application services
-- `StoryApp.Api` — Controllers, SignalR `StoryHub`, middleware, DI
+- `StoryApp.Infrastructure` — DbContext (`PulseDbContext`), repositories, migrations, seeding
+- `StoryApp.Services` — Auth, user, and pulse application services (`PulseService`)
+- `StoryApp.Api` — Controllers, SignalR **`PulseHub`**, middleware, DI
 
 ## Core Features
 
@@ -37,64 +37,50 @@ This repository contains the **backend solution** only; a separate React (or oth
 - Get user by ID; list users
 - Online/offline flag and last-seen updates (including on hub connect/disconnect)
 
-### 3. Stories (collaborative spaces)
-- Create stories (name, description, public/private)
-- List stories the current user collaborates on
-- Get story detail (collaborators only)
-- Update story metadata (admin)
-- Delete story (admin)
-- Story creator becomes admin on create
+### 3. Pulses (collaborative spaces)
+- Create pulses (name, description, public/private)
+- List pulses the current user collaborates on
+- Get pulse detail (collaborators only)
+- Update pulse metadata (**pulse creator** only)
+- Delete pulse (**pulse creator** only)
+- Creating user is recorded on the pulse (`CreatedBy`) and added as an initial collaborator
 
-**Story roles (`StoryMember`):**
-- **Admin** — Full control over story settings and members
-- **Moderator** — Can manage members (per service rules)
-- **Member** — Can participate (turns, subject to membership)
-
-### 4. Story membership
-- Add collaborators (`POST .../members`)
-- Remove collaborators (`DELETE .../members/{userId}`)
-- Unique membership per user per story
+### 4. Pacer participation (pulse membership)
+- Add pacers (`POST .../pacers`), body `AddPacerRequest` (`userId`) — **pulse creator** only
+- Remove pacers (`DELETE .../pacers/{userId}`): **pulse creator** may remove another collaborator; any collaborator may remove themselves; removing the **`CreatedBy`** user from memberships is rejected
+- Unique membership per user per pulse
 - Join timestamps tracked
 
-### 5. Turns (contributions within a story)
-- **REST:** Paginated turn history per story (`GET /api/stories/{storyId}/turns`)
-- **SignalR:** Send, edit, and delete turns in real time (`SendTurn`, `EditTurn`, `DeleteTurn`)
-- Turn types in the model include Text and placeholders for richer types; attachment URL/name fields exist on `Turn`
-- Edit/delete restricted to the turn author (enforced in the hub)
+### 5. Beats (contributions within a pulse)
+- **REST:** Paginated beat history (`GET /api/pulses/{pulseId}/beats`)
+- **SignalR:** Send, edit, and delete beats in real time (`SendBeat`, `EditBeat`, `DeleteBeat`)
+- Beat contributions are serialized as text (**`passage`**) (`SendBeat`), with room to extend the model later
+- Edit/delete restricted to the beat author (enforced in the hub)
 
-### 6. Real-time features (SignalR `/storyHub`)
-- Broadcast new, edited, and deleted turns to story groups
-- Join/leave story groups (`JoinStory`, `LeaveStory`) with membership checks
-- Typing indicators (`StartTyping`, `StopTyping`) scoped by story
+### 6. Real-time features (SignalR `/pulseHub`)
+- Broadcast new, edited, and deleted beats to pulse groups
+- Join/leave pulse groups (`JoinPulse`, `LeavePulse`) with membership checks
+- Typing indicators (`StartTyping`, `StopTyping`) scoped by pulse
 - User online/offline broadcasts (`UserStatusChanged`)
 - JWT supplied via query parameter: `?access_token={token}`
-
-### 7. Turn reactions (data model)
-- `TurnReaction` entity: emoji per user per turn
-- Unique constraint on (TurnId, UserId, Emoji)
-- REST/hub surface for reactions may be extended over time; model is present for persistence
 
 ## Database Schema (conceptual)
 
 ### Users
 - Identity, credentials (password hash), refresh token fields, `CreatedAt`, `LastSeen`, `IsOnline`
 
-### Stories
+### Pulses (`Pulses` table)
 - `Name`, `Description`, `IsPrivate`, `CreatedBy`, `CreatedAt`
 
-### StoryMembers
-- `UserId`, `StoryId`, `StoryRole`, `JoinedAt`
-- Unique (UserId, StoryId)
+### Pacers (`Pacers` table)
+- `UserId`, `PulseId`, `JoinedAt`
+- Unique (UserId, PulseId)
 
-### Turns
-- `Content`, `UserId`, `StoryId`, `Type`, `CreatedAt`, `EditedAt`, optional attachment fields
-- Indexed for efficient paging by story and time
+### Beats
+- `Passage`, `UserId`, `PulseId`, `CreatedAt`, `EditedAt`
+- Indexed for efficient paging by pulse and time
 
-### TurnReactions
-- `TurnId`, `UserId`, `Emoji`, `CreatedAt`
-- Unique (TurnId, UserId, Emoji)
-
-Exact column definitions and cascade behaviors live in EF configurations under `StoryApp.Infrastructure`.
+Exact column definitions and cascade behaviors live in EF configurations under `StoryApp.Infrastructure` (`PulseDbContext`).
 
 ## API Endpoints
 
@@ -105,15 +91,15 @@ Exact column definitions and cascade behaviors live in EF configurations under `
 - `POST /api/auth/logout` — revoke refresh token (authenticated)
 - `GET /api/auth/me` — current user ids from JWT (authenticated)
 
-### Stories (`/api/stories`)
-- `GET /api/stories` — stories for the current user
-- `GET /api/stories/{storyId}` — detail (403 if not a collaborator, 404 if missing)
-- `POST /api/stories` — create story
-- `PUT /api/stories/{storyId}` — update (admin)
-- `DELETE /api/stories/{storyId}` — delete (admin)
-- `GET /api/stories/{storyId}/turns?page=&pageSize=` — paginated turns (default page size 50)
-- `POST /api/stories/{storyId}/members` — add collaborator
-- `DELETE /api/stories/{storyId}/members/{userId}` — remove collaborator
+### Pulses (`/api/pulses`)
+- `GET /api/pulses` — pulses for the current user
+- `GET /api/pulses/{pulseId}` — detail (403 if not a collaborator, 404 if missing)
+- `POST /api/pulses` — create pulse
+- `PUT /api/pulses/{pulseId}` — update (pulse creator)
+- `DELETE /api/pulses/{pulseId}` — delete (pulse creator)
+- `GET /api/pulses/{pulseId}/beats?page=&pageSize=` — paginated beats (default page size 50)
+- `POST /api/pulses/{pulseId}/pacers` — add pacer
+- `DELETE /api/pulses/{pulseId}/pacers/{userId}` — remove pacer
 
 ### Users (`/api/users`)
 - `GET /api/users/me` — current profile
@@ -122,39 +108,39 @@ Exact column definitions and cascade behaviors live in EF configurations under `
 - `GET /api/users/search?query=` — search
 - `GET /api/users` — list users
 
-### SignalR Hub (`/storyHub`)
+### SignalR Hub (`/pulseHub`)
 
 **Connection:** JWT via `access_token` query parameter; `[Authorize]` on the hub.
 
 **Client → server (examples):**
-- `JoinStory(int storyId)` / `LeaveStory(int storyId)`
-- `SendTurn(int storyId, string content)`
-- `EditTurn(int turnId, string newContent)` / `DeleteTurn(int turnId)`
-- `StartTyping(int storyId)` / `StopTyping(int storyId)`
+- `JoinPulse(int pulseId)` / `LeavePulse(int pulseId)`
+- `SendBeat(int pulseId, string passage)`
+- `EditBeat(int beatId, string newPassage)` / `DeleteBeat(int beatId)`
+- `StartTyping(int pulseId)` / `StopTyping(int pulseId)`
 
 **Server → client (event names):**
-- `ReceiveTurn` — `TurnDto`
-- `TurnEdited` — `TurnEditedDto`
-- `TurnDeleted` — `TurnDeletedDto`
-- `UserJoinedStory` / `UserLeftStory` — `StoryEventDto`
-- `UserStartedTyping` / `UserStoppedTyping` — `TypingIndicatorDto` (includes `StoryId`)
+- `ReceiveBeat` — `BeatDto`
+- `BeatEdited` — `BeatEditedDto`
+- `BeatDeleted` — `BeatDeletedDto`
+- `UserJoinedPulse` / `UserLeftPulse` — `PulseEventDto`
+- `UserStartedTyping` / `UserStoppedTyping` — `TypingIndicatorDto` (includes `PulseId`)
 - `UserStatusChanged` — `UserStatusChangedDto`
 
 ## Security (summary)
 - Password hashing (BCrypt)
 - JWT for API and SignalR
-- Story membership checks for story-scoped operations
+- Pulse membership checks for pulse-scoped operations
 - Hub uses `HubException` for predictable client errors
 - CORS policy `AllowReactApp` for typical local dev origins (see `Program.cs`)
 
 ## Development features
 - Swagger in Development
 - Migrations applied on API startup
-- Idempotent seed when the database has no users (`StoryDbSeeder`)
+- Idempotent seed when the database has no users (`PulseDbContext` seed hook calls **`PulseDbSeeder.SeedAsync`**)
 
 ## Sample seed data
 - Users: `aya`, `bobby`, `carlos` (password `test123`)
-- Stories: "General", "Bachata", "Gym bros" (with mixed roles and sample turns)
+- Pulses (example, Dutch demo copy): **"Het Neon-Noedel Bijpand"**, **"Logboek van de stormglaswaker"**, **"De envelop met de koperen sleutel"** — twee pacers per pulse en beats in het rond (**`PulseDbSeeder`**)
 
 ## Configuration (reference)
 - **Connection string:** `DefaultConnection` in `StoryApp.Api` configuration (PostgreSQL)
@@ -162,11 +148,11 @@ Exact column definitions and cascade behaviors live in EF configurations under `
 - **CORS:** e.g. `http://localhost:3000`, `http://localhost:5173`
 
 ## Technical constraints (typical)
-- Turn content and string max lengths match EF `StringLength` on entities (e.g. long text fields on turns/stories/users)
-- Default turn pagination: **50** per page on `GetStoryTurns`
+- Beat **passage** text and string max lengths match EF `StringLength` on entities (e.g. long text fields on beats/pulses/users)
+- Default beat pagination: **50** per page on `GetPulseBeats`
 
 ---
 
-**Document version:** 1.1  
-**Last updated:** April 2026  
+**Document version:** 1.2  
+**Last updated:** May 2026  
 **Note:** Describes the backend as implemented in this repository; client apps and future features may extend the contract.

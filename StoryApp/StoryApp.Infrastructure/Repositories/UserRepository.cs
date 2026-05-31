@@ -6,7 +6,7 @@ using StoryApp.Infrastructure.Data;
 
 namespace StoryApp.Infrastructure.Repositories;
 
-public class UserRepository(StoryDbContext context) : IUserRepository
+public class UserRepository(PulseDbContext context) : IUserRepository
 {
     public UserQueryBuilder Query()
     {

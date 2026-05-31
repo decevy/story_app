@@ -5,31 +5,28 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { StoryPage } from './pages/StoryPage';
-import { StoryProvider } from './contexts/StoryContext';
+import { PulsePage } from './pages/PulsePage';
+import { PulseProvider } from './contexts/PulseContext';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected Routes */}
           <Route
             path="/"
             element={
               <ProtectedRoute>
-                <StoryProvider>
-                  <StoryPage />
-                </StoryProvider>
+                <PulseProvider>
+                  <PulsePage />
+                </PulseProvider>
               </ProtectedRoute>
             }
           />
 
-          {/* Catch all - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

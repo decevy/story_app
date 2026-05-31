@@ -7,7 +7,7 @@ Supplements the repository root **[AGENTS.md](../AGENTS.md)** and **[SPEC.md](..
 - **`main.tsx`** — React root mount.
 - **`App.tsx`** — `BrowserRouter`, `AuthProvider`, routes:
   - Public: `/login`, `/register`
-  - Protected: `/` wraps **`StoryPage`** with **`ProtectedRoute`** and **`StoryProvider`**
+  - Protected: `/` wraps **`PulsePage`** with **`ProtectedRoute`** and **`PulseProvider`**
   - Unknown paths → redirect to `/`
 
 ## Where to change what
@@ -16,8 +16,8 @@ Supplements the repository root **[AGENTS.md](../AGENTS.md)** and **[SPEC.md](..
 |------|------------|
 | Login / register UI or validation | `pages/LoginPage.tsx`, `pages/RegisterPage.tsx` |
 | Auth state, tokens, user | `contexts/AuthContext.tsx`, `services/token.service.ts` |
-| Story list, book view, layout | `components/StoryList.tsx`, `StoryBookView.tsx`, `StoryLayout.tsx` |
-| Stories/turns loading, SignalR wiring | `contexts/StoryContext.tsx` |
+| Pulse list, pulse view, layout | `components/PulseList.tsx`, `PulseView.tsx`, `PulseLayout.tsx` |
+| Pulse loading, SignalR wiring | `contexts/PulseContext.tsx` |
 | Hub connection / hub methods | `services/signalr.services.ts` |
 | REST endpoints | `api/*.api.ts` (keep aligned with **SPEC.md**); shared HTTP behavior in `api/axios-config.ts` |
 | Shared types | `types/*.ts` — keep in sync with API payloads |

@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SignalR StoryHub Test</title>
+    <title>SignalR PulseHub Test</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
 </head>
 <body>
-    <h2>SignalR StoryHub Test</h2>
+    <h2>SignalR PulseHub Test</h2>
     <div>
         <input type="text" id="token" placeholder="JWT Token" style="width: 400px;"/>
         <button onclick="connect()">Connect</button>
         <button onclick="disconnect()">Disconnect</button>
     </div>
     <div>
-        <input type="number" id="storyId" placeholder="Story ID" value="1"/>
-        <button onclick="joinStory()">Join Story</button>
-        <button onclick="leaveStory()">Leave Story</button>
+        <input type="number" id="pulseId" placeholder="Pulse ID" value="1"/>
+        <button onclick="joinPulse()">Join Pulse</button>
+        <button onclick="leavePulse()">Leave Pulse</button>
     </div>
     <div>
-        <input type="text" id="turnContent" placeholder="Turn text" style="width: 300px;"/>
-        <button onclick="sendTurn()">Send Turn</button>
+        <input type="text" id="beatPassage" placeholder="Beat passage" style="width: 300px;"/>
+        <button onclick="sendBeat()">Send Beat</button>
         <button onclick="startTyping()">Start Typing</button>
         <button onclick="stopTyping()">Stop Typing</button>
     </div>
@@ -39,7 +39,7 @@
             addMessage("Attempting to connect...");
 
             connection = new signalR.HubConnectionBuilder()
-                .withUrl("http://localhost:5056/storyHub", {
+                .withUrl("https://localhost:7011/pulseHub", {
                     accessTokenFactory: () => token,
                     skipNegotiation: false
                 })
@@ -47,16 +47,16 @@
                 .configureLogging(signalR.LogLevel.Debug)
                 .build();
 
-            connection.on("ReceiveTurn", (data) => {
+            connection.on("ReceiveBeat", (data) => {
                 addMessage(`[${data.createdAt}] ${data.user.username}: ${data.content}`);
             });
 
-            connection.on("UserJoinedStory", (data) => {
-                addMessage(`User ${data.userId} joined story ${data.storyId}`);
+            connection.on("UserJoinedPulse", (data) => {
+                addMessage(`User ${data.userId} joined pulse ${data.pulseId}`);
             });
 
-            connection.on("UserLeftStory", (data) => {
-                addMessage(`User ${data.userId} left story ${data.storyId}`);
+            connection.on("UserLeftPulse", (data) => {
+                addMessage(`User ${data.userId} left pulse ${data.pulseId}`);
             });
 
             connection.on("UserStartedTyping", (data) => {
@@ -71,12 +71,12 @@
                 addMessage(`User ${data.userId} is ${data.isOnline ? 'online' : 'offline'}`);
             });
 
-            connection.on("TurnEdited", (data) => {
-                addMessage(`Turn ${data.id} edited: ${data.content}`);
+            connection.on("BeatEdited", (data) => {
+                addMessage(`Beat ${data.id} edited: ${data.content}`);
             });
 
-            connection.on("TurnDeleted", (data) => {
-                addMessage(`Turn ${data.id} deleted (story ${data.storyId})`);
+            connection.on("BeatDeleted", (data) => {
+                addMessage(`Beat ${data.id} deleted (pulse ${data.pulseId})`);
             });
 
             connection.start()
@@ -104,46 +104,46 @@
             }
         }
 
-        function joinStory() {
-            const storyId = parseInt(document.getElementById('storyId').value);
-            connection.invoke("JoinStory", storyId)
-                .then(() => addMessage(`✅ Joined story ${storyId}`))
-                .catch(err => addMessage(`❌ Error joining story: ${err}`));
+        function joinPulse() {
+            const pulseId = parseInt(document.getElementById('pulseId').value);
+            connection.invoke("JoinPulse", pulseId)
+                .then(() => addMessage(`✅ Joined pulse ${pulseId}`))
+                .catch(err => addMessage(`❌ Error joining pulse: ${err}`));
         }
 
-        function leaveStory() {
-            const storyId = parseInt(document.getElementById('storyId').value);
-            connection.invoke("LeaveStory", storyId)
-                .then(() => addMessage(`Left story ${storyId}`))
-                .catch(err => addMessage(`❌ Error leaving story: ${err}`));
+        function leavePulse() {
+            const pulseId = parseInt(document.getElementById('pulseId').value);
+            connection.invoke("LeavePulse", pulseId)
+                .then(() => addMessage(`Left pulse ${pulseId}`))
+                .catch(err => addMessage(`❌ Error leaving pulse: ${err}`));
         }
 
-        function sendTurn() {
-            const storyId = parseInt(document.getElementById('storyId').value);
-            const content = document.getElementById('turnContent').value;
+        function sendBeat() {
+            const pulseId = parseInt(document.getElementById('pulseId').value);
+            const passage = document.getElementById('beatPassage').value;
 
-            if (!content) {
-                addMessage("ERROR: Please enter turn text");
+            if (!passage) {
+                addMessage("ERROR: Please enter beat passage text");
                 return;
             }
 
-            connection.invoke("SendTurn", storyId, content)
+            connection.invoke("SendBeat", pulseId, passage)
                 .then(() => {
-                    document.getElementById('turnContent').value = '';
-                    addMessage("✅ Turn sent");
+                    document.getElementById('beatPassage').value = '';
+                    addMessage("✅ Beat sent");
                 })
                 .catch(err => addMessage(`❌ Error: ${err}`));
         }
 
         function startTyping() {
-            const storyId = parseInt(document.getElementById('storyId').value);
-            connection.invoke("StartTyping", storyId)
+            const pulseId = parseInt(document.getElementById('pulseId').value);
+            connection.invoke("StartTyping", pulseId)
                 .catch(err => addMessage(`❌ Error: ${err}`));
         }
 
         function stopTyping() {
-            const storyId = parseInt(document.getElementById('storyId').value);
-            connection.invoke("StopTyping", storyId)
+            const pulseId = parseInt(document.getElementById('pulseId').value);
+            connection.invoke("StopTyping", pulseId)
                 .catch(err => addMessage(`❌ Error: ${err}`));
         }
 

@@ -1,28 +1,28 @@
 // src/types/signalr.types.ts
 
-export interface StoryEvent {
+export interface PulseEvent {
   userId: number;
   username: string;
-  storyId: number;
+  pulseId: number;
   timestamp: string;
 }
 
 export interface TypingIndicator {
   userId: number;
   username?: string;
-  storyId: number;
+  pulseId: number;
   isTyping?: boolean;
 }
 
-export interface TurnEdited {
+export interface BeatEdited {
   id: number;
-  content: string;
+  passage: string;
   editedAt: string;
 }
 
-export interface TurnDeleted {
+export interface BeatDeleted {
   id: number;
-  storyId: number;
+  pulseId: number;
 }
 
 export interface UserStatusChanged {

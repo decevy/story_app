@@ -8,20 +8,20 @@
 
 ### Registered infrastructure
 
-- **`StoryDbContext`** — PostgreSQL via **`UseNpgsql`** and **`DefaultConnection`**.
-- **Repositories (scoped):** `IUserRepository` → `UserRepository`, `IStoryRepository` → `StoryRepository`, `ITurnRepository` → `TurnRepository`.
-- **Application services (scoped):** `IAuthService` → `AuthService`, `IUserService` → `UserService`, `IStoryService` → `StoryService`.
+- **`PulseDbContext`** — PostgreSQL via **`UseNpgsql`** and **`DefaultConnection`**.
+- **Repositories (scoped):** `IUserRepository` → `UserRepository`, `IPulseRepository` → `PulseRepository`, `IBeatRepository` → `BeatRepository`.
+- **Application services (scoped):** `IAuthService` → `AuthService`, `IUserService` → `UserService`, `IPulseService` → `PulseService`.
 
-**Not registered:** `ITurnService`, `IPresenceService` (contracts only in Core today).
+**Not registered:** `IBeatService`, `IPresenceService` (contracts only in Core today).
 
 ### Authentication
 
 - **JWT Bearer** as default scheme; settings from **`JwtSettings`** (`SecretKey`, `Issuer`, `Audience`, etc.).
-- **SignalR:** `OnMessageReceived` copies **`access_token`** from the query string when the path starts with **`/storyHub`** so the hub can authenticate like HTTP.
+- **SignalR:** `OnMessageReceived` copies **`access_token`** from the query string when the path starts with **`/pulseHub`** so the hub can authenticate like HTTP.
 
 ### SignalR
 
-- **`builder.Services.AddSignalR()`**; **`app.MapHub<StoryHub>("/storyHub")`**.
+- **`builder.Services.AddSignalR()`**; **`app.MapHub<PulseHub>("/pulseHub")`**.
 - **Redis backplane** snippet is **commented out** (future scaling).
 
 ### Swagger
@@ -34,7 +34,7 @@
 
 ### Database on startup
 
-- After building the app, **`Database.Migrate()`** runs on **`StoryDbContext`** inside a scope — **all pending migrations apply** when the API starts.
+- After building the app, **`Database.Migrate()`** runs on **`PulseDbContext`** inside a scope — **all pending migrations apply** when the API starts.
 
 ---
 
@@ -48,7 +48,7 @@ Relevant order after build:
 4. **`UseCors("AllowReactApp")`**
 5. **`UseAuthentication`** → **`UseAuthorization`**
 6. **`MapControllers`**
-7. **`MapHub<StoryHub>`**
+7. **`MapHub<PulseHub>`**
 
 ---
 
@@ -58,23 +58,23 @@ Relevant order after build:
 |------------|------|
 | **`AuthController`** | Register, login, refresh, logout — uses **`IAuthService`** |
 | **`UsersController`** | Profile, search, update — uses **`IUserService`** |
-| **`StoriesController`** | Stories CRUD and collaborators — uses **`IStoryService`** |
+| **`PulsesController`** | Pulses CRUD and collaborators — uses **`IPulseService`** |
 
-**REST** is the primary surface for auth, users, and stories. **Turns and typing** are largely **SignalR-driven** (no separate turns controller).
+**REST** is the primary surface for auth, users, and pulses. **Beats and typing** are largely **SignalR-driven** (no separate beats-only controller beyond pulse-scoped paging).
 
 Use **Core** exceptions in lower layers; this project’s middleware maps them to status codes. Controllers should stay thin (validate binding, call service, return result).
 
 ---
 
-## SignalR hub (`Hubs/StoryHub.cs`)
+## SignalR hub (`Hubs/PulseHub.cs`)
 
 - **`[Authorize]`** — connections require a valid JWT (including query-string token for browser clients).
-- Injects **`ITurnRepository`**, **`IStoryRepository`**, **`IUserRepository`**, **`ILogger<StoryHub>`** — **real-time flows use repositories directly**, not **`ITurnService`**.
-- **Group name** pattern for stories is encapsulated in hub helpers (e.g. `story_{id}` groups for broadcasts).
-- **Client events** (names in `EventNames`): include **`ReceiveTurn`**, **`TurnEdited`**, **`TurnDeleted`**, **`UserJoinedStory`**, **`UserLeftStory`**, typing events, **`UserStatusChanged`**, etc.
+- Injects **`IBeatRepository`**, **`IPulseRepository`**, **`IUserRepository`**, **`ILogger<PulseHub>`** — **real-time flows use repositories directly**, not **`IBeatService`**.
+- **Group name** pattern for pulses is encapsulated in hub helpers (e.g. `pulse_{id}` groups for broadcasts).
+- **Client events** (names in `EventNames`): include **`ReceiveBeat`**, **`BeatEdited`**, **`BeatDeleted`**, **`UserJoinedPulse`**, **`UserLeftPulse`**, typing events, **`UserStatusChanged`**, etc.
 - Authorization failures for hub actions use **`HubException`** with user-visible messages where appropriate.
 
-When adding hub methods, keep **membership checks** consistent with **`StoryService`** / repository rules.
+When adding hub methods, keep **membership checks** consistent with **`PulseService`** / repository rules.
 
 ---
 
@@ -91,6 +91,6 @@ Hub pipeline uses **SignalR’s** error handling for hub-invoked methods; still 
 ## Conventions for agents
 
 - New **REST endpoints** → appropriate **controller** + **Core** DTOs + **Services** if non-trivial.
-- New **real-time behavior** → **`StoryHub`** + **Core** DTOs for payloads; consider whether logic belongs in a **future service** to avoid a fat hub.
+- New **real-time behavior** → **`PulseHub`** + **Core** DTOs for payloads; consider whether logic belongs in a **future service** to avoid a fat hub.
 - After changing **JWT/CORS/connection strings**, document or update **`appsettings`** examples if present.
 - **Never** put **EF configurations** or **repository SQL** here—use **Infrastructure**.

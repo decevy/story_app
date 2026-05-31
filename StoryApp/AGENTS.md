@@ -8,7 +8,7 @@ Use this file together with **nested `AGENTS.md`** files under each project: pre
 
 ## What this solution is
 
-- **.NET 9** backend for collaborative stories and real-time turns.
+- **.NET 9** backend for collaborative pulses (threads) and real-time beats.
 - **PostgreSQL** + **EF Core** for persistence.
 - **JWT** for HTTP APIs and **SignalR**.
 - **Clean Architecture** with one pragmatic twist: `**StoryApp.Services` references `StoryApp.Infrastructure`** so application services can use repository implementations via their **Core** interfaces (no extra abstraction project).
@@ -27,6 +27,8 @@ Use this file together with **nested `AGENTS.md`** files under each project: pre
 | Apply migrations to DB                    | `dotnet ef database update --project StoryApp.Infrastructure --startup-project StoryApp.Api`                |
 
 
+If the repo was reset to a **single baseline migration** (e.g. **`InitialCreate`**) and your database still has **`__EFMigrationsHistory`** rows from **removed** migrations, **`database update`** is unsafe—**drop the database** (e.g. `dotnet ef database drop --force`) and run **`database update`** again. Details: **`SETUP.md`** → *Migration history reset*.
+
 There are **no test projects** in the solution yet.
 
 ---
@@ -37,9 +39,9 @@ There are **no test projects** in the solution yet.
 | Project                     | Responsibility                                                                                                                                                                                                                                                                                                                                                  |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **StoryApp.Core**           | Domain: **entities**, **DTOs** (requests/responses and API/SignalR payloads), **repository and service interfaces**, **domain exceptions**, **query builders** (fluent `IQueryable` composition), **small extensions** (`QueryableExtensions`, `ObjectExtensions`). Only NuGet dep of note: **EF Core** (for query types and `Include` helpers)—**no ASP.NET**. |
-| **StoryApp.Infrastructure** | **StoryDbContext**, EF entity configuration, **migrations**, **repository implementations**, **seeding**.                                                                                                                                                                                                                                                       |
-| **StoryApp.Services**       | **AuthService**, **UserService**, **StoryService**—business rules, JWT/refresh handling (auth), mapping entities → DTOs via `FromEntity` / helpers.                                                                                                                                                                                                             |
-| **StoryApp.Api**            | **Controllers**, **SignalR `StoryHub`**, **JWT + Swagger + CORS**, **global exception middleware**, **DI composition** (`Program.cs`).                                                                                                                                                                                                                          |
+| **StoryApp.Infrastructure** | **PulseDbContext**, EF entity configuration, **migrations**, **repository implementations**, **seeding**.                                                                                                                                                                                                                                                       |
+| **StoryApp.Services**       | **AuthService**, **UserService**, **PulseService**—business rules, JWT/refresh handling (auth), mapping entities → DTOs via `FromEntity` / helpers.                                                                                                                                                                                                             |
+| **StoryApp.Api**            | **Controllers**, **SignalR `PulseHub`**, **JWT + Swagger + CORS**, **global exception middleware**, **DI composition** (`Program.cs`).                                                                                                                                                                                                                          |
 
 
 ### Dependency direction
@@ -70,7 +72,7 @@ flowchart LR
 
 - **Connection string**: `DefaultConnection` (PostgreSQL) in API configuration.
 - **Migrations**: applied on API startup via `Database.Migrate()` in `Program.cs`.
-- **SignalR**: hub mapped at `**/storyHub`**; JWT is passed as query parameter `**access_token**` (see JWT bearer events in `Program.cs`).
+- **SignalR**: hub mapped at `**/pulseHub`**; JWT is passed as query parameter `**access_token**` (see JWT bearer events in `Program.cs`).
 - **CORS**: policy `**AllowReactApp`** for the React dev server (`localhost:3000` etc.).
 - **Redis** SignalR backplane: registration is **commented out** in `Program.cs` (reserved for later).
 
@@ -80,7 +82,7 @@ flowchart LR
 
 These interfaces exist in **StoryApp.Core** but have **no implementation or DI registration** in **StoryApp.Services** / `**Program.cs`** today:
 
-- `**ITurnService**` — turn use cases are expressed as a service contract, but **real-time turns are implemented inside `StoryHub`** using `**ITurnRepository**` (and related repos) directly.
+- `**IBeatService**` — beat use cases are expressed as a service contract, but **real-time beats are implemented inside `PulseHub`** using `**IBeatRepository**` (and related repos) directly.
 - `**IPresenceService**` — contract for presence/typing; **hub and `UserService.UpdateUserPresenceAsync`** cover related behavior without a dedicated presence service class yet.
 
 When adding features, either **implement and register** these services and refactor callers, or **keep the current pattern** (hub + repos) and update/remove stale contracts—stay consistent with the rest of the codebase.

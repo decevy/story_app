@@ -12,7 +12,7 @@ export default defineConfig({
                 changeOrigin: true,
                 secure: false,
             },
-            '/storyHub': {
+            '/pulseHub': {
                 target: 'https://localhost:7011',
                 changeOrigin: true,
                 secure: false,

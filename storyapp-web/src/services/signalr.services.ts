@@ -3,21 +3,21 @@
 import * as signalR from '@microsoft/signalr';
 import { tokenService } from './token.service';
 import config from '../config/env.config';
-import { Turn } from '../types/story.types';
+import { Beat } from '../types/pulse.types';
 import {
-  StoryEvent,
+  PulseEvent,
   TypingIndicator,
-  TurnEdited,
-  TurnDeleted,
+  BeatEdited,
+  BeatDeleted,
   UserStatusChanged,
 } from '../types/signalr.types';
 
 export type SignalREventHandlers = {
-  onReceiveTurn?: (turn: Turn) => void;
-  onTurnEdited?: (data: TurnEdited) => void;
-  onTurnDeleted?: (data: TurnDeleted) => void;
-  onUserJoinedStory?: (data: StoryEvent) => void;
-  onUserLeftStory?: (data: StoryEvent) => void;
+  onReceiveBeat?: (beat: Beat) => void;
+  onBeatEdited?: (data: BeatEdited) => void;
+  onBeatDeleted?: (data: BeatDeleted) => void;
+  onUserJoinedPulse?: (data: PulseEvent) => void;
+  onUserLeftPulse?: (data: PulseEvent) => void;
   onUserStartedTyping?: (data: TypingIndicator) => void;
   onUserStoppedTyping?: (data: TypingIndicator) => void;
   onUserStatusChanged?: (data: UserStatusChanged) => void;
@@ -76,39 +76,39 @@ class SignalRService {
     return this.connectionLock;
   }
 
-  async joinStory(storyId: number): Promise<void> {
+  async joinPulse(pulseId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('JoinStory', storyId);
+    await this.connection.invoke('JoinPulse', pulseId);
   }
 
-  async leaveStory(storyId: number): Promise<void> {
+  async leavePulse(pulseId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('LeaveStory', storyId);
+    await this.connection.invoke('LeavePulse', pulseId);
   }
 
-  async sendTurn(storyId: number, content: string): Promise<void> {
+  async sendBeat(pulseId: number, passage: string): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('SendTurn', storyId, content);
+    await this.connection.invoke('SendBeat', pulseId, passage);
   }
 
-  async editTurn(turnId: number, newContent: string): Promise<void> {
+  async editBeat(beatId: number, newPassage: string): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('EditTurn', turnId, newContent);
+    await this.connection.invoke('EditBeat', beatId, newPassage);
   }
 
-  async deleteTurn(turnId: number): Promise<void> {
+  async deleteBeat(beatId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('DeleteTurn', turnId);
+    await this.connection.invoke('DeleteBeat', beatId);
   }
 
-  async startTyping(storyId: number): Promise<void> {
+  async startTyping(pulseId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('StartTyping', storyId);
+    await this.connection.invoke('StartTyping', pulseId);
   }
 
-  async stopTyping(storyId: number): Promise<void> {
+  async stopTyping(pulseId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('StopTyping', storyId);
+    await this.connection.invoke('StopTyping', pulseId);
   }
 
   isConnected(): boolean {
@@ -118,24 +118,24 @@ class SignalRService {
   private setupEventHandlers(): void {
     if (!this.connection) return;
 
-    this.connection.on('ReceiveTurn', (turn: Turn) => {
-      this.handlers.onReceiveTurn?.(turn);
+    this.connection.on('ReceiveBeat', (beat: Beat) => {
+      this.handlers.onReceiveBeat?.(beat);
     });
 
-    this.connection.on('TurnEdited', (data: TurnEdited) => {
-      this.handlers.onTurnEdited?.(data);
+    this.connection.on('BeatEdited', (data: BeatEdited) => {
+      this.handlers.onBeatEdited?.(data);
     });
 
-    this.connection.on('TurnDeleted', (data: TurnDeleted) => {
-      this.handlers.onTurnDeleted?.(data);
+    this.connection.on('BeatDeleted', (data: BeatDeleted) => {
+      this.handlers.onBeatDeleted?.(data);
     });
 
-    this.connection.on('UserJoinedStory', (data: StoryEvent) => {
-      this.handlers.onUserJoinedStory?.(data);
+    this.connection.on('UserJoinedPulse', (data: PulseEvent) => {
+      this.handlers.onUserJoinedPulse?.(data);
     });
 
-    this.connection.on('UserLeftStory', (data: StoryEvent) => {
-      this.handlers.onUserLeftStory?.(data);
+    this.connection.on('UserLeftPulse', (data: PulseEvent) => {
+      this.handlers.onUserLeftPulse?.(data);
     });
 
     this.connection.on('UserStartedTyping', (data: TypingIndicator) => {

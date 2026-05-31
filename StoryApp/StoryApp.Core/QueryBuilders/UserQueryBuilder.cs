@@ -9,23 +9,25 @@ public class UserQueryBuilder(IQueryable<User> query)
     private IQueryable<User> _query = query;
 
     #region Include properties
-    public UserQueryBuilder WithTurns()
+    public UserQueryBuilder WithBeats(bool includePulses = false)
     {
-        _query = _query.Include(u => u.Turns);
+        _query = includePulses
+            ? _query.Include(u => u.Beats).ThenInclude(m => m.Pulse)
+            : _query.Include(u => u.Beats);
         return this;
     }
 
-    public UserQueryBuilder WithStoryMemberships(bool includeStories = false)
+    public UserQueryBuilder WithPacers(bool includePulses = false)
     {
         _query = _query
-            .Include(u => u.StoryMemberships)
-            .ThenIncludeIf(includeStories, sm => sm.Story);
+            .Include(u => u.Pacers)
+            .ThenIncludeIf(includePulses, sm => sm.Pulse);
         return this;
     }
 
     public UserQueryBuilder WithFullDetails()
     {
-        return WithTurns().WithStoryMemberships(includeStories: true);
+        return WithBeats().WithPacers(includePulses: true);
     }
     #endregion
 
@@ -48,6 +50,12 @@ public class UserQueryBuilder(IQueryable<User> query)
         return this;
     }
 
+    public UserQueryBuilder WhereUsernameContains(string substring)
+    {
+        _query = _query.Where(u => u.Username.ToLower().Contains(substring.ToLower()));
+        return this;
+    }
+
     public UserQueryBuilder WhereRefreshToken(string refreshToken)
     {
         _query = _query.Where(u => u.RefreshToken == refreshToken);
@@ -66,11 +74,11 @@ public class UserQueryBuilder(IQueryable<User> query)
         return this;
     }
 
-    public UserQueryBuilder WhereSearchTerm(string searchTerm) // todo: check how safe this is (sql injection)
+    public UserQueryBuilder WhereSearchTerm(string searchTerm)
     {
         var lowerTerm = searchTerm.ToLower();
-        _query = _query.Where(u => 
-            u.Username.ToLower().Contains(lowerTerm) || 
+        _query = _query.Where(u =>
+            u.Username.ToLower().Contains(lowerTerm) ||
             u.Email.ToLower().Contains(lowerTerm));
         return this;
     }
@@ -101,9 +109,9 @@ public class UserQueryBuilder(IQueryable<User> query)
 
     public UserQueryBuilder WhereRefreshTokenValid()
     {
-        _query = _query.Where(u => 
-            u.RefreshToken != null && 
-            u.RefreshTokenExpiry != null && 
+        _query = _query.Where(u =>
+            u.RefreshToken != null &&
+            u.RefreshTokenExpiry != null &&
             u.RefreshTokenExpiry > DateTime.UtcNow);
         return this;
     }
@@ -180,6 +188,16 @@ public class UserQueryBuilder(IQueryable<User> query)
         return await _query.FirstOrDefaultAsync(u => u.Id == id);
     }
 
+    public async Task<User?> FindByUsernameAsync(string username)
+    {
+        return await _query.FirstOrDefaultAsync(u => u.Username == username);
+    }
+
+    public User? FindByUsername(string username)
+    {
+        return _query.Where(u => u.Username == username).SingleOrDefault();
+    }
+
     public async Task<User> FirstAsync()
     {
         return await _query.FirstAsync();
@@ -212,15 +230,13 @@ public class UserQueryBuilder(IQueryable<User> query)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
-        
+
         return (users, totalCount);
     }
-    
+
     public IQueryable<User> AsQueryable()
     {
         return _query;
     }
     #endregion
-
 }
-

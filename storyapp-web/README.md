@@ -29,7 +29,7 @@ For development, the Vite dev server proxies requests to the backend:
 
 ```env
 VITE_API_URL=http://localhost:3000
-VITE_HUB_URL=http://localhost:3000/storyHub
+VITE_HUB_URL=http://localhost:3000/pulseHub
 ```
 
 ### Production
@@ -38,7 +38,7 @@ For production builds, set these to your actual backend domain:
 
 ```env
 VITE_API_URL=https://your-api-domain.com
-VITE_HUB_URL=https://your-api-domain.com/storyHub
+VITE_HUB_URL=https://your-api-domain.com/pulseHub
 ```
 
 ## Getting Started

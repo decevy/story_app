@@ -1,9 +1,9 @@
 namespace StoryApp.Core.Dtos;
 
-public class TypingIndicatorDto
+public class PulseEventDto
 {
     public int UserId { get; set; }
     public string Username { get; set; } = string.Empty;
     public int PulseId { get; set; }
-    public bool IsTyping { get; set; }
+    public DateTime Timestamp { get; set; }
 }

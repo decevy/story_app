@@ -35,6 +35,12 @@ dotnet ef migrations list --project StoryApp.Infrastructure --startup-project St
 
 The API also runs pending migrations on startup (`Database.Migrate()`), but applying explicitly is useful before the first run.
 
+#### Migration history reset (`InitialCreate` baseline)
+
+**WARNING — existing databases:** The repo currently ships a **single** baseline migration, **`InitialCreate`**, aligned with **`PulseDbContext`**. Any PostgreSQL database that already ran **older migrations** whose files were removed from this repo **cannot be updated cleanly** with `dotnet ef database update`: **`__EFMigrationsHistory`** will not match EF’s expectation, and the schema may drift from what the baseline migration assumes.
+
+For such databases, **drop and recreate** the database (then run `dotnet ef database update`), e.g. `dotnet ef database drop --force …` followed by **`database update`**, or **`docker compose down -v`** for a dev volume reset. **`dotnet ef database update` alone is fine only for fresh or empty databases** matching this baseline.
+
 ### 4. Run the API
 ```bash
 dotnet run --project StoryApp.Api
@@ -126,8 +132,7 @@ dotnet run --project StoryApp.Api
 
 **Note**: The seeder only runs if the database is empty (no users exist). After running these commands, the database will be populated with:
 - 3 test users (aya, bobby, carlos) — password: `test123`
-- 3 test stories (General, Bachata, Gym bros)
-- Sample turns across those stories
+- 3 sample pulses with sample beats (**`PulseDbSeeder`**, invoked from **`PulseDbContext`** EF seed hooks — see `PulseDbSeeder.cs` for names)
 
 ## Troubleshooting
 
@@ -145,11 +150,11 @@ ports:
 Then update your connection string’s port accordingly.
 
 ### Migration fails
-- Ensure migrations exist under `StoryApp.Infrastructure/Migrations/`
-- Try removing and recreating only in a dev database: `dotnet ef migrations remove` then `dotnet ef migrations add InitialCreate` (names may vary)
+- Ensure migrations exist under `StoryApp.Infrastructure/Migrations/` (baseline: **`InitialCreate`**)
+- If the DB previously applied migrations that were **removed from git**, do **not** expect `dotnet ef database update` to fix it — **drop the database** and run `database update` again (see **Migration history reset** under step 3)
 
 ## Next Steps
 Once your environment is running:
 1. Confirm the API starts and connects to PostgreSQL
 2. Open Swagger UI at `https://localhost:7011/swagger` (when using the HTTPS profile)
-3. Connect a client to `/storyHub` with JWT via the `access_token` query parameter for real-time turns
+3. Connect a client to `/pulseHub` with JWT via the `access_token` query parameter for real-time beats

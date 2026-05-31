@@ -1,6 +1,6 @@
 # Agent instructions — StoryApp.Infrastructure
 
-**StoryApp.Infrastructure** implements **persistence** for **StoryApp.Core**: **`StoryDbContext`**, **EF Core configurations**, **repository classes**, **migrations** (under this project’s **`Migrations/`** folder when present), and **database seeding**. It references **StoryApp.Core** only (plus Npgsql/EF packages per **`.csproj`**).
+**StoryApp.Infrastructure** implements **persistence** for **StoryApp.Core**: **`PulseDbContext`**, **EF Core configurations**, **repository classes**, **migrations** (under this project’s **`Migrations/`** folder when present), and **database seeding**. It references **StoryApp.Core** only (plus Npgsql/EF packages per **`.csproj`**).
 
 No **controllers**, **hubs**, or **JWT** code belongs here.
 
@@ -10,11 +10,11 @@ No **controllers**, **hubs**, or **JWT** code belongs here.
 
 | Path | Role |
 |------|------|
-| **`Data/StoryDbContext.cs`** | **`DbSet<>`** declarations, **`OnModelCreating`** wiring, migration assembly |
-| **`Data/StoryDbSeeder.cs`** | Optional **seed data** invoked when the database is initialized or migrated (follow existing entry points) |
+| **`Data/PulseDbContext.cs`** | **`DbSet<>`** declarations, **`OnModelCreating`** wiring, migration assembly |
+| **`Data/PulseDbSeeder.cs`** | **Canonical seed data** (`SeedAsync`); `PulseDbContext`’s EF **`UseSeeding`** hook delegates here |
 | **`Repositories/UserRepository.cs`** | **`IUserRepository`** |
-| **`Repositories/StoryRepository.cs`** | **`IStoryRepository`** (includes **`Query()`** / **`QueryStoryMembers()`** implementations) |
-| **`Repositories/TurnRepository.cs`** | **`ITurnRepository`** |
+| **`Repositories/PulseRepository.cs`** | **`IPulseRepository`** (includes **`Query()`** / **`QueryPacers()`** implementations) |
+| **`Repositories/BeatRepository.cs`** | **`IBeatRepository`** |
 
 Entity **configuration classes** may live alongside the context or under a `Configurations/` folder depending on how the codebase evolves—**keep fluent API aligned** with **Core** entities.
 
@@ -41,6 +41,8 @@ dotnet ef database update --project StoryApp.Infrastructure --startup-project St
 
 The **API** also runs **`Migrate()`** on startup, so pending migrations apply automatically in dev—use **`database update`** when you want to apply schema changes **without** launching the full web host.
 
+**Baseline / existing databases:** The solution may be reset to a **single** migration (e.g. **`InitialCreate`**). Databases that already applied **older migration IDs** that no longer exist in **`Migrations/`** are **not** safely upgradable with `database update` alone—**drop and recreate** the database (or clear it and reapply) so **`__EFMigrationsHistory`** matches the checked-in migrations.
+
 **Checklist for schema changes:**
 
 1. Update **Core** entities if needed.
@@ -50,8 +52,9 @@ The **API** also runs **`Migrate()`** on startup, so pending migrations apply au
 
 ---
 
-## Seeding (`StoryDbSeeder`)
+## Seeding (`PulseDbContext` → **`PulseDbSeeder`**)
 
+- **`PulseDbContext`** wires **`UseSeeding` / `UseAsyncSeeding`** to **`PulseDbSeeder.SeedAsync`** (single source of truth).
 - Keep seeding **idempotent** where possible (avoid duplicate key errors on re-run).
 - Do not reference **Api** or **Services** types from the seeder.
 
