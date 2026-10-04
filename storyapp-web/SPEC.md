@@ -89,26 +89,36 @@ StoryApp Web is a collaborative story application built as a single-page applica
 
 #### Beat display
 - Beats are shown as **continuous book-style prose** in a single scrollable page (centered column)
-- Flowing text: each beat’s **passage** wraps inline with the rest of the pulse; a **space** separates beats
-- When the **author changes** from the previous beat, a **subtle username line** appears before that passage (no chat bubbles or timestamps in the body)
+- Each beat’s **segments** render in `order` with typographic breaks derived from `transitionAfter`:
+  - **First alinea after section / major section / chapter** — large vertical gap (~3 lines), no first-line indent
+  - **First new alinea in a section** — one line break + **2em first-line indent**
+  - **Further alineas in the same section** — single line break only, no indent
+  - **Inline continuation** — flows on the same line as prior text (with a trailing space between beats when appropriate)
+- When the **author changes** from the previous beat, a **subtle username line** appears before that beat’s text (no chat bubbles or timestamps in the body)
 - After new beats arrive (sent by you or received from others), the view **scrolls smoothly** so the stitch point before the composer sits near the **vertical center** of the viewport
 - Empty state: short guidance text when the pulse has no beats yet
 
 #### Beat sending
-- **Inline composer**: a borderless multi-line field directly after the last committed text (not a separate chat bar)
-- **End beat** button (disabled when disconnected or empty); **Enter** ends the beat (**Shift+Enter** inserts a newline; blank lines in the draft render as paragraph breaks via `pre-wrap`)
-- Beats are sent via SignalR to the current pulse
+- **Inline composer**: a `contentEditable` caret directly after the last committed text (no placeholder text). Prior draft segments render in the same typography as sent beats before the active field.
+- **Draft appearance**: in-progress text uses a **random accent color**; holding Enter cycles the draft through a **rainbow** until the beat sends.
+- **Structure (Enter / Backspace)**:
+  - **Enter (tap)**: advance structure — first Enter starts a **new alinea** (`NewParagraph`); further Enters on empty slots upgrade to **new section** (`NewSection` only in the UI; no Major/Chapter)
+  - **Enter (hold ~1.5s)**: **send** the beat (progress anchored to `performance.now()` via rAF, not bare `setTimeout`)
+  - **Backspace (tap)**: when the active segment is empty, unwind structure (section → alinea → merge into previous segment); otherwise delete characters
+  - **Backspace (hold ~1.5s)**: **clear** the entire draft
+  - Extra **Enter** taps in an empty **section** slot are ignored
+- **End beat** button (disabled when disconnected or empty) also sends the draft
+- Beats are sent via SignalR as **`segments[]`** with `order`, `text`, and optional `transitionAfter`
 - Draft is cleared after a successful send
 - **Reading font**: a dropdown (Inter, Source Serif 4, EB Garamond, IBM Plex Mono); choice is stored in `localStorage` under `pulse-font`
 - Connection status indicator remains in the app header
 
 #### Beat data model
 - Beats contain:
-  - ID, **passage** (JSON `passage`), pulse ID (`pulseId`)
-  - User information (sender)
-  - Creation timestamp
-  - Optional edit timestamp
-  - Beat type (numeric: 0 Text, 1 Image, 2 File, 3 System)
+  - ID, **`order`**, optional **`transitionOverride`**, **`segments[]`** (`id`, `order`, `text`, optional `transitionAfter`)
+  - Pulse ID (`pulseId`), user information (sender), creation timestamp, optional edit timestamp
+- Display text for previews is the concatenation of segment `text` values in `order` (see `beatText()` in `pulse.types.ts`)
+- `SendBeat` / `EditBeat` send **`segments[]`** (`order`, `text`, optional `transitionAfter`); the PulseView composer builds multi-segment beats from Enter/Backspace structure
 
 ### 4. Real-time Communication
 
@@ -132,8 +142,8 @@ StoryApp Web is a collaborative story application built as a single-page applica
 #### SignalR methods (client ↔ hub)
 - `JoinPulse(pulseId)` - Join a pulse group
 - `LeavePulse(pulseId)` - Leave a pulse group
-- `SendBeat(pulseId, passage)` - Send a beat
-- `EditBeat(beatId, newPassage)` - Edit a beat (available, not used in UI)
+- `SendBeat(pulseId, segments)` — `segments`: `{ order, text, transitionAfter? }[]`
+- `EditBeat(beatId, segments)` — same segment shape (available, not used in UI)
 - `DeleteBeat(beatId)` - Delete a beat (available, not used in UI)
 - `StartTyping(pulseId)` - Indicate typing started (available, not used in UI)
 - `StopTyping(pulseId)` - Indicate typing stopped (available, not used in UI)
@@ -237,7 +247,9 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ```typescript
 {
   id: number;
-  passage: string;
+  order: number;
+  transitionOverride?: BeatTransition;
+  segments: BeatSegment[];
   user: User;
   pulseId: number;
   createdAt: string; // ISO date string

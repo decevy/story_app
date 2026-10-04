@@ -15,7 +15,9 @@ public class BeatRepository(PulseDbContext context) : IBeatRepository
 
     public async Task<Beat?> GetByIdAsync(int id)
     {
-        return await Query().FindByIdAsync(id);
+        return await Query()
+            .WithSegments()
+            .FindByIdAsync(id);
     }
 
     public async Task<Beat> CreateAsync(Beat beat)
@@ -30,7 +32,6 @@ public class BeatRepository(PulseDbContext context) : IBeatRepository
 
     public async Task UpdateAsync(Beat beat)
     {
-        context.Entry(beat).State = EntityState.Modified;
         await context.SaveChangesAsync();
     }
 
@@ -48,8 +49,19 @@ public class BeatRepository(PulseDbContext context) : IBeatRepository
     {
         return await Query()
             .WithUser()
+            .WithSegments()
             .WherePulseId(pulseId)
-            .OrderByNewest()
+            .OrderByBeatOrderDescending()
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<int> GetNextOrderAsync(int pulseId)
+    {
+        var maxOrder = await context.Beats
+            .Where(b => b.PulseId == pulseId)
+            .Select(b => (int?)b.Order)
+            .MaxAsync();
+
+        return maxOrder is null ? 0 : maxOrder.Value + 1;
     }
 }

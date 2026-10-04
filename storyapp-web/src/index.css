@@ -26,6 +26,37 @@ body {
   min-height: 100vh;
 }
 
+.pulse-composer[contenteditable]:focus {
+  outline: none;
+}
+
+.pulse-composer[contenteditable='true'] {
+  caret-color: var(--draft-color, currentColor);
+}
+
+.draft-zone {
+  --draft-color: hsl(220, 70%, 42%);
+}
+
+.draft-zone .pulse-composer[contenteditable='true'] {
+  color: transparent;
+  background-color: var(--draft-color);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.draft-zone .pulse-composer[contenteditable='false'] {
+  color: transparent;
+  background-color: var(--draft-color);
+  -webkit-background-clip: text;
+  background-clip: text;
+  opacity: 0.6;
+}
+
+.pulse-composer[contenteditable='false'] {
+  cursor: not-allowed;
+}
+
 /* Spinner animation */
 @keyframes spin {
   0% { transform: rotate(0deg); }

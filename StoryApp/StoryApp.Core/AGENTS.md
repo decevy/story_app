@@ -28,7 +28,7 @@
 | **`User`** | Account, password hash, refresh token fields, presence (`IsOnline`, `LastSeen`) |
 | **`Pulse`** | Collaborative pulse thread; creator relationship |
 | **`Pacer`** | User ↔ pulse participation (membership row) |
-| **`Beat`** | Contributions in a pulse (text **passage**) |
+| **`Beat`** | Contributions in a pulse (ordered **`BeatSegment`** rows) |
 
 **Relationships (conceptual):** users join pulses via memberships (**`Pacer`**); pulses contain **`Beat`**s. **Integer** primary keys; delete/cascade rules are defined in **Infrastructure** EF configuration, not here.
 

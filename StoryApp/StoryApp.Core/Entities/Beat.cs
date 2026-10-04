@@ -1,13 +1,12 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace StoryApp.Core.Entities;
 
 public class Beat
 {
     public int Id { get; set; }
 
-    [Required]
-    public string Passage { get; set; } = string.Empty;
+    public int Order { get; set; }
+
+    public BeatTransition? TransitionOverride { get; set; }
 
     public int UserId { get; set; }
     public int PulseId { get; set; }
@@ -16,4 +15,5 @@ public class Beat
 
     public User User { get; set; } = null!;
     public Pulse Pulse { get; set; } = null!;
+    public IList<BeatSegment> Segments { get; set; } = [];
 }

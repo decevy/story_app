@@ -85,7 +85,7 @@ public class PulseHub(
         logger.LogInformation("User {userId} left pulse {pulseId}", userId, pulseId);
     }
 
-    public async Task SendBeat(int pulseId, string passage)
+    public async Task SendBeat(int pulseId, IList<BeatSegmentDto> segments)
     {
         var userId = GetUserId();
 
@@ -96,15 +96,19 @@ public class PulseHub(
         var user = await userRepository.GetByIdAsync(userId)
             ?? throw new HubException("User not found");
 
+        var order = await beatRepository.GetNextOrderAsync(pulseId);
+        var mappedSegments = MapSegmentDtos(segments);
+
         var beat = new Beat
         {
-            Passage = passage,
+            Order = order,
             UserId = userId,
             PulseId = pulseId,
             CreatedAt = DateTime.UtcNow,
-            User = user
+            User = user,
+            Segments = mappedSegments
         };
-        await beatRepository.CreateAsync(beat);
+        beat = await beatRepository.CreateAsync(beat);
 
         await Clients.Group(GetGroupName(pulseId)).SendAsync(
             EventNames.ReceiveBeat,
@@ -114,7 +118,7 @@ public class PulseHub(
         logger.LogInformation("User {userId} added a beat to pulse {pulseId}", userId, pulseId);
     }
 
-    public async Task EditBeat(int beatId, string newPassage)
+    public async Task EditBeat(int beatId, IList<BeatSegmentDto> segments)
     {
         var userId = GetUserId();
         var beat = await beatRepository.GetByIdAsync(beatId)
@@ -123,7 +127,10 @@ public class PulseHub(
         if (beat.UserId != userId)
             throw new HubException("You can only edit your own beats");
 
-        beat.Passage = newPassage;
+        beat.Segments.Clear();
+        foreach (var segment in MapSegmentDtos(segments))
+            beat.Segments.Add(segment);
+
         beat.EditedAt = DateTime.UtcNow;
 
         await beatRepository.UpdateAsync(beat);
@@ -133,8 +140,11 @@ public class PulseHub(
             new BeatEditedDto
             {
                 Id = beatId,
-                Passage = newPassage,
-                EditedAt = beat.EditedAt.Value
+                EditedAt = beat.EditedAt.Value,
+                Segments = beat.Segments
+                    .OrderBy(s => s.Order)
+                    .Select(BeatSegmentDto.FromEntity)
+                    .ToList()
             }
         );
     }
@@ -179,6 +189,23 @@ public class PulseHub(
     }
 
     private static string GetGroupName(int pulseId) => $"pulse_{pulseId}";
+
+    private static List<BeatSegment> MapSegmentDtos(IList<BeatSegmentDto> segments)
+    {
+        if (segments is not { Count: > 0 })
+            throw new HubException("At least one segment is required");
+
+        var mapped = segments
+            .Select(dto => dto.ToEntity())
+            .Where(s => !string.IsNullOrWhiteSpace(s.Text))
+            .OrderBy(s => s.Order)
+            .ToList();
+
+        if (mapped.Count == 0)
+            throw new HubException("At least one segment must contain text");
+
+        return mapped;
+    }
 
     private int GetUserId()
     {

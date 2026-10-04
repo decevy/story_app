@@ -2,13 +2,76 @@
 
 import { User } from './auth.types';
 
+export enum BeatTransition {
+  SameParagraph = 0,
+  NewParagraph = 1,
+  NewSection = 2,
+  NewSectionMajor = 3,
+  NewChapter = 4,
+}
+
+export interface BeatSegment {
+  id: number;
+  order: number;
+  text: string;
+  transitionAfter?: BeatTransition;
+}
+
+/** Payload for SendBeat / EditBeat hub calls (no server-assigned id). */
+export interface BeatSegmentInput {
+  order: number;
+  text: string;
+  transitionAfter?: BeatTransition;
+}
+
 export interface Beat {
   id: number;
-  passage: string;
+  order: number;
+  transitionOverride?: BeatTransition;
+  segments: BeatSegment[];
   user: User;
   pulseId: number;
   createdAt: string;
   editedAt?: string;
+}
+
+export function beatText(beat: Beat): string {
+  return [...beat.segments]
+    .sort((a, b) => a.order - b.order)
+    .map((segment) => segment.text)
+    .join('');
+}
+
+export function sortedBeatSegments(beat: Beat): BeatSegment[] {
+  return [...beat.segments].sort((a, b) => a.order - b.order);
+}
+
+export function beatNeedsTrailingInlineSpace(beat: Beat): boolean {
+  const segments = sortedBeatSegments(beat);
+  const last = segments[segments.length - 1];
+  if (!last) {
+    return false;
+  }
+  return (
+    last.transitionAfter == null ||
+    last.transitionAfter === BeatTransition.SameParagraph
+  );
+}
+
+export function lastBeatEndsWithStructuralBreak(beat: Beat): boolean {
+  const segments = sortedBeatSegments(beat);
+  const last = segments[segments.length - 1];
+  return (
+    last?.transitionAfter === BeatTransition.NewParagraph ||
+    last?.transitionAfter === BeatTransition.NewSection ||
+    last?.transitionAfter === BeatTransition.NewSectionMajor ||
+    last?.transitionAfter === BeatTransition.NewChapter
+  );
+}
+
+export function lastBeatSegmentTransition(beat: Beat): BeatTransition | undefined {
+  const segments = sortedBeatSegments(beat);
+  return segments[segments.length - 1]?.transitionAfter;
 }
 
 export interface Pacer {

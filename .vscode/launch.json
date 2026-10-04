@@ -18,6 +18,7 @@
       "args": [],
       "cwd": "${workspaceFolder}/StoryApp/StoryApp.Api",
       "stopAtEntry": false,
+      "launchProfile": "https",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

@@ -1,76 +1,50 @@
 // src/components/PulseView.tsx
 
-import {
-  KeyboardEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePulse } from '../contexts/PulseContext';
-import { Beat } from '../types/pulse.types';
-
-const FONT_STORAGE_KEY = 'pulse-font';
-
-const BOOK_FONTS = {
-  inter: {
-    label: 'Inter',
-    stack: "'Inter', ui-sans-serif, system-ui, sans-serif",
-  },
-  sourceSerif: {
-    label: 'Source Serif 4',
-    stack: "'Source Serif 4', ui-serif, Georgia, serif",
-  },
-  ebGaramond: {
-    label: 'EB Garamond',
-    stack: "'EB Garamond', ui-serif, Georgia, serif",
-  },
-  plexMono: {
-    label: 'IBM Plex Mono',
-    stack: "'IBM Plex Mono', ui-monospace, monospace",
-  },
-} as const;
-
-type BookFontId = keyof typeof BOOK_FONTS;
-
-function readStoredFontId(): BookFontId {
-  try {
-    const raw = localStorage.getItem(FONT_STORAGE_KEY);
-    if (raw && raw in BOOK_FONTS) {
-      return raw as BookFontId;
-    }
-    const legacyRaw = localStorage.getItem('story-font');
-    if (legacyRaw && legacyRaw in BOOK_FONTS) {
-      localStorage.removeItem('story-font');
-      localStorage.setItem(FONT_STORAGE_KEY, legacyRaw);
-      return legacyRaw as BookFontId;
-    }
-  } catch {
-    /* ignore */
-  }
-  return 'sourceSerif';
-}
+import { createEmptyComposer, type ComposerState } from './beatComposer';
+import { BeatSpan } from './BeatSpan';
+import { ComposerField, type ComposerFieldHandle } from './ComposerField';
+import { BOOK_FONTS, FONT_STORAGE_KEY, readStoredFontId, type BookFontId } from './pulseBookFonts';
+import { getSegmentStartVisual } from './segmentVisuals';
+import { useComposerHold } from './useComposerHold';
+import { lastBeatSegmentTransition } from '../types/pulse.types';
 
 export function PulseView() {
   const { currentPulse, beats, isConnected, sendBeat } = usePulse();
 
-  const [draft, setDraft] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  const [composer, setComposer] = useState<ComposerState>(createEmptyComposer);
   const [fontId, setFontId] = useState<BookFontId>(readStoredFontId);
+  const [seedToken, setSeedToken] = useState(0);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLSpanElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const sendDraftRef = useRef<() => Promise<void>>(async () => {});
-  const enterHoldTimerRef = useRef<number | null>(null);
+  const composerFieldRef = useRef<ComposerFieldHandle>(null);
 
-  const lastBeatPassage = beats.length > 0 ? beats[beats.length - 1]!.passage : '';
-  const lastEndsWithNewline = /\r?\n\s*$/.test(lastBeatPassage);
-  const composerIsBlock = beats.length === 0 || lastEndsWithNewline;
-  /** Narrow inline textarea after prose looks fine for one soft line; hard breaks must span full inset. */
-  const draftHasHardBreak = /\r?\n/.test(draft);
-  const composerFullWidthLayout = composerIsBlock || draftHasHardBreak;
+  const bumpSeed = useCallback(() => {
+    setSeedToken((token) => token + 1);
+  }, []);
+
+  const {
+    draftColor,
+    clearHoldTimers,
+    handleComposerKeyDown,
+    handleEnterTap,
+    handleComposerKeyUp,
+    handleSegmentTextChange,
+    handleSegmentFocus,
+    isSending,
+  } = useComposerHold({
+    composer,
+    setComposer,
+    isConnected,
+    sendBeat,
+    bumpSeed,
+  });
+
+  const lastBeat = beats.length > 0 ? beats[beats.length - 1]! : null;
+  const priorBeatLastTransition =
+    lastBeat != null ? lastBeatSegmentTransition(lastBeat) : undefined;
 
   const fontStack = BOOK_FONTS[fontId].stack;
 
@@ -108,95 +82,46 @@ export function PulseView() {
     };
   }, [beatsSignature]);
 
-  const adjustTextareaHeight = useCallback(() => {
-    const el = textareaRef.current;
-    if (!el) {
+  const composerDisabled = !isConnected || isSending;
+
+  const focusComposer = useCallback(() => {
+    if (composerDisabled) {
       return;
     }
-    el.style.height = '0px';
-    el.style.height = `${el.scrollHeight}px`;
-    if (composerFullWidthLayout) {
-      el.style.width = '100%';
-    } else {
-      el.style.width = 'auto';
-      el.style.width = `${Math.max(el.scrollWidth, 112)}px`;
-    }
-  }, [composerFullWidthLayout]);
+    composerFieldRef.current?.focus();
+  }, [composerDisabled]);
 
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [draft, beats.length, composerFullWidthLayout, adjustTextareaHeight]);
-
-  const sendDraft = useCallback(async () => {
-    const trimmed = draft.trim();
-    if (!trimmed || !isConnected) {
-      return;
-    }
-
-    setIsSending(true);
-    try {
-      await sendBeat(trimmed);
-      setDraft('');
-    } catch (error) {
-      console.error('Failed to send beat:', error);
-    } finally {
-      setIsSending(false);
-    }
-  }, [draft, isConnected, sendBeat]);
-
-  sendDraftRef.current = sendDraft;
-
-  const clearEnterHoldTimer = useCallback(() => {
-    if (enterHoldTimerRef.current !== null) {
-      window.clearTimeout(enterHoldTimerRef.current);
-      enterHoldTimerRef.current = null;
-    }
-  }, []);
-
-  const scheduleSendAfterEnterHold = useCallback(() => {
-    clearEnterHoldTimer();
-    enterHoldTimerRef.current = window.setTimeout(() => {
-      enterHoldTimerRef.current = null;
-      void sendDraftRef.current();
-    }, 3000);
-  }, [clearEnterHoldTimer]);
-
-  const handleComposerKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key !== 'Enter') {
+  const handleDraftZoneMouseDown = useCallback(
+    (event: MouseEvent<HTMLSpanElement>) => {
+      if (composerDisabled) {
         return;
       }
-      if (e.ctrlKey || e.metaKey || e.altKey) {
+      const target = event.target as HTMLElement;
+      if (target.closest('.pulse-composer')) {
         return;
       }
-
-      if (e.repeat) {
-        e.preventDefault();
+      if (target.closest('[data-draft-text]')) {
         return;
       }
-
-      if (e.shiftKey) {
+      if (target.classList.contains('draft-zone-fill')) {
         return;
       }
-
-      scheduleSendAfterEnterHold();
+      event.preventDefault();
+      focusComposer();
     },
-    [scheduleSendAfterEnterHold]
+    [composerDisabled, focusComposer],
   );
 
-  const handleComposerKeyUp = useCallback(
-    (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key !== 'Enter') {
+  const handleDraftZoneFillMouseDown = useCallback(
+    (event: MouseEvent<HTMLSpanElement>) => {
+      if (composerDisabled) {
         return;
       }
-      clearEnterHoldTimer();
+      event.preventDefault();
+      focusComposer();
     },
-    [clearEnterHoldTimer]
+    [composerDisabled, focusComposer],
   );
-
-  useEffect(() => {
-    return () => clearEnterHoldTimer();
-  }, [clearEnterHoldTimer]);
 
   if (!currentPulse) {
     return null;
@@ -229,77 +154,78 @@ export function PulseView() {
         className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:thin]"
       >
         <div
-          className="mx-auto max-w-[42rem] bg-[#faf8f5] px-6 py-10 shadow-sm ring-1 ring-stone-200/60 min-[900px]:my-6 min-[900px]:min-h-[calc(100%-3rem)] min-[900px]:arounded-lg min-[900px]:corner-squircle"
+          className="mx-auto flex min-h-full flex-col max-w-[42rem] bg-[#faf8f5] px-6 py-10 shadow-sm ring-1 ring-stone-200/60 min-[900px]:my-6 min-[900px]:min-h-[calc(100%-3rem)] min-[900px]:arounded-lg min-[900px]:corner-squircle"
           style={{ fontFamily: fontStack }}
         >
           {beats.length === 0 && (
             <p className="mb-6 text-sm text-stone-500">
               No beats yet. Write the opening below.
-              <span className="block pt-2 sm:inline sm:before:content-[' ']">
-                Enter or Shift+Enter starts a new line. Hold plain Enter (~3&nbsp;s), or tap End beat,
-                to finish yours.
-              </span>
             </p>
           )}
 
-          <div className="text-lg leading-[1.75] text-stone-900">
-            {beats.map((beat) => (
-              <BeatSpan key={beat.id} beat={beat} />
-            ))}
+          <div className="flex min-h-[12rem] flex-1 flex-wrap items-stretch text-lg leading-[1.75]">
+            <span className="min-w-0 select-text text-stone-900">
+              {beats.map((beat, beatIndex) => (
+                <BeatSpan
+                  key={beat.id}
+                  beat={beat}
+                  priorBeatLastTransition={
+                    beatIndex > 0
+                      ? lastBeatSegmentTransition(beats[beatIndex - 1]!)
+                      : undefined
+                  }
+                />
+              ))}
+            </span>
             <span
-              ref={anchorRef}
-              className="inline-block h-0 w-0 align-baseline"
-              aria-hidden
-            />
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              placeholder={
-                isConnected ? 'Continue the pulse…' : 'Disconnected…'
-              }
-              disabled={!isConnected || isSending}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={handleComposerKeyDown}
-              onKeyUp={handleComposerKeyUp}
-              onBlur={clearEnterHoldTimer}
-              className={`max-w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-lg leading-[1.75] text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 ${
-                composerFullWidthLayout ? 'block w-full align-top' : 'inline-block align-top'
-              } `}
-              aria-label="Pulse continuation"
-            />
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-stone-200/80 pt-4 text-xs text-stone-500">
-            <button
-              type="button"
-              disabled={!draft.trim() || !isConnected || isSending}
-              onClick={() => void sendDraft()}
-              className="arounded-md corner-squircle bg-stone-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-stone-900 disabled:cursor-not-allowed disabled:bg-stone-400"
+              className="draft-zone flex min-h-full min-w-[5rem] flex-1 cursor-text flex-col select-text"
+              style={{ ['--draft-color' as string]: draftColor }}
+              onMouseDown={handleDraftZoneMouseDown}
             >
-              End beat
-            </button>
-            <span className="hidden sm:inline">
-              Shift+Enter = line break · Plain Enter holds = end (~3&nbsp;s), or tap End beat
+              <span className="inline">
+                {composer.segments.map((segment, index) => (
+                  <span key={`draft-${index}`} data-draft-text="">
+                    <ComposerField
+                      ref={
+                        index === composer.activeIndex
+                          ? composerFieldRef
+                          : undefined
+                      }
+                      text={segment.text}
+                      seedToken={seedToken}
+                      startVisual={getSegmentStartVisual(
+                        composer.segments,
+                        index,
+                        index === 0 ? priorBeatLastTransition : undefined,
+                      )}
+                      isActive={index === composer.activeIndex}
+                      disabled={composerDisabled}
+                      onTextChange={(text) =>
+                        handleSegmentTextChange(index, text)
+                      }
+                      onFocusSegment={() => handleSegmentFocus(index)}
+                      onEnterTap={handleEnterTap}
+                      onKeyDown={handleComposerKeyDown}
+                      onKeyUp={handleComposerKeyUp}
+                      onBlur={clearHoldTimers}
+                    />
+                  </span>
+                ))}
+                <span
+                  ref={anchorRef}
+                  className="inline-block h-0 w-0 align-baseline"
+                  aria-hidden
+                />
+              </span>
+              <span
+                className="draft-zone-fill block min-h-[6rem] w-full flex-1"
+                aria-hidden
+                onMouseDown={handleDraftZoneFillMouseDown}
+              />
             </span>
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function trailingNewlineEndsPassage(passage: string): boolean {
-  return /\r?\n\s*$/.test(passage);
-}
-
-function BeatSpan({ beat }: { beat: Beat }) {
-  const needsTrailingSpace = !trailingNewlineEndsPassage(beat.passage);
-
-  return (
-    <>
-      <span className="whitespace-pre-wrap break-words">{beat.passage}</span>
-      {needsTrailingSpace ? <span className="inline"> </span> : null}
-    </>
   );
 }

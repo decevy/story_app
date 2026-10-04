@@ -1,7 +1,7 @@
 // src/components/PulseList.tsx
 
 import { usePulse } from '../contexts/PulseContext';
-import { PulseSummary } from '../types/pulse.types';
+import { PulseSummary, beatText } from '../types/pulse.types';
 import { formatDistanceToNow } from 'date-fns';
 
 export function PulseList() {
@@ -15,7 +15,7 @@ export function PulseList() {
     if (!pulse.lastBeat) {
       return 'No beats yet';
     }
-    const preview = pulse.lastBeat.passage;
+    const preview = beatText(pulse.lastBeat);
     return preview.length > 50 ? `${preview.slice(0, 50)}...` : preview;
   };
 

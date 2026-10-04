@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { pulsesApi } from '../api/pulses.api';
 import { signalRService } from '../services/signalr.services';
-import { PulseSummary, Pulse, Beat } from '../types/pulse.types';
+import { PulseSummary, Pulse, Beat, BeatSegmentInput } from '../types/pulse.types';
 import { useAuth } from './AuthContext';
 
 interface PulseContextType {
@@ -24,7 +24,7 @@ interface PulseContextType {
 
   loadPulses: () => Promise<void>;
   selectPulse: (pulseId: number) => Promise<void>;
-  sendBeat: (passage: string) => Promise<void>;
+  sendBeat: (segments: BeatSegmentInput[]) => Promise<void>;
   leaveCurrentPulse: () => Promise<void>;
 }
 
@@ -149,16 +149,22 @@ export function PulseProvider({ children }: PulseProviderProps) {
     }
   }, [currentPulse, connect]);
 
-  const sendBeat = useCallback(async (passage: string) => {
-    if (!currentPulse || !passage.trim()) {
+  const sendBeat = useCallback(async (segments: BeatSegmentInput[]) => {
+    if (!currentPulse || segments.length === 0) {
+      return;
+    }
+
+    const hasText = segments.some((segment) => segment.text.trim().length > 0);
+    if (!hasText) {
       return;
     }
 
     try {
-      await signalRService.sendBeat(currentPulse.id, passage);
+      await signalRService.sendBeat(currentPulse.id, segments);
       console.log(`Beat sent in pulse ${currentPulse.id}`);
     } catch (error) {
       console.error(`Failed to send beat in pulse ${currentPulse.id}:`, error);
+      throw error;
     }
   }, [currentPulse]);
 

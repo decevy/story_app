@@ -161,7 +161,9 @@ public class PulseService(
 
         var (beats, totalCount) = await beatRepository.Query()
             .WithUser()
+            .WithSegments()
             .WherePulseId(pulseId)
+            .OrderByBeatOrder()
             .ToPagedListAsync(page, pageSize);
 
         return new PaginatedResponse<BeatDto>

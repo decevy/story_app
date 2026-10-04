@@ -123,10 +123,18 @@ public static class PulseDbSeeder
 
                 beats.Add(new Beat
                 {
-                    Passage = passagesInOrder[i],
+                    Order = i,
                     UserId = i % 2 == 0 ? firstUserId : secondUserId,
                     PulseId = pulseId,
-                    CreatedAt = DateTime.UtcNow.AddMinutes(t)
+                    CreatedAt = DateTime.UtcNow.AddMinutes(t),
+                    Segments =
+                    [
+                        new BeatSegment
+                        {
+                            Order = 0,
+                            Text = passagesInOrder[i]
+                        }
+                    ]
                 });
             }
 

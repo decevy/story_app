@@ -20,9 +20,15 @@ public class BeatQueryBuilder(IQueryable<Beat> query)
         return this;
     }
 
+    public BeatQueryBuilder WithSegments()
+    {
+        _query = _query.Include(b => b.Segments);
+        return this;
+    }
+
     public BeatQueryBuilder WithFullDetails()
     {
-        return WithUser().WithPulse();
+        return WithUser().WithPulse().WithSegments();
     }
     #endregion
 
@@ -74,6 +80,18 @@ public class BeatQueryBuilder(IQueryable<Beat> query)
     public BeatQueryBuilder OrderByOldest()
     {
         _query = _query.OrderBy(b => b.CreatedAt);
+        return this;
+    }
+
+    public BeatQueryBuilder OrderByBeatOrder()
+    {
+        _query = _query.OrderBy(b => b.Order).ThenBy(b => b.CreatedAt);
+        return this;
+    }
+
+    public BeatQueryBuilder OrderByBeatOrderDescending()
+    {
+        _query = _query.OrderByDescending(b => b.Order).ThenByDescending(b => b.CreatedAt);
         return this;
     }
     #endregion

@@ -18,6 +18,27 @@
       }
     },
     {
+      "label": "run-storyapp-api",
+      "type": "shell",
+      "command": "dotnet run --project ${workspaceFolder}/StoryApp/StoryApp.Api/StoryApp.Api.csproj --launch-profile https --no-build",
+      "dependsOn": ["build-storyapp-api"],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "dotnet",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Now listening on:"
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "group": "dev"
+      }
+    },
+    {
       "label": "vite-dev",
       "type": "shell",
       "command": "npm run dev",

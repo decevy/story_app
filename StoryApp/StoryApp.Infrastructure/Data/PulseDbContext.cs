@@ -8,6 +8,7 @@ public class PulseDbContext(DbContextOptions<PulseDbContext> options) : DbContex
     public DbSet<User> Users { get; set; }
     public DbSet<Pulse> Pulses { get; set; }
     public DbSet<Beat> Beats { get; set; }
+    public DbSet<BeatSegment> BeatSegments { get; set; }
     public DbSet<Pacer> Pacers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -48,7 +49,6 @@ public class PulseDbContext(DbContextOptions<PulseDbContext> options) : DbContex
         modelBuilder.Entity<Beat>(entity =>
         {
             entity.HasKey(b => b.Id);
-            entity.Property(b => b.Passage).HasMaxLength(2000);
 
             entity.HasOne(b => b.User)
                   .WithMany(u => u.Beats)
@@ -60,8 +60,22 @@ public class PulseDbContext(DbContextOptions<PulseDbContext> options) : DbContex
                   .HasForeignKey(b => b.PulseId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasMany(b => b.Segments)
+                  .WithOne(s => s.Beat)
+                  .HasForeignKey(s => s.BeatId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasIndex(b => b.CreatedAt);
             entity.HasIndex(b => new { b.PulseId, b.CreatedAt });
+            entity.HasIndex(b => new { b.PulseId, b.Order });
+        });
+
+        modelBuilder.Entity<BeatSegment>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.Text).HasMaxLength(2000);
+
+            entity.HasIndex(s => new { s.BeatId, s.Order }).IsUnique();
         });
 
         modelBuilder.Entity<Pacer>(entity =>

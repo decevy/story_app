@@ -1,5 +1,7 @@
 // src/types/signalr.types.ts
 
+import { BeatSegment } from './pulse.types';
+
 export interface PulseEvent {
   userId: number;
   username: string;
@@ -16,7 +18,7 @@ export interface TypingIndicator {
 
 export interface BeatEdited {
   id: number;
-  passage: string;
+  segments: BeatSegment[];
   editedAt: string;
 }
 

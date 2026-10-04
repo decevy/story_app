@@ -54,7 +54,7 @@ This repository contains the **backend solution** only; a separate React (or oth
 ### 5. Beats (contributions within a pulse)
 - **REST:** Paginated beat history (`GET /api/pulses/{pulseId}/beats`)
 - **SignalR:** Send, edit, and delete beats in real time (`SendBeat`, `EditBeat`, `DeleteBeat`)
-- Beat contributions are serialized as text (**`passage`**) (`SendBeat`), with room to extend the model later
+- Beats contain ordered **segments** (`BeatSegment`); hub methods **`SendBeat`** / **`EditBeat`** accept **`IList<BeatSegmentDto>`**
 - Edit/delete restricted to the beat author (enforced in the hub)
 
 ### 6. Real-time features (SignalR `/pulseHub`)
@@ -77,8 +77,9 @@ This repository contains the **backend solution** only; a separate React (or oth
 - Unique (UserId, PulseId)
 
 ### Beats
-- `Passage`, `UserId`, `PulseId`, `CreatedAt`, `EditedAt`
-- Indexed for efficient paging by pulse and time
+- `Order`, `TransitionOverride?`, `UserId`, `PulseId`, `CreatedAt`, `EditedAt`
+- Child **`BeatSegment`** rows: `Order`, `Text`, `TransitionAfter?`, `BeatId`
+- Indexed for efficient paging by pulse and order/time
 
 Exact column definitions and cascade behaviors live in EF configurations under `StoryApp.Infrastructure` (`PulseDbContext`).
 
@@ -114,8 +115,8 @@ Exact column definitions and cascade behaviors live in EF configurations under `
 
 **Client → server (examples):**
 - `JoinPulse(int pulseId)` / `LeavePulse(int pulseId)`
-- `SendBeat(int pulseId, string passage)`
-- `EditBeat(int beatId, string newPassage)` / `DeleteBeat(int beatId)`
+- `SendBeat(int pulseId, IList<BeatSegmentDto> segments)`
+- `EditBeat(int beatId, IList<BeatSegmentDto> segments)` / `DeleteBeat(int beatId)`
 - `StartTyping(int pulseId)` / `StopTyping(int pulseId)`
 
 **Server → client (event names):**
@@ -148,7 +149,7 @@ Exact column definitions and cascade behaviors live in EF configurations under `
 - **CORS:** e.g. `http://localhost:3000`, `http://localhost:5173`
 
 ## Technical constraints (typical)
-- Beat **passage** text and string max lengths match EF `StringLength` on entities (e.g. long text fields on beats/pulses/users)
+- Beat **segment text** max length **2000** (EF `StringLength` on `BeatSegment.Text`)
 - Default beat pagination: **50** per page on `GetPulseBeats`
 
 ---

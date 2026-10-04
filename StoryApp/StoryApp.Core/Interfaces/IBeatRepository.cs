@@ -11,4 +11,5 @@ public interface IBeatRepository
     Task UpdateAsync(Beat beat);
     Task DeleteAsync(int id);
     Task<Beat?> GetLastBeatInPulseAsync(int pulseId);
+    Task<int> GetNextOrderAsync(int pulseId);
 }

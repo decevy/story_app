@@ -1,14 +1,17 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using StoryApp.Core.Dtos;
+using StoryApp.Core.Entities;
 
 namespace StoryApp.Core.Dtos.Requests;
 
 public class SendBeatRequest
 {
     [Required]
-    [JsonPropertyName("passage")]
-    public string Passage { get; set; } = string.Empty;
+    [MinLength(1)]
+    public IList<BeatSegmentDto> Segments { get; set; } = [];
 
     [Required]
     public int PulseId { get; set; }
+
+    public BeatTransition? TransitionOverride { get; set; }
 }

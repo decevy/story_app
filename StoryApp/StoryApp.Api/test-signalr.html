@@ -48,7 +48,8 @@
                 .build();
 
             connection.on("ReceiveBeat", (data) => {
-                addMessage(`[${data.createdAt}] ${data.user.username}: ${data.content}`);
+                const text = (data.segments || []).sort((a, b) => a.order - b.order).map(s => s.text).join('');
+                addMessage(`[${data.createdAt}] ${data.user.username}: ${text}`);
             });
 
             connection.on("UserJoinedPulse", (data) => {
@@ -72,7 +73,8 @@
             });
 
             connection.on("BeatEdited", (data) => {
-                addMessage(`Beat ${data.id} edited: ${data.content}`);
+                const text = (data.segments || []).sort((a, b) => a.order - b.order).map(s => s.text).join('');
+                addMessage(`Beat ${data.id} edited: ${text}`);
             });
 
             connection.on("BeatDeleted", (data) => {
@@ -127,7 +129,7 @@
                 return;
             }
 
-            connection.invoke("SendBeat", pulseId, passage)
+            connection.invoke("SendBeat", pulseId, [{ order: 0, text: passage }])
                 .then(() => {
                     document.getElementById('beatPassage').value = '';
                     addMessage("✅ Beat sent");
