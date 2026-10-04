@@ -10,7 +10,9 @@ import {
 } from 'react';
 import {
   CARET_ZWSP,
+  hasAdjacentWhitespace,
   placeCaretAtEnd,
+  placeCaretAtOffset,
   readPlainText,
   writePlainText,
 } from './composerDom';
@@ -135,11 +137,22 @@ export const ComposerField = forwardRef<ComposerFieldHandle, ComposerFieldProps>
         return;
       }
 
+      const previous = textRef.current;
       const plain = readPlainText(element);
 
       if (plain.length === 0 && element.textContent !== CARET_ZWSP) {
         writePlainText(element, '');
         placeCaretAtEnd(element);
+      }
+
+      if (hasAdjacentWhitespace(plain)) {
+        writePlainText(element, previous);
+        const duplicateAt = plain.search(/\s{2,}/);
+        placeCaretAtOffset(
+          element,
+          duplicateAt >= 0 ? duplicateAt + 1 : previous.length,
+        );
+        return;
       }
 
       onTextChange(plain);

@@ -4,12 +4,7 @@ import {
   segmentStartVisualIsBlock,
   type SegmentStartVisual,
 } from './segmentVisuals';
-import {
-  Beat,
-  BeatTransition,
-  beatNeedsTrailingInlineSpace,
-  sortedBeatSegments,
-} from '../types/pulse.types';
+import { Beat, BeatTransition, sortedBeatSegments } from '../types/pulse.types';
 
 function SegmentText({
   text,
@@ -43,7 +38,6 @@ export function BeatSpan({
   priorBeatLastTransition?: BeatTransition;
 }) {
   const segments = sortedBeatSegments(beat);
-  const needsTrailingSpace = beatNeedsTrailingInlineSpace(beat);
 
   return (
     <>
@@ -59,7 +53,6 @@ export function BeatSpan({
           />
         </span>
       ))}
-      {needsTrailingSpace ? <span className="inline"> </span> : null}
     </>
   );
 }

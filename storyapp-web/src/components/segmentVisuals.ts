@@ -44,6 +44,9 @@ export function getSegmentStartVisual(
     if (isSectionBreak(priorContext)) {
       return 'afterSection';
     }
+    if (priorContext === BeatTransition.NewParagraph) {
+      return 'indentedAlinea';
+    }
     return 'inline';
   }
 

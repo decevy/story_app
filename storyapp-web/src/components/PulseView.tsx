@@ -179,8 +179,12 @@ export function PulseView() {
             </p>
           )}
 
-          <div className="flex min-h-[12rem] flex-1 flex-wrap items-stretch text-lg leading-[1.75]">
-            <span className="min-w-0 select-text text-stone-900">
+          <div className="flex min-h-[12rem] flex-1 flex-col items-stretch text-lg leading-[1.75]">
+            <div
+              className="draft-zone min-w-0 flex-1 cursor-text select-text text-stone-900"
+              style={{ ['--draft-color' as string]: draftColor }}
+              onMouseDown={handleDraftZoneMouseDown}
+            >
               {beats.map((beat, beatIndex) => (
                 <BeatSpan
                   key={beat.id}
@@ -192,53 +196,45 @@ export function PulseView() {
                   }
                 />
               ))}
-            </span>
-            <span
-              className="draft-zone flex min-h-full min-w-[5rem] flex-1 cursor-text flex-col select-text"
-              style={{ ['--draft-color' as string]: draftColor }}
-              onMouseDown={handleDraftZoneMouseDown}
-            >
-              <span className="inline">
-                {composer.segments.map((segment, index) => (
-                  <span key={`draft-${index}`} data-draft-text="">
-                    <ComposerField
-                      ref={
-                        index === composer.activeIndex
-                          ? composerFieldRef
-                          : undefined
-                      }
-                      text={segment.text}
-                      seedToken={seedToken}
-                      startVisual={getSegmentStartVisual(
-                        composer.segments,
-                        index,
-                        index === 0 ? priorBeatLastTransition : undefined,
-                      )}
-                      isActive={index === composer.activeIndex}
-                      disabled={composerDisabled}
-                      onTextChange={(text) =>
-                        handleSegmentTextChange(index, text)
-                      }
-                      onFocusSegment={() => handleSegmentFocus(index)}
-                      onEnterTap={handleEnterTap}
-                      onKeyDown={handleComposerKeyDown}
-                      onKeyUp={handleComposerKeyUp}
-                      onBlur={clearHoldTimers}
-                    />
-                  </span>
-                ))}
-                <span
-                  ref={anchorRef}
-                  className="inline-block h-0 w-0 align-baseline"
-                  aria-hidden
-                />
-              </span>
+              {composer.segments.map((segment, index) => (
+                <span key={`draft-${index}`} data-draft-text="">
+                  <ComposerField
+                    ref={
+                      index === composer.activeIndex
+                        ? composerFieldRef
+                        : undefined
+                    }
+                    text={segment.text}
+                    seedToken={seedToken}
+                    startVisual={getSegmentStartVisual(
+                      composer.segments,
+                      index,
+                      index === 0 ? priorBeatLastTransition : undefined,
+                    )}
+                    isActive={index === composer.activeIndex}
+                    disabled={composerDisabled}
+                    onTextChange={(text) =>
+                      handleSegmentTextChange(index, text)
+                    }
+                    onFocusSegment={() => handleSegmentFocus(index)}
+                    onEnterTap={handleEnterTap}
+                    onKeyDown={handleComposerKeyDown}
+                    onKeyUp={handleComposerKeyUp}
+                    onBlur={clearHoldTimers}
+                  />
+                </span>
+              ))}
               <span
-                className="draft-zone-fill block min-h-[6rem] w-full flex-1"
+                ref={anchorRef}
+                className="inline-block h-0 w-0 align-baseline"
                 aria-hidden
-                onMouseDown={handleDraftZoneFillMouseDown}
               />
-            </span>
+            </div>
+            <span
+              className="draft-zone-fill block min-h-[6rem] w-full flex-1 cursor-text"
+              aria-hidden
+              onMouseDown={handleDraftZoneFillMouseDown}
+            />
           </div>
         </div>
       </div>

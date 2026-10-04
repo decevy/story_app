@@ -46,18 +46,6 @@ export function sortedBeatSegments(beat: Beat): BeatSegment[] {
   return [...beat.segments].sort((a, b) => a.order - b.order);
 }
 
-export function beatNeedsTrailingInlineSpace(beat: Beat): boolean {
-  const segments = sortedBeatSegments(beat);
-  const last = segments[segments.length - 1];
-  if (!last) {
-    return false;
-  }
-  return (
-    last.transitionAfter == null ||
-    last.transitionAfter === BeatTransition.SameParagraph
-  );
-}
-
 export function lastBeatEndsWithStructuralBreak(beat: Beat): boolean {
   const segments = sortedBeatSegments(beat);
   const last = segments[segments.length - 1];

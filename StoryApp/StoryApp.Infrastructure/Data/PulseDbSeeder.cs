@@ -5,6 +5,8 @@ namespace StoryApp.Infrastructure.Data;
 
 public static class PulseDbSeeder
 {
+    private readonly record struct SeedSegment(string Text, BeatTransition? TransitionAfter = null);
+
     public static async Task SeedAsync(PulseDbContext context, CancellationToken cancellationToken = default)
     {
         if (await context.Users.AnyAsync(cancellationToken))
@@ -49,27 +51,24 @@ public static class PulseDbSeeder
         {
             new Pulse
             {
-                Name = "Het Neon-Noedel Bijpand",
-                Description =
-                    "Volksvertelsels rond een retro-brandstoffen-diner bij de tramhalte in de asteroïdengordel.",
+                Name = "De herberg aan de kruising",
+                Description = "Twee reizigers stoppen waar de wegen samenkomen.",
                 IsPrivate = false,
                 CreatedBy = users[0].Id,
                 CreatedAt = DateTime.UtcNow
             },
             new Pulse
             {
-                Name = "Logboek van de stormglaswaker",
-                Description =
-                    "Met de hand geschreven vuurtorennotities uit het seizoen waarin het getijdewater stout deed.",
+                Name = "Het licht op het eiland",
+                Description = "Een wachter houdt het licht brandend terwijl de zee zwijgt.",
                 IsPrivate = false,
                 CreatedBy = users[1].Id,
                 CreatedAt = DateTime.UtcNow
             },
             new Pulse
             {
-                Name = "De envelop met de koperen sleutel",
-                Description =
-                    "Twee nichten annoteren een brozes briefje achter een afbladderende ladenkast met kantteksten.",
+                Name = "De brief en de sleutel",
+                Description = "Twee nichten vinden op zolder een brief die op hen wachtte.",
                 IsPrivate = true,
                 CreatedBy = users[0].Id,
                 CreatedAt = DateTime.UtcNow
@@ -101,20 +100,37 @@ public static class PulseDbSeeder
         await context.SaveChangesAsync(cancellationToken);
         context.ChangeTracker.Clear();
 
+        static List<BeatSegment> MapSegments(IReadOnlyList<SeedSegment> segments)
+        {
+            var mapped = new List<BeatSegment>(segments.Count);
+            for (var i = 0; i < segments.Count; i++)
+            {
+                var seed = segments[i];
+                mapped.Add(new BeatSegment
+                {
+                    Order = i,
+                    Text = seed.Text,
+                    TransitionAfter = seed.TransitionAfter
+                });
+            }
+
+            return mapped;
+        }
+
         static List<Beat> BuildRoundRobinPulse(
             int pulseId,
             int firstUserId,
             int secondUserId,
-            IReadOnlyList<string> passagesInOrder,
+            SeedSegment[][] beatsInOrder,
             int startMinuteOffsetInclusive,
             int endMinuteOffsetInclusive)
         {
-            var beats = new List<Beat>(passagesInOrder.Count);
-            var stepCount = passagesInOrder.Count - 1;
+            var beats = new List<Beat>(beatsInOrder.Length);
+            var stepCount = beatsInOrder.Length - 1;
             if (stepCount < 0)
                 return beats;
 
-            for (var i = 0; i < passagesInOrder.Count; i++)
+            for (var i = 0; i < beatsInOrder.Length; i++)
             {
                 var t = stepCount == 0
                     ? endMinuteOffsetInclusive
@@ -127,108 +143,148 @@ public static class PulseDbSeeder
                     UserId = i % 2 == 0 ? firstUserId : secondUserId,
                     PulseId = pulseId,
                     CreatedAt = DateTime.UtcNow.AddMinutes(t),
-                    Segments =
-                    [
-                        new BeatSegment
-                        {
-                            Order = 0,
-                            Text = passagesInOrder[i]
-                        }
-                    ]
+                    Segments = MapSegments(beatsInOrder[i])
                 });
             }
 
             return beats;
         }
 
-        var neonAnnexPassages = new[]
-        {
-            "De laminaire afvoerroosters boven hok zeven fluisterden akkoorden die ik zweer nog te kennen van aardse snelwegen.",
-            "Buiten lakte een plasmamotregen het glas van de aanmeerslurf met goedkoop-kermisschitterstrepen.",
-            "Onze serveerster schoof twee kommen naar voren waarop meteoriet-roetbouillon stond, zonder te knipperen achter haar chroom-brilvizier.",
-            "De bouillon rook naar onweer en weigerde beleefd af te koelen.",
-            "Een geplastificeerde kaart beloofde dat de servetten uit biologisch afbreekbare sterrenstof waren; het mijne loste op tot nette rook.",
-            "De jukebox draaide alleen baan-verkeerswaarschuwingen vermengd met salsarhythmes.",
-            "Drie hokjes verder bekvechten twee mensen tolbruggen tussen Lagrangepaarkeervelden.",
-            "De frietjes arriveerden nog orbitend in hun mand als een suf trage micrograviteitswiebel.",
-            "Ik schreef het bestelnummer toch maar op mijn pols bijgeloof uit oude grensweg-dinerstreken.",
-            "Hij lachte en zei dat zulke zaakjes leefden van sentimenteel vrachtpersoneel dat regengeluid miste.",
-            "De juslepel droeg een gescratcht rompnummer dat overeenkwam met een berging uit het stormravagejaar.",
-            "We deden of we het niet merkten en gaven het lepel voor lepel alsof een gerucht herschrijven veiliger maakte.",
-            "Bij het bijvul-karretje smaakte gerecycleerde thee naar koelmedium en muntheling.",
-            "Hij bekende dat hij ruimtevoer haten zou als plekken als deze zich niet overdreven melodramatisch verkochten.",
-            "Ik wees naar het raam waar een dronekoort lampionnen voorbijdroeg langs de silhouetspar.",
-            "Hij zei dat lampionnen elke lucht geleend lieten voelen, zelfs als je er eeuwig onder woonde.",
-            "De neondraak boven de kassa flikkerde als een zware vrachtklopper de ligplaats-sloten deed trillen.",
-            "Misschien voelde het neon hoe onze harten aan diezelfde kleine sympathische sprong deelnamen.",
-            "We deelden een toetje waar orbit crumble op stond tot de korrels zijwaarts dreven als verkeerd gerichte sneeuw.",
-            "Het kruim bleef hangen aan mouwen én aan verhalen die we later zouden polijsten.",
-            "Een omroep telde de afstand tot de dockingklamp af; precies bij nul zoogden de vorken mee.",
-            "We betaalden met noten gefixeerd door zegels uit drie admiraliteitscirkels.",
-            "Buiten perlde condens tegen de luikpakking als parels die voor ons verboden waren.",
-            "Hij trok zijn kraag scheef schots—precies genoeg verzet voor een dinertje dat gedijt op beschaafde chaos."
-        };
+        SeedSegment[][] innBeats =
+        [
+            [
+                new("We waren laat. ", BeatTransition.SameParagraph),
+                new("De herberg stond waar twee wegen elkaar kruisten, en de deur stond open. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Binnen rook het naar brood. ", BeatTransition.SameParagraph),
+                new("Een man veegde de vloer alsof hij de dag wilde sluiten zonder hem te vergeten. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Hij keek op. ", BeatTransition.SameParagraph),
+                new("Wie honger heeft, mag blijven, zei hij. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("We gingen zitten. ", BeatTransition.SameParagraph),
+                new("Niemand vroeg waar we vandaan kwamen. ", BeatTransition.NewSection)
+            ],
+            [
+                new("De soep was eenvoudig. ", BeatTransition.SameParagraph),
+                new("Juist daarom smaakte ze naar iets wat ik lang had gemist. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Mijn vriend zei dat een reis begint op het moment dat je stopt met haasten. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Ik wilde zeggen dat we een schema hadden. ", BeatTransition.SameParagraph),
+                new("De woorden bleven in mijn mond. ", BeatTransition.NewSection)
+            ],
+            [
+                new("Buiten ging de wind liggen. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("De waard zette een kaars op tafel. ", BeatTransition.SameParagraph),
+                new("Hij zei dat licht niet van de kaars is, maar van degene die ernaar kijkt. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("We aten in stilte. ", BeatTransition.SameParagraph),
+                new("Stilte is ook een vorm van gezelschap. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Bij de deur zei hij: de weg kiest niet. ", BeatTransition.SameParagraph),
+                new("Jij kiest of je hem volgt. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("We betaalden met wat we hadden. ", BeatTransition.SameParagraph),
+                new("Het was genoeg. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("We liepen verder. ", BeatTransition.SameParagraph),
+                new("Achter ons bleef de lamp branden, klein en zeker. ")
+            ]
+        ];
 
-        var keeperLogPassages = new[]
-        {
-            "Het logboek begint bij schijnschemer omdat de vuurtorenklok 's nachts elf koppige minuten heeft gewonnen.",
-            "Zout korstte langs de reliëfkaart op het reling als handschrift waar alleen de wind een punt onder kon zetten.",
-            "Het glas van de lampenkamer droeg een violette waas die geen sop volledig durfde toe te geven.",
-            "Radar tikte spokenbanken aan telkens wanneer de getijdebalk twee klanken in plaats van drie sloeg.",
-            "Thee smaakte naar jodiumtrouw en naar een fluitketel waarvan de damp de vensterbank niet vrij wilde geven.",
-            "Meeuwen cirkelden scherper dan de rekenkunst tijdens zo'n kalme deining zou toe moeten laten.",
-            "De misthoorn hakte halverwege een ademteug een halve lettergreep af — redelijk kattenkruid om in rood in te vullen.",
-            "Verfafschilfers van de weduwe-galerij vielen een keer omhoog en dreven naar de lantaarnlichting als gedesoriënteerd sneeuw.",
-            "Op het pakbonnetje bij de vrachtkrat stonden reservelampen én tussen haakjes optionele moed, met klein krullend schrift geschreven.",
-            "We lachten één keer, broos en voorzichtig, en staplesten blikken alsof we horizon konden afsluiten met blikwerk.",
-            "Midden in de nacht zag ik het vuurtorenlog zwellen door getijden die piekten vóór de maan haar gezicht liet zien.",
-            "We klemden gedroogde bloemen tussen pagina's dertien en veerteen tot het papier rook naar hooi en gekantelde weiden.",
-            "De marifoonpraat meldde een koor van boeien dat vragen beantwoordde die niemand op het land hardop had gesteld.",
-            "De donder kwam vroeger dan gepland, naar roestige scharnieren smaakte en beleefd geleende afstand meebracht.",
-            "We dichtsplankten de luiken toch maar en lieten de bouten kloppen op een ritme dat grootmoeder floten zou.",
-            "Door de spleet tekende het bliksemlicht vluchtige zeekaarten die zich vouwden nog vóór we ze konden onthouden.",
-            "De ketel gilde verraad toen koude motregel de schoorsteen in één grove band naar beneden sloeg.",
-            "We vingen het met een emmer en noemden de meting liever wetenschap dan uitputting.",
-            "Bij het keren van het tij vulden voetafdrukken op het voorplatform zich met luminescerend planktonapplaus.",
-            "We stonden doodstil tot het applaus verdunt tot gewone onschuldige golfschuim.",
-            "De lampmotor bromde een vowelkonstante alsof felheid ook werk is waar je voor tekent.",
-            "We sloten af met initialen verknoeid door pekel nog leesbaar voor de volgende sceptische lezer.",
-            "Die ochtend bekvechten meeuwen om touwslagschaduwen op het gebroken steen van het voordek.",
-            "We draaiden aan de kompasroos-ring tot hij het noorden weer beleefd wenste voor te geven waar het niets meer uitmaakte.",
-        };
+        SeedSegment[][] lighthouseBeats =
+        [
+            [
+                new("Ik schrijf dit bij het vallen van de avond. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("De zee was rustig, en toch hoorde ik haar. ", BeatTransition.SameParagraph),
+                new("Ze sprak niet in woorden. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Een oude man had me gezegd: bewaak het licht, niet de storm. ", BeatTransition.NewSection)
+            ],
+            [
+                new("Ik poetste het glas tot ik mijn eigen gezicht zag. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("In de nacht kwam de mist. ", BeatTransition.SameParagraph),
+                new("Ik liet de lamp draaien, zoals ik had beloofd. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Een schip antwoordde met één flits. ", BeatTransition.SameParagraph),
+                new("Dat was genoeg om niet alleen te zijn. ", BeatTransition.NewSection)
+            ],
+            [
+                new("Bij dageraad lag zout op de reling. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Ik dacht aan de mensen op het land. ", BeatTransition.SameParagraph),
+                new("Zij slapen terwijl iemand wakker blijft. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("De meeuwen kwamen terug. ", BeatTransition.SameParagraph),
+                new("Zij kennen de weg zonder kaart. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Ik sloot het logboek. ", BeatTransition.SameParagraph),
+                new("Wat telt, staat niet altijd op papier. ")
+            ]
+        ];
 
-        var copperKeyPassages = new[]
-        {
-            "De brosse envelop rook naar mottenvlerken en violet inktwerk dat zich niet wenste te verontschuldigen voor het bleken.",
-            "Binnen krulde de eerste regel zich als een handschrift dat een bekentenis nog moest nakomen.",
-            "De met pleister geplakte koperen sleutel liet een halovlek die leek op iemand zijn adem inhoudend.",
-            "Stofmite reden de zolderzonnestraal rakelings door dat lichtcircuit alsof ze onze zenuwen peilden.",
-            "Ze las hardop waar 'na de rijping van peren' stond en de zinsnede bleef steken in de keel van de verwarming.",
-            "Ik vertaalde zwijgen naar schattingen over boomgaarden waar we alleen maar rommelige geruchtenpostcards van kenden.",
-            "Een randnoot meldde een dinsdag blauwgeverfde brug puur bijgeloof waar niemand ooit controle op heeft kunnen houden.",
-            "Plooirimpsels tekenden een patroon dat weerklonk met het platte grindpad langs de kas van nicht tante.",
-            "Inktvlekken deden zich voor als vingerafdrukken die grootte door namiddaglucht wisselden.",
-            "Op millimeterpapier streepte ik tegenstrijdigheden om tot gevlochten haarlijnen te komen.",
-            "Het tweede stuk tekst smeekt de vindster om niet te vertrouwen op slotenmakerij die vals fluit.",
-            "We oefenden excuses voor voorraadwerk dat deze geheimenis het langst bewaakt had.",
-            "Hij volgde een inkteveeg tot die hem deed denken aan kustlijnen op afgeknepen ansichtkaarten.",
-            "Een nabericht zinspeelde dat een biscuitblik in de schuur rammelde voller dan enig recept er recht op had.",
-            "We betwisten of vriendelijkheid te lamineren valt zoals dinerkaarten tegen vet bestand moeten zijn.",
-            "Een geplet viooltje zwierde zich los en tolde nog één rondje eer het haaks op gezonde verstand viel.",
-            "Pagina drie citeerde een procureur berucht om zaken kwijt te raken aan vogelnests in gerechtsgevelgoten.",
-            "Ik vroeg mij af of pennenwerk verval bespoedigt wanneer het zich ergens bij schaamt uit eerlijkheid.",
-            "Een kiertje langs de enveloprug liet geselafdraad uit schortkoord zien gekleurd met indigo.",
-            "We legden de koperen sleutel toch op de radiator alsof ijzer te vermurwen viel tegen koperen koppigheid.",
-            "De verwarming sloot met een zacht geratel en een halve schouder op—alsof dingen zich herinnerden dat ze eens zo vast werden vastgepakt.",
-            "Ze overschreef broze pennenstrepen naar grafiet terwijl ik voorzichtige datums tussen de randen noteerde.",
-            "We vonden dat een brief achterstevoren vouwen de zolder dicht tegen naderende roddel langs de kraakjes.",
-            "Halverwege de trappedaling zong oude ijzerwerk een liedje naar zomers die wij elkaar nooit deelden.",
-        };
+        SeedSegment[][] letterBeats =
+        [
+            [
+                new("Op zolder vonden we een envelop. ", BeatTransition.SameParagraph),
+                new("Hij lag daar alsof hij op ons had gewacht. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Erin zat een brief, en een koperen sleutel. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Mijn nicht las de eerste regel hardop. ", BeatTransition.SameParagraph),
+                new("Wie zoekt wat hij al heeft, vindt de deur niet. ", BeatTransition.NewSection)
+            ],
+            [
+                new("We zwegen. ", BeatTransition.SameParagraph),
+                new("Soms is stilte het enige eerlijke antwoord. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("De sleutel was klein. ", BeatTransition.SameParagraph),
+                new("Hij woog meer dan hij leek. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("In de kantlijn stond: het hart is een slot dat opent als je ophoudt te forceren. ", BeatTransition.NewSection)
+            ],
+            [
+                new("We daalden de trap af. ", BeatTransition.SameParagraph),
+                new("Beneden rook het huis naar hout en naar thee. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Ze zei dat we de brief niet hoefden te begrijpen om hem te bewaren. ", BeatTransition.NewParagraph)
+            ],
+            [
+                new("Ik legde de sleutel in mijn zak. ", BeatTransition.SameParagraph),
+                new("Niet om een deur te openen, maar om te onthouden dat er één was. ")
+            ]
+        ];
 
         var beats = new List<Beat>();
-        beats.AddRange(BuildRoundRobinPulse(pulses[0].Id, aya, bobby, neonAnnexPassages, -132, -90));
-        beats.AddRange(BuildRoundRobinPulse(pulses[1].Id, bobby, carlos, keeperLogPassages, -88, -46));
-        beats.AddRange(BuildRoundRobinPulse(pulses[2].Id, aya, carlos, copperKeyPassages, -44, -2));
+        beats.AddRange(BuildRoundRobinPulse(pulses[0].Id, aya, bobby, innBeats, -132, -90));
+        beats.AddRange(BuildRoundRobinPulse(pulses[1].Id, bobby, carlos, lighthouseBeats, -88, -46));
+        beats.AddRange(BuildRoundRobinPulse(pulses[2].Id, aya, carlos, letterBeats, -44, -2));
 
         await context.Beats.AddRangeAsync(beats, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);

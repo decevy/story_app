@@ -153,6 +153,11 @@ export function toSegmentInputs(state: ComposerState): BeatSegmentInput[] {
     }
   }
 
+  const last = segments[segments.length - 1];
+  if (last != null && last.text.length > 0 && !/\s$/.test(last.text)) {
+    last.text = `${last.text} `;
+  }
+
   return segments.map((segment, index) => ({
     order: index,
     text: segment.text,
