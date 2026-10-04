@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace StoryApp.Core.Entities;
 
+/// <summary>
+/// A text fragment within a <see cref="Beat"/>; <see cref="TransitionAfter"/> controls layout before the next segment.
+/// </summary>
 public class BeatSegment
 {
     public int Id { get; set; }

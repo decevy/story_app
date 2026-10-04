@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace StoryApp.Core.Entities;
 
+/// <summary>
+/// Collaborative story thread: metadata, creator, <see cref="Beat"/> history, and <see cref="Pacer"/> memberships.
+/// </summary>
 public class Pulse
 {
     public int Id { get; set; }

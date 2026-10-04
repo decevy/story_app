@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace StoryApp.Core.Entities;
 
+/// <summary>
+/// Registered account: credentials, refresh tokens, presence, and navigation to beats and pulse memberships.
+/// </summary>
 public class User
 {
     public int Id { get; set; }

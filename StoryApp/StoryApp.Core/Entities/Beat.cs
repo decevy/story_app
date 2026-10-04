@@ -1,5 +1,8 @@
 namespace StoryApp.Core.Entities;
 
+/// <summary>
+/// One author's contribution in a pulse, made of ordered <see cref="BeatSegment"/> rows.
+/// </summary>
 public class Beat
 {
     public int Id { get; set; }
