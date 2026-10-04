@@ -2,6 +2,7 @@ import {
   BeatSegmentInput,
   BeatTransition,
 } from '../types/pulse.types';
+import { isSectionBreak } from './segmentVisuals';
 
 export type DraftSegment = {
   text: string;
@@ -11,6 +12,8 @@ export type DraftSegment = {
 export type ComposerState = {
   segments: DraftSegment[];
   activeIndex: number;
+  /** Break before the first draft segment. Overrides the previous beat while drafting. */
+  leadingTransition?: BeatTransition;
 };
 
 export type BackspaceResult =
@@ -25,6 +28,7 @@ export function createEmptyComposer(): ComposerState {
 export function cloneComposer(state: ComposerState): ComposerState {
   return {
     activeIndex: state.activeIndex,
+    leadingTransition: state.leadingTransition,
     segments: state.segments.map((segment) => ({ ...segment })),
   };
 }
@@ -66,7 +70,17 @@ function insertEmptySegmentAfterActive(composer: ComposerState): void {
   composer.activeIndex = insertAt;
 }
 
-export function applyEnter(state: ComposerState): ComposerState {
+function effectiveLeading(
+  state: ComposerState,
+  priorContext?: BeatTransition,
+): BeatTransition | undefined {
+  return state.leadingTransition ?? priorContext;
+}
+
+export function applyEnter(
+  state: ComposerState,
+  priorContext?: BeatTransition,
+): ComposerState {
   const next = cloneComposer(state);
   const active = next.segments[next.activeIndex]!;
 
@@ -88,13 +102,17 @@ export function applyEnter(state: ComposerState): ComposerState {
     return next;
   }
 
-  // If the active segment is the very first (index 0) and is empty,
-  // pressing Enter should still create a new paragraph segment after it:
-  // - Set the transition after the (empty) first segment to NewParagraph
-  // - Insert a new empty segment after it and focus that segment
+  // An empty first segment restyles in place. The break is stored on the
+  // draft, ahead of the previous beat, so no extra empty segment is inserted.
   if (next.activeIndex === 0) {
-    active.transitionAfter = BeatTransition.NewParagraph;
-    insertEmptySegmentAfterActive(next);
+    const leading = effectiveLeading(next, priorContext);
+    if (isSectionBreak(leading)) {
+      return state;
+    }
+    next.leadingTransition =
+      leading === BeatTransition.NewParagraph
+        ? BeatTransition.NewSection
+        : BeatTransition.NewParagraph;
     return next;
   }
 
@@ -118,7 +136,10 @@ export function applyEnter(state: ComposerState): ComposerState {
   return next;
 }
 
-export function applyBackspace(state: ComposerState): BackspaceResult {
+export function applyBackspace(
+  state: ComposerState,
+  priorContext?: BeatTransition,
+): BackspaceResult {
   const active = state.segments[state.activeIndex]!;
 
   if (active.text.length > 0) {
@@ -126,7 +147,20 @@ export function applyBackspace(state: ComposerState): BackspaceResult {
   }
 
   if (state.activeIndex === 0) {
-    return { type: 'noop' };
+    if (state.leadingTransition == null) {
+      return { type: 'noop' };
+    }
+
+    const next = cloneComposer(state);
+    if (isSectionBreak(next.leadingTransition)) {
+      next.leadingTransition = BeatTransition.NewParagraph;
+    } else {
+      delete next.leadingTransition;
+    }
+    if (next.leadingTransition === priorContext) {
+      delete next.leadingTransition;
+    }
+    return { type: 'structural', state: next };
   }
 
   const next = cloneComposer(state);

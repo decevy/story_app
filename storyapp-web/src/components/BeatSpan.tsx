@@ -1,7 +1,6 @@
-import { SegmentLeadingBreak } from './SegmentLeadingBreak';
 import {
   getSegmentStartVisual,
-  segmentStartVisualIsBlock,
+  segmentLayoutClass,
   type SegmentStartVisual,
 } from './segmentVisuals';
 import { Beat, BeatTransition, sortedBeatSegments } from '../types/pulse.types';
@@ -13,20 +12,12 @@ function SegmentText({
   text: string;
   startVisual: SegmentStartVisual;
 }) {
-  const isBlock = segmentStartVisualIsBlock(startVisual);
-  const indent = startVisual === 'indentedAlinea';
-
   return (
-    <>
-      <SegmentLeadingBreak visual={startVisual} />
-      <span
-        className={`break-words whitespace-pre-wrap ${
-          indent ? 'block indent-[2em]' : isBlock ? 'block' : ''
-        }`}
-      >
-        {text}
-      </span>
-    </>
+    <span
+      className={`break-words whitespace-pre-wrap ${segmentLayoutClass(startVisual)}`}
+    >
+      {text}
+    </span>
   );
 }
 
@@ -48,7 +39,9 @@ export function BeatSpan({
             startVisual={getSegmentStartVisual(
               segments,
               index,
-              index === 0 ? priorBeatLastTransition : undefined,
+              index === 0
+                ? (beat.transitionOverride ?? priorBeatLastTransition)
+                : undefined,
             )}
           />
         </span>

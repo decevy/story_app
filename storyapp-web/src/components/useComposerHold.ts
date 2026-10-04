@@ -10,6 +10,7 @@ import {
   updateSegmentText,
   type ComposerState,
 } from './beatComposer';
+import { BeatTransition } from '../types/pulse.types';
 
 const HOLD_MS = 1500;
 
@@ -26,8 +27,12 @@ type UseComposerHoldOptions = {
   composer: ComposerState;
   setComposer: React.Dispatch<React.SetStateAction<ComposerState>>;
   isConnected: boolean;
-  sendBeat: (segments: ReturnType<typeof toSegmentInputs>) => Promise<void>;
+  sendBeat: (
+    segments: ReturnType<typeof toSegmentInputs>,
+    transitionOverride?: BeatTransition,
+  ) => Promise<void>;
   bumpSeed: () => void;
+  priorBeatLastTransition?: BeatTransition;
 };
 
 export function useComposerHold({
@@ -36,6 +41,7 @@ export function useComposerHold({
   isConnected,
   sendBeat,
   bumpSeed,
+  priorBeatLastTransition,
 }: UseComposerHoldOptions) {
   const [isSending, setIsSending] = useState(false);
   const [draftHue, setDraftHue] = useState(randomDraftHue);
@@ -90,7 +96,7 @@ export function useComposerHold({
 
     setIsSending(true);
     try {
-      await sendBeat(segments);
+      await sendBeat(segments, composer.leadingTransition);
       setComposer(createEmptyComposer());
       resetDraftAppearance();
       bumpSeed();
@@ -163,7 +169,10 @@ export function useComposerHold({
 
   const canStructuralBackspace = useCallback((state: ComposerState) => {
     const active = state.segments[state.activeIndex];
-    return active != null && active.text.length === 0 && state.activeIndex > 0;
+    if (active == null || active.text.length > 0) {
+      return false;
+    }
+    return state.activeIndex > 0 || state.leadingTransition != null;
   }, []);
 
   const handleComposerKeyDown = useCallback(
@@ -203,13 +212,16 @@ export function useComposerHold({
         setComposer((previous) => {
           const existing = previous.segments[previous.activeIndex]?.text ?? '';
           const textToApply = activeText.length > 0 ? activeText : existing;
-          return applyEnter(updateActiveSegmentText(previous, textToApply));
+          return applyEnter(
+            updateActiveSegmentText(previous, textToApply),
+            priorBeatLastTransition,
+          );
         });
         bumpSeed();
       }
       enterHoldSentRef.current = false;
     },
-    [bumpSeed, setComposer, stopEnterHold],
+    [bumpSeed, priorBeatLastTransition, setComposer, stopEnterHold],
   );
 
   const handleComposerKeyUp = useCallback(
@@ -222,7 +234,7 @@ export function useComposerHold({
           return;
         }
 
-        const result = applyBackspace(composer);
+        const result = applyBackspace(composer, priorBeatLastTransition);
         if (result.type === 'structural') {
           setComposer(result.state);
           bumpSeed();
@@ -230,7 +242,7 @@ export function useComposerHold({
         backspaceHoldFiredRef.current = false;
       }
     },
-    [bumpSeed, composer, setComposer, stopBackspaceHold],
+    [bumpSeed, composer, priorBeatLastTransition, setComposer, stopBackspaceHold],
   );
 
   const handleSegmentTextChange = useCallback(

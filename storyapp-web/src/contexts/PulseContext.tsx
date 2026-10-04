@@ -11,7 +11,13 @@ import {
 } from 'react';
 import { pulsesApi } from '../api/pulses.api';
 import { signalRService } from '../services/signalr.services';
-import { PulseSummary, Pulse, Beat, BeatSegmentInput } from '../types/pulse.types';
+import {
+  PulseSummary,
+  Pulse,
+  Beat,
+  BeatSegmentInput,
+  BeatTransition,
+} from '../types/pulse.types';
 import { useAuth } from './AuthContext';
 
 interface PulseContextType {
@@ -24,7 +30,10 @@ interface PulseContextType {
 
   loadPulses: () => Promise<void>;
   selectPulse: (pulseId: number) => Promise<void>;
-  sendBeat: (segments: BeatSegmentInput[]) => Promise<void>;
+  sendBeat: (
+    segments: BeatSegmentInput[],
+    transitionOverride?: BeatTransition,
+  ) => Promise<void>;
   leaveCurrentPulse: () => Promise<void>;
 }
 
@@ -149,7 +158,10 @@ export function PulseProvider({ children }: PulseProviderProps) {
     }
   }, [currentPulse, connect]);
 
-  const sendBeat = useCallback(async (segments: BeatSegmentInput[]) => {
+  const sendBeat = useCallback(async (
+    segments: BeatSegmentInput[],
+    transitionOverride?: BeatTransition,
+  ) => {
     if (!currentPulse || segments.length === 0) {
       return;
     }
@@ -160,7 +172,7 @@ export function PulseProvider({ children }: PulseProviderProps) {
     }
 
     try {
-      await signalRService.sendBeat(currentPulse.id, segments);
+      await signalRService.sendBeat(currentPulse.id, segments, transitionOverride);
       console.log(`Beat sent in pulse ${currentPulse.id}`);
     } catch (error) {
       console.error(`Failed to send beat in pulse ${currentPulse.id}:`, error);

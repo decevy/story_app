@@ -85,7 +85,10 @@ public class PulseHub(
         logger.LogInformation("User {userId} left pulse {pulseId}", userId, pulseId);
     }
 
-    public async Task SendBeat(int pulseId, IList<BeatSegmentDto> segments)
+    public async Task SendBeat(
+        int pulseId,
+        IList<BeatSegmentDto> segments,
+        BeatTransition? transitionOverride = null)
     {
         var userId = GetUserId();
 
@@ -102,6 +105,7 @@ public class PulseHub(
         var beat = new Beat
         {
             Order = order,
+            TransitionOverride = transitionOverride,
             UserId = userId,
             PulseId = pulseId,
             CreatedAt = DateTime.UtcNow,

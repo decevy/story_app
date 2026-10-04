@@ -3,7 +3,7 @@
 import * as signalR from '@microsoft/signalr';
 import { tokenService } from './token.service';
 import config from '../config/env.config';
-import { Beat, BeatSegmentInput } from '../types/pulse.types';
+import { Beat, BeatSegmentInput, BeatTransition } from '../types/pulse.types';
 import {
   PulseEvent,
   TypingIndicator,
@@ -86,9 +86,17 @@ class SignalRService {
     await this.connection.invoke('LeavePulse', pulseId);
   }
 
-  async sendBeat(pulseId: number, segments: BeatSegmentInput[]): Promise<void> {
+  async sendBeat(
+    pulseId: number,
+    segments: BeatSegmentInput[],
+    transitionOverride?: BeatTransition,
+  ): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('SendBeat', pulseId, segments);
+    if (transitionOverride == null) {
+      await this.connection.invoke('SendBeat', pulseId, segments);
+      return;
+    }
+    await this.connection.invoke('SendBeat', pulseId, segments, transitionOverride);
   }
 
   async editBeat(beatId: number, segments: BeatSegmentInput[]): Promise<void> {

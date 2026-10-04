@@ -67,3 +67,16 @@ export function getSegmentStartVisual(
 export function segmentStartVisualIsBlock(visual: SegmentStartVisual): boolean {
   return visual !== 'inline';
 }
+
+export function segmentLayoutClass(visual: SegmentStartVisual): string {
+  switch (visual) {
+    case 'indentedAlinea':
+      return 'block indent-[2em]';
+    case 'plainAlinea':
+      return 'block';
+    case 'afterSection':
+      return 'block w-full pt-[2lh]';
+    case 'inline':
+      return '';
+  }
+}

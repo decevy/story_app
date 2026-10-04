@@ -16,8 +16,8 @@ import {
   readPlainText,
   writePlainText,
 } from './composerDom';
-import { SegmentLeadingBreak } from './SegmentLeadingBreak';
 import {
+  segmentLayoutClass,
   segmentStartVisualIsBlock,
   type SegmentStartVisual,
 } from './segmentVisuals';
@@ -63,7 +63,6 @@ export const ComposerField = forwardRef<ComposerFieldHandle, ComposerFieldProps>
     const textRef = useRef(text);
     textRef.current = text;
     const isBlock = segmentStartVisualIsBlock(startVisual);
-    const indent = startVisual === 'indentedAlinea';
 
     const ensureCaretHost = useCallback(() => {
       const element = editableRef.current;
@@ -249,7 +248,6 @@ export const ComposerField = forwardRef<ComposerFieldHandle, ComposerFieldProps>
 
     return (
       <span className="contents" onMouseDown={handleWrapperMouseDown}>
-        <SegmentLeadingBreak visual={startVisual} />
         <span
           ref={editableRef}
           role="textbox"
@@ -268,12 +266,10 @@ export const ComposerField = forwardRef<ComposerFieldHandle, ComposerFieldProps>
           onKeyUp={handleKeyUp}
           onFocus={handleFocus}
           onBlur={onBlur}
-          className={`pulse-composer break-words whitespace-pre-wrap ${
-            indent
-              ? 'block min-h-[1.75em] w-full indent-[2em]'
-              : isBlock
-                ? 'block min-h-[1.75em] w-full'
-                : 'inline-block min-h-[1.75em] min-w-[1ch] align-baseline'
+          className={`pulse-composer break-words whitespace-pre-wrap ${segmentLayoutClass(startVisual)} ${
+            isBlock
+              ? 'min-h-[1.75em] w-full'
+              : 'inline-block min-h-[1.75em] min-w-[1ch] align-baseline'
           } ${disabled ? '' : 'cursor-text'}`}
         />
       </span>

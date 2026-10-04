@@ -25,6 +25,10 @@ export function PulseView() {
     setSeedToken((token) => token + 1);
   }, []);
 
+  const lastBeat = beats.length > 0 ? beats[beats.length - 1]! : null;
+  const priorBeatLastTransition =
+    lastBeat != null ? lastBeatSegmentTransition(lastBeat) : undefined;
+
   const {
     draftColor,
     clearHoldTimers,
@@ -40,11 +44,8 @@ export function PulseView() {
     isConnected,
     sendBeat,
     bumpSeed,
+    priorBeatLastTransition,
   });
-
-  const lastBeat = beats.length > 0 ? beats[beats.length - 1]! : null;
-  const priorBeatLastTransition =
-    lastBeat != null ? lastBeatSegmentTransition(lastBeat) : undefined;
 
   const fontStack = BOOK_FONTS[fontId].stack;
 
@@ -209,7 +210,9 @@ export function PulseView() {
                     startVisual={getSegmentStartVisual(
                       composer.segments,
                       index,
-                      index === 0 ? priorBeatLastTransition : undefined,
+                      index === 0
+                        ? (composer.leadingTransition ?? priorBeatLastTransition)
+                        : undefined,
                     )}
                     isActive={index === composer.activeIndex}
                     disabled={composerDisabled}
