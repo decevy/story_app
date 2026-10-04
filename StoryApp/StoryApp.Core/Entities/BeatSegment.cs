@@ -3,7 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace StoryApp.Core.Entities;
 
 /// <summary>
-/// A text fragment within a <see cref="Beat"/>; <see cref="TransitionAfter"/> controls layout before the next segment.
+/// A text fragment within a <see cref="Beat"/>; <see cref="TransitionAfter"/> controls layout before the next segment. 
+/// E.g. if the first segment has a transition of "NewParagraph", the next segment will be rendered in a new paragraph.
 /// </summary>
 public class BeatSegment
 {

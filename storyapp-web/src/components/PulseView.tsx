@@ -123,6 +123,21 @@ export function PulseView() {
     [composerDisabled, focusComposer],
   );
 
+  const handlePageMouseDown = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (composerDisabled) {
+        return;
+      }
+      const target = event.target as HTMLElement;
+      if (target.closest('.pulse-composer')) {
+        return;
+      }
+      event.preventDefault();
+      focusComposer();
+    },
+    [composerDisabled, focusComposer],
+  );
+
   if (!currentPulse) {
     return null;
   }
@@ -154,8 +169,9 @@ export function PulseView() {
         className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:thin]"
       >
         <div
-          className="mx-auto flex min-h-full flex-col max-w-[42rem] bg-[#faf8f5] px-6 py-10 shadow-sm ring-1 ring-stone-200/60 min-[900px]:my-6 min-[900px]:min-h-[calc(100%-3rem)] min-[900px]:arounded-lg min-[900px]:corner-squircle"
+          className="mx-auto flex min-h-full cursor-text flex-col max-w-[42rem] bg-[#faf8f5] px-6 py-10 shadow-sm ring-1 ring-stone-200/60 min-[900px]:my-6 min-[900px]:min-h-[calc(100%-3rem)] min-[900px]:arounded-lg min-[900px]:corner-squircle"
           style={{ fontFamily: fontStack }}
+          onMouseDown={handlePageMouseDown}
         >
           {beats.length === 0 && (
             <p className="mb-6 text-sm text-stone-500">
