@@ -13,6 +13,12 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
-  <app-root></app-root>
+  <app-root>
+    <!-- Shown while the app initializer validates stored tokens (ProtectedRoute loading state). -->
+    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 arounded-full corner-squircle animate-spin"></div>
+      <p class="mt-5 text-base text-gray-600">Loading...</p>
+    </div>
+  </app-root>
 </body>
 </html>
