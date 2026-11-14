@@ -69,6 +69,10 @@
             },
             "development": {
               "buildTarget": "storyapp-ng:build:development"
+            },
+            "e2e": {
+              "buildTarget": "storyapp-ng:build:development",
+              "prebundle": false
             }
           },
           "defaultConfiguration": "development",
