@@ -1,13 +1,29 @@
 import { Component, inject } from '@angular/core';
 
+import { StoryLayout } from './story-layout';
+import { StoryList } from './story-list';
 import { StoryStore } from './story-store';
+import { StoryView } from './story-view';
 
-/** Placeholder until phase 3. */
+/** Port of storyapp-web/src/pages/StoryPage.tsx. */
 @Component({
   selector: 'app-story-page',
-  template: `<p class="p-6 text-gray-500" data-testid="phase2-probe">
-    {{ store.isConnected() ? 'connected' : 'disconnected' }} · {{ store.stories.value().length }} stories
-  </p>`,
+  imports: [StoryLayout, StoryList, StoryView],
+  template: `
+    <app-story-layout>
+      <app-story-list storySidebar />
+      @if (store.currentStory()) {
+        <app-story-view storyMain />
+      } @else {
+        <div storyMain class="flex items-center justify-center h-full">
+          <div class="text-center text-gray-500">
+            <p class="text-xl mb-2">Select a story to get started</p>
+            <p class="text-sm">Choose from the list on the left</p>
+          </div>
+        </div>
+      }
+    </app-story-layout>
+  `,
 })
 export class StoryPage {
   protected readonly store = inject(StoryStore);

@@ -102,13 +102,13 @@ export class SignalRService {
     await this.requireConnection().invoke('LeaveStory', storyId);
   }
 
+  /**
+   * Always sends three arguments. The React client omits `seamBefore` when it is unset, but
+   * SignalR does not apply the C# default (`Seam? seamBefore = null`) and rejects a
+   * two-argument call with a server error, so an explicit `null` is sent instead.
+   */
   async sendPassage(storyId: number, segments: PassageSegmentInput[], seamBefore?: Seam): Promise<void> {
-    const connection = this.requireConnection();
-    if (seamBefore == null) {
-      await connection.invoke('SendPassage', storyId, segments);
-      return;
-    }
-    await connection.invoke('SendPassage', storyId, segments, seamBefore);
+    await this.requireConnection().invoke('SendPassage', storyId, segments, seamBefore ?? null);
   }
 
   async editPassage(passageId: number, segments: PassageSegmentInput[]): Promise<void> {

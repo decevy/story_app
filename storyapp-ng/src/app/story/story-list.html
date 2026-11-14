@@ -1,0 +1,52 @@
+@if (stories().length === 0) {
+  <div class="flex flex-col items-center justify-center h-full p-6 text-center">
+    <p class="text-gray-500 mb-2">No stories yet</p>
+    <p class="text-sm text-gray-400">Create or join a story to add passages</p>
+  </div>
+} @else {
+  <div class="flex flex-col h-full">
+    <div class="p-4 border-b border-gray-200">
+      <h2 id="story-list-heading" class="text-lg font-semibold text-gray-800">Stories</h2>
+      <p class="text-sm text-gray-500">{{ stories().length }} available</p>
+    </div>
+
+    <div
+      ngListbox
+      class="flex-1 overflow-y-auto"
+      aria-labelledby="story-list-heading"
+      orientation="vertical"
+      focusMode="roving"
+      selectionMode="explicit"
+      [value]="selected()"
+      (valueChange)="onSelectionChange($event)"
+    >
+      @for (story of stories(); track story.id) {
+        <div
+          ngOption
+          [value]="story.id"
+          [label]="story.name"
+          data-testid="story-list-item"
+          class="p-4 border-b border-gray-100 cursor-pointer transition-colors"
+          [class]="
+            store.currentStory()?.id === story.id
+              ? 'bg-blue-50 border-l-4 border-l-blue-500'
+              : 'hover:bg-gray-50'
+          "
+        >
+          <div class="flex items-start justify-between mb-1">
+            <h3 class="font-semibold text-gray-800">{{ story.name }}</h3>
+            @if (story.lastPassage) {
+              <span class="text-xs text-gray-400">{{ lastPassageAge(story) }}</span>
+            }
+          </div>
+
+          <p class="text-sm text-gray-500 mb-1">
+            {{ story.writerCount }} writer{{ story.writerCount !== 1 ? 's' : '' }}
+          </p>
+
+          <p class="text-sm text-gray-600 truncate">{{ lastPassagePreview(story) }}</p>
+        </div>
+      }
+    </div>
+  </div>
+}
