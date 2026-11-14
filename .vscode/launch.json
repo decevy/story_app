@@ -2,12 +2,20 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Chrome (Vite dev)",
+      "name": "Chrome (React dev)",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "vite-dev",
+      "preLaunchTask": "react-dev",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}/storyapp-web"
+    },
+    {
+      "name": "Chrome (Angular dev)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "ng-serve",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/storyapp-ng"
     },
     {
       "name": "StoryApp.Api (.NET)",
@@ -26,8 +34,13 @@
   ],
   "compounds": [
     {
-      "name": "API + Chrome (Vite)",
-      "configurations": ["StoryApp.Api (.NET)", "Chrome (Vite dev)"],
+      "name": "API + Chrome (React)",
+      "configurations": ["StoryApp.Api (.NET)", "Chrome (React dev)"],
+      "stopAll": true
+    },
+    {
+      "name": "API + Chrome (Angular)",
+      "configurations": ["StoryApp.Api (.NET)", "Chrome (Angular dev)"],
       "stopAll": true
     }
   ]
