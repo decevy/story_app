@@ -251,7 +251,7 @@ export const ComposerField = forwardRef<ComposerFieldHandle, ComposerFieldProps>
         <span
           ref={editableRef}
           role="textbox"
-          aria-label="Pulse continuation"
+          aria-label="Story continuation"
           aria-multiline={isBlock}
           aria-disabled={disabled}
           contentEditable={disabled ? false : true}
@@ -266,7 +266,7 @@ export const ComposerField = forwardRef<ComposerFieldHandle, ComposerFieldProps>
           onKeyUp={handleKeyUp}
           onFocus={handleFocus}
           onBlur={onBlur}
-          className={`pulse-composer break-words whitespace-pre-wrap ${segmentLayoutClass(startVisual)} ${
+          className={`story-composer break-words whitespace-pre-wrap ${segmentLayoutClass(startVisual)} ${
             isBlock
               ? 'min-h-[1.75em] w-full'
               : 'inline-block min-h-[1.75em] min-w-[1ch] align-baseline'

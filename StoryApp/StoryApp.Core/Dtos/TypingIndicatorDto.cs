@@ -4,6 +4,6 @@ public class TypingIndicatorDto
 {
     public int UserId { get; set; }
     public string Username { get; set; } = string.Empty;
-    public int PulseId { get; set; }
+    public int StoryId { get; set; }
     public bool IsTyping { get; set; }
 }

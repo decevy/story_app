@@ -26,11 +26,11 @@ body {
   min-height: 100vh;
 }
 
-.pulse-composer[contenteditable]:focus {
+.story-composer[contenteditable]:focus {
   outline: none;
 }
 
-.pulse-composer[contenteditable='true'] {
+.story-composer[contenteditable='true'] {
   caret-color: var(--draft-color, currentColor);
 }
 
@@ -38,14 +38,14 @@ body {
   --draft-color: hsl(220, 70%, 42%);
 }
 
-.draft-zone .pulse-composer[contenteditable='true'] {
+.draft-zone .story-composer[contenteditable='true'] {
   color: transparent;
   background-color: var(--draft-color);
   -webkit-background-clip: text;
   background-clip: text;
 }
 
-.draft-zone .pulse-composer[contenteditable='false'] {
+.draft-zone .story-composer[contenteditable='false'] {
   color: transparent;
   background-color: var(--draft-color);
   -webkit-background-clip: text;
@@ -53,7 +53,7 @@ body {
   opacity: 0.6;
 }
 
-.pulse-composer[contenteditable='false'] {
+.story-composer[contenteditable='false'] {
   cursor: not-allowed;
 }
 

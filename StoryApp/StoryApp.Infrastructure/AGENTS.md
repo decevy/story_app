@@ -1,6 +1,6 @@
 # Agent instructions — StoryApp.Infrastructure
 
-**StoryApp.Infrastructure** implements **persistence** for **StoryApp.Core**: **`PulseDbContext`**, **EF Core configurations**, **repository classes**, **migrations** (under this project’s **`Migrations/`** folder when present), and **database seeding**. It references **StoryApp.Core** only (plus Npgsql/EF packages per **`.csproj`**).
+**StoryApp.Infrastructure** implements **persistence** for **StoryApp.Core**: **`StoryDbContext`**, **EF Core configurations**, **repository classes**, **migrations** (under this project’s **`Migrations/`** folder when present), and **database seeding**. It references **StoryApp.Core** only (plus Npgsql/EF packages per **`.csproj`**).
 
 No **controllers**, **hubs**, or **JWT** code belongs here.
 
@@ -10,11 +10,11 @@ No **controllers**, **hubs**, or **JWT** code belongs here.
 
 | Path | Role |
 |------|------|
-| **`Data/PulseDbContext.cs`** | **`DbSet<>`** declarations, **`OnModelCreating`** wiring, migration assembly |
-| **`Data/PulseDbSeeder.cs`** | **Canonical seed data** (`SeedAsync`); `PulseDbContext`’s EF **`UseSeeding`** hook delegates here |
+| **`Data/StoryDbContext.cs`** | **`DbSet<>`** declarations, **`OnModelCreating`** wiring, migration assembly |
+| **`Data/StoryDbSeeder.cs`** | **Canonical seed data** (`SeedAsync`); `StoryDbContext`’s EF **`UseSeeding`** hook delegates here |
 | **`Repositories/UserRepository.cs`** | **`IUserRepository`** |
-| **`Repositories/PulseRepository.cs`** | **`IPulseRepository`** (includes **`Query()`** / **`QueryPacers()`** implementations) |
-| **`Repositories/BeatRepository.cs`** | **`IBeatRepository`** |
+| **`Repositories/StoryRepository.cs`** | **`IStoryRepository`** (includes **`Query()`** / **`QueryWriters()`** implementations) |
+| **`Repositories/PassageRepository.cs`** | **`IPassageRepository`** |
 
 Entity **configuration classes** may live alongside the context or under a `Configurations/` folder depending on how the codebase evolves—**keep fluent API aligned** with **Core** entities.
 
@@ -52,9 +52,9 @@ The **API** also runs **`Migrate()`** on startup, so pending migrations apply au
 
 ---
 
-## Seeding (`PulseDbContext` → **`PulseDbSeeder`**)
+## Seeding (`StoryDbContext` → **`StoryDbSeeder`**)
 
-- **`PulseDbContext`** wires **`UseSeeding` / `UseAsyncSeeding`** to **`PulseDbSeeder.SeedAsync`** (single source of truth).
+- **`StoryDbContext`** wires **`UseSeeding` / `UseAsyncSeeding`** to **`StoryDbSeeder.SeedAsync`** (single source of truth).
 - Keep seeding **idempotent** where possible (avoid duplicate key errors on re-run).
 - Do not reference **Api** or **Services** types from the seeder.
 

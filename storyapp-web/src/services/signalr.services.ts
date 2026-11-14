@@ -3,21 +3,21 @@
 import * as signalR from '@microsoft/signalr';
 import { tokenService } from './token.service';
 import config from '../config/env.config';
-import { Beat, BeatSegmentInput, BeatTransition } from '../types/pulse.types';
+import { Passage, PassageSegmentInput, Seam } from '../types/story.types';
 import {
-  PulseEvent,
+  StoryEvent,
   TypingIndicator,
-  BeatEdited,
-  BeatDeleted,
+  PassageEdited,
+  PassageDeleted,
   UserStatusChanged,
 } from '../types/signalr.types';
 
 export type SignalREventHandlers = {
-  onReceiveBeat?: (beat: Beat) => void;
-  onBeatEdited?: (data: BeatEdited) => void;
-  onBeatDeleted?: (data: BeatDeleted) => void;
-  onUserJoinedPulse?: (data: PulseEvent) => void;
-  onUserLeftPulse?: (data: PulseEvent) => void;
+  onReceivePassage?: (passage: Passage) => void;
+  onPassageEdited?: (data: PassageEdited) => void;
+  onPassageDeleted?: (data: PassageDeleted) => void;
+  onUserJoinedStory?: (data: StoryEvent) => void;
+  onUserLeftStory?: (data: StoryEvent) => void;
   onUserStartedTyping?: (data: TypingIndicator) => void;
   onUserStoppedTyping?: (data: TypingIndicator) => void;
   onUserStatusChanged?: (data: UserStatusChanged) => void;
@@ -76,47 +76,47 @@ class SignalRService {
     return this.connectionLock;
   }
 
-  async joinPulse(pulseId: number): Promise<void> {
+  async joinStory(storyId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('JoinPulse', pulseId);
+    await this.connection.invoke('JoinStory', storyId);
   }
 
-  async leavePulse(pulseId: number): Promise<void> {
+  async leaveStory(storyId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('LeavePulse', pulseId);
+    await this.connection.invoke('LeaveStory', storyId);
   }
 
-  async sendBeat(
-    pulseId: number,
-    segments: BeatSegmentInput[],
-    transitionOverride?: BeatTransition,
+  async sendPassage(
+    storyId: number,
+    segments: PassageSegmentInput[],
+    seamBefore?: Seam,
   ): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    if (transitionOverride == null) {
-      await this.connection.invoke('SendBeat', pulseId, segments);
+    if (seamBefore == null) {
+      await this.connection.invoke('SendPassage', storyId, segments);
       return;
     }
-    await this.connection.invoke('SendBeat', pulseId, segments, transitionOverride);
+    await this.connection.invoke('SendPassage', storyId, segments, seamBefore);
   }
 
-  async editBeat(beatId: number, segments: BeatSegmentInput[]): Promise<void> {
+  async editPassage(passageId: number, segments: PassageSegmentInput[]): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('EditBeat', beatId, segments);
+    await this.connection.invoke('EditPassage', passageId, segments);
   }
 
-  async deleteBeat(beatId: number): Promise<void> {
+  async deletePassage(passageId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('DeleteBeat', beatId);
+    await this.connection.invoke('DeletePassage', passageId);
   }
 
-  async startTyping(pulseId: number): Promise<void> {
+  async startTyping(storyId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('StartTyping', pulseId);
+    await this.connection.invoke('StartTyping', storyId);
   }
 
-  async stopTyping(pulseId: number): Promise<void> {
+  async stopTyping(storyId: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('StopTyping', pulseId);
+    await this.connection.invoke('StopTyping', storyId);
   }
 
   isConnected(): boolean {
@@ -126,24 +126,24 @@ class SignalRService {
   private setupEventHandlers(): void {
     if (!this.connection) return;
 
-    this.connection.on('ReceiveBeat', (beat: Beat) => {
-      this.handlers.onReceiveBeat?.(beat);
+    this.connection.on('ReceivePassage', (passage: Passage) => {
+      this.handlers.onReceivePassage?.(passage);
     });
 
-    this.connection.on('BeatEdited', (data: BeatEdited) => {
-      this.handlers.onBeatEdited?.(data);
+    this.connection.on('PassageEdited', (data: PassageEdited) => {
+      this.handlers.onPassageEdited?.(data);
     });
 
-    this.connection.on('BeatDeleted', (data: BeatDeleted) => {
-      this.handlers.onBeatDeleted?.(data);
+    this.connection.on('PassageDeleted', (data: PassageDeleted) => {
+      this.handlers.onPassageDeleted?.(data);
     });
 
-    this.connection.on('UserJoinedPulse', (data: PulseEvent) => {
-      this.handlers.onUserJoinedPulse?.(data);
+    this.connection.on('UserJoinedStory', (data: StoryEvent) => {
+      this.handlers.onUserJoinedStory?.(data);
     });
 
-    this.connection.on('UserLeftPulse', (data: PulseEvent) => {
-      this.handlers.onUserLeftPulse?.(data);
+    this.connection.on('UserLeftStory', (data: StoryEvent) => {
+      this.handlers.onUserLeftStory?.(data);
     });
 
     this.connection.on('UserStartedTyping', (data: TypingIndicator) => {

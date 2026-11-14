@@ -9,25 +9,25 @@ public class UserQueryBuilder(IQueryable<User> query)
     private IQueryable<User> _query = query;
 
     #region Include properties
-    public UserQueryBuilder WithBeats(bool includePulses = false)
+    public UserQueryBuilder WithPassages(bool includeStories = false)
     {
-        _query = includePulses
-            ? _query.Include(u => u.Beats).ThenInclude(m => m.Pulse)
-            : _query.Include(u => u.Beats);
+        _query = includeStories
+            ? _query.Include(u => u.Passages).ThenInclude(m => m.Story)
+            : _query.Include(u => u.Passages);
         return this;
     }
 
-    public UserQueryBuilder WithPacers(bool includePulses = false)
+    public UserQueryBuilder WithWriters(bool includeStories = false)
     {
         _query = _query
-            .Include(u => u.Pacers)
-            .ThenIncludeIf(includePulses, sm => sm.Pulse);
+            .Include(u => u.Writers)
+            .ThenIncludeIf(includeStories, sm => sm.Story);
         return this;
     }
 
     public UserQueryBuilder WithFullDetails()
     {
-        return WithBeats().WithPacers(includePulses: true);
+        return WithPassages().WithWriters(includeStories: true);
     }
     #endregion
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-StoryApp Web is a collaborative story application built as a single-page application (SPA) that enables users to work together in **pulses** (shared threads). The application provides user authentication, pulse-level **beats** (messages), and real-time delivery via WebSocket connections.
+StoryApp Web is a collaborative story application built as a single-page application (SPA) that enables users to work together in **stories** (shared threads). The application provides user authentication, story-level **passages** (messages), and real-time delivery via WebSocket connections.
 
 ## Technology Stack
 
@@ -13,7 +13,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 
 ### Routing & State Management
 - **React Router DOM 7.9.4** - Client-side routing
-- **React Context API** - State management (AuthContext, PulseContext)
+- **React Context API** - State management (AuthContext, StoryContext)
 
 ### Real-time Communication
 - **Microsoft SignalR 9.0.6** - WebSocket-based real-time messaging
@@ -53,72 +53,72 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - Logout functionality that clears tokens and redirects to login
 
 #### Protected Routes
-- Main pulse interface is protected and requires authentication
+- Main story interface is protected and requires authentication
 - Unauthenticated users are redirected to login page
 - Loading state shown during authentication check
 
-### 2. Pulses
+### 2. Stories
 
-#### Pulse list
-- Displays all pulses where the user is a **pacer** (collaborator)
-- Shows pulse information:
-  - Pulse name
-  - Pacer count
-  - Last beat preview (truncated to 50 characters)
-  - Timestamp of last beat (relative time, e.g., "2 hours ago")
-- Empty state message when no pulses are available
-- Clicking a pulse selects it and loads its beats
+#### Story list
+- Displays all stories where the user is a **writer** (collaborator)
+- Shows story information:
+  - Story name
+  - Writer count
+  - Last passage preview (truncated to 50 characters)
+  - Timestamp of last passage (relative time, e.g., "2 hours ago")
+- Empty state message when no stories are available
+- Clicking a story selects it and loads its passages
 
-#### Pulse selection
-- Selecting a pulse:
-  - Leaves the current pulse (if any)
-  - Loads pulse details and beats (paginated, 50 beats per page)
-  - Joins the SignalR pulse group for real-time updates
-- Pulse selection is visually indicated with highlighted background
+#### Story selection
+- Selecting a story:
+  - Leaves the current story (if any)
+  - Loads story details and passages (paginated, 50 passages per page)
+  - Joins the SignalR story group for real-time updates
+- Story selection is visually indicated with highlighted background
 
-#### Pulse data model
-- Pulses have:
+#### Story data model
+- Stories have:
   - ID, name, description (optional)
   - Privacy flag (isPrivate)
   - Creator information
   - Creation timestamp
-  - Pacer list (`pacers`)
-  - Pacer count (`pacerCount` on summaries)
+  - Writer list (`writers`)
+  - Writer count (`writerCount` on summaries)
 
-### 3. Beats (messages in a pulse)
+### 3. Passages (messages in a story)
 
-#### Beat display
-- Beats are shown as **continuous book-style prose** in a single scrollable page (centered column)
-- Each beat’s **segments** render in `order` with typographic breaks derived from `transitionAfter`:
+#### Passage display
+- Passages are shown as **continuous book-style prose** in a single scrollable page (centered column)
+- Each passage’s **segments** render in `order` with typographic breaks derived from `seamAfter`:
   - **First alinea after section / major section / chapter** — large vertical gap (~3 lines), no first-line indent
   - **First new alinea in a section** — one line break + **2em first-line indent**
   - **Further alineas in the same section** — single line break only, no indent
-  - **Inline continuation** — flows on the same line as prior text (with a trailing space between beats when appropriate)
-- When the **author changes** from the previous beat, a **subtle username line** appears before that beat’s text (no chat bubbles or timestamps in the body)
-- After new beats arrive (sent by you or received from others), the view **scrolls smoothly** so the stitch point before the composer sits near the **vertical center** of the viewport
-- Empty state: short guidance text when the pulse has no beats yet
+  - **Inline continuation** — flows on the same line as prior text (with a trailing space between passages when appropriate)
+- When the **author changes** from the previous passage, a **subtle username line** appears before that passage’s text (no chat bubbles or timestamps in the body)
+- After new passages arrive (sent by you or received from others), the view **scrolls smoothly** so the stitch point before the composer sits near the **vertical center** of the viewport
+- Empty state: short guidance text when the story has no passages yet
 
-#### Beat sending
-- **Inline composer**: a `contentEditable` caret directly after the last committed text (no placeholder text). Prior draft segments render in the same typography as sent beats before the active field.
-- **Draft appearance**: in-progress text uses a **random accent color**; holding Enter cycles the draft through a **rainbow** until the beat sends.
+#### Passage sending
+- **Inline composer**: a `contentEditable` caret directly after the last committed text (no placeholder text). Prior draft segments render in the same typography as sent passages before the active field.
+- **Draft appearance**: in-progress text uses a **random accent color**; holding Enter cycles the draft through a **rainbow** until the passage sends.
 - **Structure (Enter / Backspace)**:
-  - **Enter (tap)**: advance structure — first Enter starts a **new alinea** (`NewParagraph`); further Enters on empty slots upgrade to **new section** (`NewSection` only in the UI; no Major/Chapter)
-  - **Enter (hold ~1.5s)**: **send** the beat (progress anchored to `performance.now()` via rAF, not bare `setTimeout`)
+  - **Enter (tap)**: advance structure — first Enter starts a **new alinea** (`Paragraph`); further Enters on empty slots upgrade to **new section** (`Section` only in the UI; no Major/Chapter)
+  - **Enter (hold ~1.5s)**: **send** the passage (progress anchored to `performance.now()` via rAF, not bare `setTimeout`)
   - **Backspace (tap)**: when the active segment is empty, unwind structure (section → alinea → merge into previous segment); otherwise delete characters
   - **Backspace (hold ~1.5s)**: **clear** the entire draft
   - Extra **Enter** taps in an empty **section** slot are ignored
-- **End beat** button (disabled when disconnected or empty) also sends the draft
-- Beats are sent via SignalR as **`segments[]`** with `order`, `text`, and optional `transitionAfter`
+- **End passage** button (disabled when disconnected or empty) also sends the draft
+- Passages are sent via SignalR as **`segments[]`** with `order`, `text`, and optional `seamAfter`
 - Draft is cleared after a successful send
-- **Reading font**: a dropdown (Inter, Source Serif 4, EB Garamond, IBM Plex Mono); choice is stored in `localStorage` under `pulse-font`
+- **Reading font**: a dropdown (Inter, Source Serif 4, EB Garamond, IBM Plex Mono); choice is stored in `localStorage` under `book-font`
 - Connection status indicator remains in the app header
 
-#### Beat data model
-- Beats contain:
-  - ID, **`order`**, optional **`transitionOverride`**, **`segments[]`** (`id`, `order`, `text`, optional `transitionAfter`)
-  - Pulse ID (`pulseId`), user information (sender), creation timestamp, optional edit timestamp
-- Display text for previews is the concatenation of segment `text` values in `order` (see `beatText()` in `pulse.types.ts`)
-- `SendBeat` / `EditBeat` send **`segments[]`** (`order`, `text`, optional `transitionAfter`); the PulseView composer builds multi-segment beats from Enter/Backspace structure
+#### Passage data model
+- Passages contain:
+  - ID, **`order`**, optional **`seamBefore`**, **`segments[]`** (`id`, `order`, `text`, optional `seamAfter`)
+  - Story ID (`storyId`), user information (sender), creation timestamp, optional edit timestamp
+- Display text for previews is the concatenation of segment `text` values in `order` (see `passageText()` in `story.types.ts`)
+- `SendPassage` / `EditPassage` send **`segments[]`** (`order`, `text`, optional `seamAfter`); the StoryView composer builds multi-segment passages from Enter/Backspace structure
 
 ### 4. Real-time Communication
 
@@ -126,27 +126,27 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - Automatic connection when user is authenticated
 - Connection uses JWT access token for authentication
 - Automatic reconnection on connection loss
-- Reconnection automatically rejoins the current pulse
+- Reconnection automatically rejoins the current story
 - Connection status displayed in header (green/red indicator)
 
 #### Real-time events handled
-- **ReceiveBeat** - New beats appear instantly
-- **BeatEdited** - Beat edit notifications (handler exists, not used in UI)
-- **BeatDeleted** - Beat deletion notifications (handler exists, not used in UI)
-- **UserJoinedPulse** - User join notifications (handler exists, not used in UI)
-- **UserLeftPulse** - User leave notifications (handler exists, not used in UI)
-- **UserStartedTyping** - Typing indicators; payload uses `pulseId` (handler exists, not used in UI)
-- **UserStoppedTyping** - Typing indicators; payload uses `pulseId` (handler exists, not used in UI)
+- **ReceivePassage** - New passages appear instantly
+- **PassageEdited** - Passage edit notifications (handler exists, not used in UI)
+- **PassageDeleted** - Passage deletion notifications (handler exists, not used in UI)
+- **UserJoinedStory** - User join notifications (handler exists, not used in UI)
+- **UserLeftStory** - User leave notifications (handler exists, not used in UI)
+- **UserStartedTyping** - Typing indicators; payload uses `storyId` (handler exists, not used in UI)
+- **UserStoppedTyping** - Typing indicators; payload uses `storyId` (handler exists, not used in UI)
 - **UserStatusChanged** - Online/offline status changes (handler exists, not used in UI)
 
 #### SignalR methods (client ↔ hub)
-- `JoinPulse(pulseId)` - Join a pulse group
-- `LeavePulse(pulseId)` - Leave a pulse group
-- `SendBeat(pulseId, segments)` — `segments`: `{ order, text, transitionAfter? }[]`
-- `EditBeat(beatId, segments)` — same segment shape (available, not used in UI)
-- `DeleteBeat(beatId)` - Delete a beat (available, not used in UI)
-- `StartTyping(pulseId)` - Indicate typing started (available, not used in UI)
-- `StopTyping(pulseId)` - Indicate typing stopped (available, not used in UI)
+- `JoinStory(storyId)` - Join a story group
+- `LeaveStory(storyId)` - Leave a story group
+- `SendPassage(storyId, segments)` — `segments`: `{ order, text, seamAfter? }[]`
+- `EditPassage(passageId, segments)` — same segment shape (available, not used in UI)
+- `DeletePassage(passageId)` - Delete a passage (available, not used in UI)
+- `StartTyping(storyId)` - Indicate typing started (available, not used in UI)
+- `StopTyping(storyId)` - Indicate typing stopped (available, not used in UI)
 
 ### 5. User Interface
 
@@ -157,11 +157,11 @@ StoryApp Web is a collaborative story application built as a single-page applica
   - Current user information (username, email)
   - Logout button
 - **Sidebar** (left):
-  - Pulse list (fixed width: 320px)
-  - Scrollable pulse list
+  - Story list (fixed width: 320px)
+  - Scrollable story list
 - **Main content area** (right):
-  - **Book view** when a pulse is selected: title bar with font picker, scrollable page column, inline composer
-  - Empty state when no pulse is selected
+  - **Book view** when a story is selected: title bar with font picker, scrollable page column, inline composer
+  - Empty state when no story is selected
 
 #### Styling
 - Uses Tailwind CSS utility classes
@@ -179,15 +179,15 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - `GET /auth/me` - Get current user
 - `POST /auth/refresh` - Refresh access token
 
-### Pulses API (`/api/pulses`)
-- `GET /pulses` - Get user's pulses (returns `PulseSummary[]`)
-- `GET /pulses/:id` - Get pulse details
-- `POST /pulses` - Create pulse (available, not used in UI); body: `CreatePulseRequest` (`name`, `description`, `isPrivate`, etc.)
-- `PUT /pulses/:id` - Update pulse (available, not used in UI)
-- `DELETE /pulses/:id` - Delete pulse (available, not used in UI)
-- `POST /pulses/:id/pacers` - Add pacer / collaborator (`AddPacerRequest`)
-- `DELETE /pulses/:id/pacers/:userId` - Remove pacer from pulse
-- `GET /pulses/:pulseId/beats` - Get pulse beats (paginated, `page` and `pageSize` query params)
+### Stories API (`/api/stories`)
+- `GET /stories` - Get user's stories (returns `StorySummary[]`)
+- `GET /stories/:id` - Get story details
+- `POST /stories` - Create story (available, not used in UI); body: `CreateStoryRequest` (`name`, `description`, `isPrivate`, etc.)
+- `PUT /stories/:id` - Update story (available, not used in UI)
+- `DELETE /stories/:id` - Delete story (available, not used in UI)
+- `POST /stories/:id/writers` - Add writer / collaborator (`AddWriterRequest`)
+- `DELETE /stories/:id/writers/:userId` - Remove writer from story
+- `GET /stories/:storyId/passages` - Get story passages (paginated, `page` and `pageSize` query params)
 
 ### Users API (`/api/users`)
 - `GET /users/me` - Get current user profile (available, not used in UI)
@@ -216,7 +216,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 }
 ```
 
-### Pulse
+### Story
 ```typescript
 {
   id: number;
@@ -225,11 +225,11 @@ StoryApp Web is a collaborative story application built as a single-page applica
   isPrivate: boolean;
   creator: User;
   createdAt: string; // ISO date string
-  pacers: Pacer[];
+  writers: Writer[];
 }
 ```
 
-### PulseSummary
+### StorySummary
 ```typescript
 {
   id: number;
@@ -238,26 +238,26 @@ StoryApp Web is a collaborative story application built as a single-page applica
   isPrivate: boolean;
   creator: User;
   createdAt: string;
-  pacerCount: number;
-  lastBeat?: Beat;
+  writerCount: number;
+  lastPassage?: Passage;
 }
 ```
 
-### Beat
+### Passage
 ```typescript
 {
   id: number;
   order: number;
-  transitionOverride?: BeatTransition;
-  segments: BeatSegment[];
+  seamBefore?: Seam;
+  segments: PassageSegment[];
   user: User;
-  pulseId: number;
+  storyId: number;
   createdAt: string; // ISO date string
   editedAt?: string; // ISO date string
 }
 ```
 
-### Pacer (pulse collaborator)
+### Writer (story collaborator)
 ```typescript
 {
   userId: number;
@@ -271,12 +271,12 @@ StoryApp Web is a collaborative story application built as a single-page applica
 
 ### Required Environment Variables
 - `VITE_API_URL` - Base URL for REST API (e.g., `http://localhost:3000`)
-- `VITE_HUB_URL` - SignalR hub URL (e.g., `http://localhost:3000/pulseHub`)
+- `VITE_HUB_URL` - SignalR hub URL (e.g., `http://localhost:3000/storyHub`)
 
 ### Development Setup
 - Vite dev server runs on port 3000
 - Proxies `/api` requests to `https://localhost:7011`
-- Proxies `/pulseHub` WebSocket connections to `https://localhost:7011`
+- Proxies `/storyHub` WebSocket connections to `https://localhost:7011`
 
 ## Application Flow
 
@@ -290,14 +290,14 @@ StoryApp Web is a collaborative story application built as a single-page applica
    - After successful auth, tokens stored and user redirected to `/`
    - Protected routes check authentication before rendering
 
-3. **Pulse collaboration flow**:
+3. **Story collaboration flow**:
    - On authenticated load, SignalR connection established
-   - User's pulses are fetched and displayed
-   - User selects a pulse from the list
-   - Pulse details and beats (last 50) are loaded
-   - User joins SignalR pulse group
-   - Beats can be sent and received in real-time
-   - User can switch pulses (automatically leaves previous, joins new)
+   - User's stories are fetched and displayed
+   - User selects a story from the list
+   - Story details and passages (last 50) are loaded
+   - User joins SignalR story group
+   - Passages can be sent and received in real-time
+   - User can switch stories (automatically leaves previous, joins new)
 
 4. **Logout Flow**:
    - Logout API call made
@@ -308,12 +308,12 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ## Current Limitations / Unused Features
 
 The following API endpoints and SignalR handlers exist but are not currently used in the UI:
-- Pulse creation, update, deletion
-- Pulse pacer management (add/remove)
-- Beat editing and deletion
+- Story creation, update, deletion
+- Story writer management (add/remove)
+- Passage editing and deletion
 - Typing indicators
 - User search and profile management
-- System beats
+- System passages
 
 ## File Structure
 

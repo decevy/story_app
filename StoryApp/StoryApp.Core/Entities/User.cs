@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace StoryApp.Core.Entities;
 
 /// <summary>
-/// Registered account: credentials, refresh tokens, presence, and navigation to beats and pulse memberships.
+/// Registered account: credentials, refresh tokens, presence, and navigation to passages and story memberships.
 /// </summary>
 public class User
 {
@@ -29,6 +29,6 @@ public class User
     public DateTime? RefreshTokenExpiry { get; set; }
 
     // Navigation properties
-    public ICollection<Beat> Beats { get; set; } = [];
-    public ICollection<Pacer> Pacers { get; set; } = [];
+    public ICollection<Passage> Passages { get; set; } = [];
+    public ICollection<Writer> Writers { get; set; } = [];
 }

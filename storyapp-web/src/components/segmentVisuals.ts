@@ -1,4 +1,4 @@
-import { BeatTransition } from '../types/pulse.types';
+import { Seam } from '../types/story.types';
 
 export type SegmentStartVisual =
   | 'inline'
@@ -7,14 +7,14 @@ export type SegmentStartVisual =
   | 'afterSection';
 
 export type SegmentLike = {
-  transitionAfter?: BeatTransition;
+  seamAfter?: Seam;
 };
 
-export function isSectionBreak(transition?: BeatTransition): boolean {
+export function isSectionBreak(seam?: Seam): boolean {
   return (
-    transition === BeatTransition.NewSection ||
-    transition === BeatTransition.NewSectionMajor ||
-    transition === BeatTransition.NewChapter
+    seam === Seam.Section ||
+    seam === Seam.MajorSection ||
+    seam === Seam.Chapter
   );
 }
 
@@ -24,11 +24,11 @@ function countParagraphsSinceSection(
 ): number {
   let count = 0;
   for (let index = fromIndex; index >= 0; index -= 1) {
-    const transition = segments[index]?.transitionAfter;
-    if (isSectionBreak(transition)) {
+    const seam = segments[index]?.seamAfter;
+    if (isSectionBreak(seam)) {
       break;
     }
-    if (transition === BeatTransition.NewParagraph) {
+    if (seam === Seam.Paragraph) {
       count += 1;
     }
   }
@@ -38,25 +38,25 @@ function countParagraphsSinceSection(
 export function getSegmentStartVisual(
   segments: SegmentLike[],
   index: number,
-  priorContext?: BeatTransition,
+  previousPassageLastSeam?: Seam,
 ): SegmentStartVisual {
   if (index === 0) {
-    if (isSectionBreak(priorContext)) {
+    if (isSectionBreak(previousPassageLastSeam)) {
       return 'afterSection';
     }
-    if (priorContext === BeatTransition.NewParagraph) {
+    if (previousPassageLastSeam === Seam.Paragraph) {
       return 'indentedAlinea';
     }
     return 'inline';
   }
 
-  const breakBefore = segments[index - 1]?.transitionAfter;
+  const breakBefore = segments[index - 1]?.seamAfter;
 
   if (isSectionBreak(breakBefore)) {
     return 'afterSection';
   }
 
-  if (breakBefore === BeatTransition.NewParagraph) {
+  if (breakBefore === Seam.Paragraph) {
     const paragraphCount = countParagraphsSinceSection(segments, index - 1);
     return paragraphCount === 1 ? 'indentedAlinea' : 'plainAlinea';
   }

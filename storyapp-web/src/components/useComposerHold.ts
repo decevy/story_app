@@ -9,8 +9,8 @@ import {
   updateActiveSegmentText,
   updateSegmentText,
   type ComposerState,
-} from './beatComposer';
-import { BeatTransition } from '../types/pulse.types';
+} from './passageComposer';
+import { Seam } from '../types/story.types';
 
 const HOLD_MS = 1500;
 
@@ -27,21 +27,21 @@ type UseComposerHoldOptions = {
   composer: ComposerState;
   setComposer: React.Dispatch<React.SetStateAction<ComposerState>>;
   isConnected: boolean;
-  sendBeat: (
+  sendPassage: (
     segments: ReturnType<typeof toSegmentInputs>,
-    transitionOverride?: BeatTransition,
+    seamBefore?: Seam,
   ) => Promise<void>;
   bumpSeed: () => void;
-  priorBeatLastTransition?: BeatTransition;
+  previousPassageLastSeam?: Seam;
 };
 
 export function useComposerHold({
   composer,
   setComposer,
   isConnected,
-  sendBeat,
+  sendPassage,
   bumpSeed,
-  priorBeatLastTransition,
+  previousPassageLastSeam,
 }: UseComposerHoldOptions) {
   const [isSending, setIsSending] = useState(false);
   const [draftHue, setDraftHue] = useState(randomDraftHue);
@@ -96,16 +96,16 @@ export function useComposerHold({
 
     setIsSending(true);
     try {
-      await sendBeat(segments, composer.leadingTransition);
+      await sendPassage(segments, composer.seamBefore);
       setComposer(createEmptyComposer());
       resetDraftAppearance();
       bumpSeed();
     } catch (error) {
-      console.error('Failed to send beat:', error);
+      console.error('Failed to send passage:', error);
     } finally {
       setIsSending(false);
     }
-  }, [bumpSeed, composer, isConnected, resetDraftAppearance, sendBeat, setComposer]);
+  }, [bumpSeed, composer, isConnected, resetDraftAppearance, sendPassage, setComposer]);
 
   sendDraftRef.current = sendDraft;
 
@@ -172,7 +172,7 @@ export function useComposerHold({
     if (active == null || active.text.length > 0) {
       return false;
     }
-    return state.activeIndex > 0 || state.leadingTransition != null;
+    return state.activeIndex > 0 || state.seamBefore != null;
   }, []);
 
   const handleComposerKeyDown = useCallback(
@@ -214,14 +214,14 @@ export function useComposerHold({
           const textToApply = activeText.length > 0 ? activeText : existing;
           return applyEnter(
             updateActiveSegmentText(previous, textToApply),
-            priorBeatLastTransition,
+            previousPassageLastSeam,
           );
         });
         bumpSeed();
       }
       enterHoldSentRef.current = false;
     },
-    [bumpSeed, priorBeatLastTransition, setComposer, stopEnterHold],
+    [bumpSeed, previousPassageLastSeam, setComposer, stopEnterHold],
   );
 
   const handleComposerKeyUp = useCallback(
@@ -234,7 +234,7 @@ export function useComposerHold({
           return;
         }
 
-        const result = applyBackspace(composer, priorBeatLastTransition);
+        const result = applyBackspace(composer, previousPassageLastSeam);
         if (result.type === 'structural') {
           setComposer(result.state);
           bumpSeed();
@@ -242,7 +242,7 @@ export function useComposerHold({
         backspaceHoldFiredRef.current = false;
       }
     },
-    [bumpSeed, composer, priorBeatLastTransition, setComposer, stopBackspaceHold],
+    [bumpSeed, composer, previousPassageLastSeam, setComposer, stopBackspaceHold],
   );
 
   const handleSegmentTextChange = useCallback(

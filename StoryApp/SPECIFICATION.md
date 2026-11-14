@@ -1,16 +1,16 @@
 # StoryApp - Application Specification
 
 ## Overview
-StoryApp is a collaborative storytelling backend: a .NET 9 Web API with PostgreSQL and SignalR. Users join **pulses**, add sequential **beats** (text contributions), and see updates in real time. JWT secures both REST and the SignalR hub.
+StoryApp is a collaborative storytelling backend: a .NET 9 Web API with PostgreSQL and SignalR. Users join **stories**, add sequential **passages** (text contributions), and see updates in real time. JWT secures both REST and the SignalR hub.
 
-This repository contains the **backend solution** only; a separate React (or other) client would consume these APIs and connect to **`/pulseHub`**.
+This repository contains the **backend solution** only; a separate React (or other) client would consume these APIs and connect to **`/storyHub`**.
 
 ## Architecture
 
 **Backend Stack:**
 - .NET 9 Web API
 - PostgreSQL with Entity Framework Core
-- SignalR for real-time beats, typing, and presence-style user status
+- SignalR for real-time passages, typing, and presence-style user status
 - JWT Bearer authentication (HTTP header and hub query string)
 - Clean Architecture: Core, Infrastructure, Services, Api
 
@@ -19,9 +19,9 @@ This repository contains the **backend solution** only; a separate React (or oth
 
 **Project Structure:**
 - `StoryApp.Core` — Entities, DTOs, interfaces, exceptions, query builders
-- `StoryApp.Infrastructure` — DbContext (`PulseDbContext`), repositories, migrations, seeding
-- `StoryApp.Services` — Auth, user, and pulse application services (`PulseService`)
-- `StoryApp.Api` — Controllers, SignalR **`PulseHub`**, middleware, DI
+- `StoryApp.Infrastructure` — DbContext (`StoryDbContext`), repositories, migrations, seeding
+- `StoryApp.Services` — Auth, user, and story application services (`StoryService`)
+- `StoryApp.Api` — Controllers, SignalR **`StoryHub`**, middleware, DI
 
 ## Core Features
 
@@ -37,30 +37,30 @@ This repository contains the **backend solution** only; a separate React (or oth
 - Get user by ID; list users
 - Online/offline flag and last-seen updates (including on hub connect/disconnect)
 
-### 3. Pulses (collaborative spaces)
-- Create pulses (name, description, public/private)
-- List pulses the current user collaborates on
-- Get pulse detail (collaborators only)
-- Update pulse metadata (**pulse creator** only)
-- Delete pulse (**pulse creator** only)
-- Creating user is recorded on the pulse (`CreatedBy`) and added as an initial collaborator
+### 3. Stories (collaborative spaces)
+- Create stories (name, description, public/private)
+- List stories the current user collaborates on
+- Get story detail (collaborators only)
+- Update story metadata (**story creator** only)
+- Delete story (**story creator** only)
+- Creating user is recorded on the story (`CreatedBy`) and added as an initial collaborator
 
-### 4. Pacer participation (pulse membership)
-- Add pacers (`POST .../pacers`), body `AddPacerRequest` (`userId`) — **pulse creator** only
-- Remove pacers (`DELETE .../pacers/{userId}`): **pulse creator** may remove another collaborator; any collaborator may remove themselves; removing the **`CreatedBy`** user from memberships is rejected
-- Unique membership per user per pulse
+### 4. Writer participation (story membership)
+- Add writers (`POST .../writers`), body `AddWriterRequest` (`userId`) — **story creator** only
+- Remove writers (`DELETE .../writers/{userId}`): **story creator** may remove another collaborator; any collaborator may remove themselves; removing the **`CreatedBy`** user from memberships is rejected
+- Unique membership per user per story
 - Join timestamps tracked
 
-### 5. Beats (contributions within a pulse)
-- **REST:** Paginated beat history (`GET /api/pulses/{pulseId}/beats`)
-- **SignalR:** Send, edit, and delete beats in real time (`SendBeat`, `EditBeat`, `DeleteBeat`)
-- Beats contain ordered **segments** (`BeatSegment`); hub methods **`SendBeat`** / **`EditBeat`** accept **`IList<BeatSegmentDto>`**
-- Edit/delete restricted to the beat author (enforced in the hub)
+### 5. Passages (contributions within a story)
+- **REST:** Paginated passage history (`GET /api/stories/{storyId}/passages`)
+- **SignalR:** Send, edit, and delete passages in real time (`SendPassage`, `EditPassage`, `DeletePassage`)
+- Passages contain ordered **segments** (`PassageSegment`); hub methods **`SendPassage`** / **`EditPassage`** accept **`IList<PassageSegmentDto>`**
+- Edit/delete restricted to the passage author (enforced in the hub)
 
-### 6. Real-time features (SignalR `/pulseHub`)
-- Broadcast new, edited, and deleted beats to pulse groups
-- Join/leave pulse groups (`JoinPulse`, `LeavePulse`) with membership checks
-- Typing indicators (`StartTyping`, `StopTyping`) scoped by pulse
+### 6. Real-time features (SignalR `/storyHub`)
+- Broadcast new, edited, and deleted passages to story groups
+- Join/leave story groups (`JoinStory`, `LeaveStory`) with membership checks
+- Typing indicators (`StartTyping`, `StopTyping`) scoped by story
 - User online/offline broadcasts (`UserStatusChanged`)
 - JWT supplied via query parameter: `?access_token={token}`
 
@@ -69,19 +69,19 @@ This repository contains the **backend solution** only; a separate React (or oth
 ### Users
 - Identity, credentials (password hash), refresh token fields, `CreatedAt`, `LastSeen`, `IsOnline`
 
-### Pulses (`Pulses` table)
+### Stories (`Stories` table)
 - `Name`, `Description`, `IsPrivate`, `CreatedBy`, `CreatedAt`
 
-### Pacers (`Pacers` table)
-- `UserId`, `PulseId`, `JoinedAt`
-- Unique (UserId, PulseId)
+### Writers (`Writers` table)
+- `UserId`, `StoryId`, `JoinedAt`
+- Unique (UserId, StoryId)
 
-### Beats
-- `Order`, `TransitionOverride?`, `UserId`, `PulseId`, `CreatedAt`, `EditedAt`
-- Child **`BeatSegment`** rows: `Order`, `Text`, `TransitionAfter?`, `BeatId`
-- Indexed for efficient paging by pulse and order/time
+### Passages
+- `Order`, `SeamBefore?`, `UserId`, `StoryId`, `CreatedAt`, `EditedAt`
+- Child **`PassageSegment`** rows: `Order`, `Text`, `SeamAfter?`, `PassageId`
+- Indexed for efficient paging by story and order/time
 
-Exact column definitions and cascade behaviors live in EF configurations under `StoryApp.Infrastructure` (`PulseDbContext`).
+Exact column definitions and cascade behaviors live in EF configurations under `StoryApp.Infrastructure` (`StoryDbContext`).
 
 ## API Endpoints
 
@@ -92,15 +92,15 @@ Exact column definitions and cascade behaviors live in EF configurations under `
 - `POST /api/auth/logout` — revoke refresh token (authenticated)
 - `GET /api/auth/me` — current user ids from JWT (authenticated)
 
-### Pulses (`/api/pulses`)
-- `GET /api/pulses` — pulses for the current user
-- `GET /api/pulses/{pulseId}` — detail (403 if not a collaborator, 404 if missing)
-- `POST /api/pulses` — create pulse
-- `PUT /api/pulses/{pulseId}` — update (pulse creator)
-- `DELETE /api/pulses/{pulseId}` — delete (pulse creator)
-- `GET /api/pulses/{pulseId}/beats?page=&pageSize=` — paginated beats (default page size 50)
-- `POST /api/pulses/{pulseId}/pacers` — add pacer
-- `DELETE /api/pulses/{pulseId}/pacers/{userId}` — remove pacer
+### Stories (`/api/stories`)
+- `GET /api/stories` — stories for the current user
+- `GET /api/stories/{storyId}` — detail (403 if not a collaborator, 404 if missing)
+- `POST /api/stories` — create story
+- `PUT /api/stories/{storyId}` — update (story creator)
+- `DELETE /api/stories/{storyId}` — delete (story creator)
+- `GET /api/stories/{storyId}/passages?page=&pageSize=` — paginated passages (default page size 50)
+- `POST /api/stories/{storyId}/writers` — add writer
+- `DELETE /api/stories/{storyId}/writers/{userId}` — remove writer
 
 ### Users (`/api/users`)
 - `GET /api/users/me` — current profile
@@ -109,39 +109,39 @@ Exact column definitions and cascade behaviors live in EF configurations under `
 - `GET /api/users/search?query=` — search
 - `GET /api/users` — list users
 
-### SignalR Hub (`/pulseHub`)
+### SignalR Hub (`/storyHub`)
 
 **Connection:** JWT via `access_token` query parameter; `[Authorize]` on the hub.
 
 **Client → server (examples):**
-- `JoinPulse(int pulseId)` / `LeavePulse(int pulseId)`
-- `SendBeat(int pulseId, IList<BeatSegmentDto> segments)`
-- `EditBeat(int beatId, IList<BeatSegmentDto> segments)` / `DeleteBeat(int beatId)`
-- `StartTyping(int pulseId)` / `StopTyping(int pulseId)`
+- `JoinStory(int storyId)` / `LeaveStory(int storyId)`
+- `SendPassage(int storyId, IList<PassageSegmentDto> segments)`
+- `EditPassage(int passageId, IList<PassageSegmentDto> segments)` / `DeletePassage(int passageId)`
+- `StartTyping(int storyId)` / `StopTyping(int storyId)`
 
 **Server → client (event names):**
-- `ReceiveBeat` — `BeatDto`
-- `BeatEdited` — `BeatEditedDto`
-- `BeatDeleted` — `BeatDeletedDto`
-- `UserJoinedPulse` / `UserLeftPulse` — `PulseEventDto`
-- `UserStartedTyping` / `UserStoppedTyping` — `TypingIndicatorDto` (includes `PulseId`)
+- `ReceivePassage` — `PassageDto`
+- `PassageEdited` — `PassageEditedDto`
+- `PassageDeleted` — `PassageDeletedDto`
+- `UserJoinedStory` / `UserLeftStory` — `StoryEventDto`
+- `UserStartedTyping` / `UserStoppedTyping` — `TypingIndicatorDto` (includes `StoryId`)
 - `UserStatusChanged` — `UserStatusChangedDto`
 
 ## Security (summary)
 - Password hashing (BCrypt)
 - JWT for API and SignalR
-- Pulse membership checks for pulse-scoped operations
+- Story membership checks for story-scoped operations
 - Hub uses `HubException` for predictable client errors
 - CORS policy `AllowReactApp` for typical local dev origins (see `Program.cs`)
 
 ## Development features
 - Swagger in Development
 - Migrations applied on API startup
-- Idempotent seed when the database has no users (`PulseDbContext` seed hook calls **`PulseDbSeeder.SeedAsync`**)
+- Idempotent seed when the database has no users (`StoryDbContext` seed hook calls **`StoryDbSeeder.SeedAsync`**)
 
 ## Sample seed data
 - Users: `aya`, `bobby`, `carlos` (password `test123`)
-- Pulses (example, Dutch demo copy): **"Het Neon-Noedel Bijpand"**, **"Logboek van de stormglaswaker"**, **"De envelop met de koperen sleutel"** — twee pacers per pulse en beats in het rond (**`PulseDbSeeder`**)
+- Stories (example, Dutch demo copy): **"Het Neon-Noedel Bijpand"**, **"Logboek van de stormglaswaker"**, **"De envelop met de koperen sleutel"** — twee writers per story en passages in het rond (**`StoryDbSeeder`**)
 
 ## Configuration (reference)
 - **Connection string:** `DefaultConnection` in `StoryApp.Api` configuration (PostgreSQL)
@@ -149,8 +149,8 @@ Exact column definitions and cascade behaviors live in EF configurations under `
 - **CORS:** e.g. `http://localhost:3000`, `http://localhost:5173`
 
 ## Technical constraints (typical)
-- Beat **segment text** max length **2000** (EF `StringLength` on `BeatSegment.Text`)
-- Default beat pagination: **50** per page on `GetPulseBeats`
+- Passage **segment text** max length **2000** (EF `StringLength` on `PassageSegment.Text`)
+- Default passage pagination: **50** per page on `GetStoryPassages`
 
 ---
 

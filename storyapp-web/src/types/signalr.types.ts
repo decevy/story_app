@@ -1,30 +1,30 @@
 // src/types/signalr.types.ts
 
-import { BeatSegment } from './pulse.types';
+import { PassageSegment } from './story.types';
 
-export interface PulseEvent {
+export interface StoryEvent {
   userId: number;
   username: string;
-  pulseId: number;
+  storyId: number;
   timestamp: string;
 }
 
 export interface TypingIndicator {
   userId: number;
   username?: string;
-  pulseId: number;
+  storyId: number;
   isTyping?: boolean;
 }
 
-export interface BeatEdited {
+export interface PassageEdited {
   id: number;
-  segments: BeatSegment[];
+  segments: PassageSegment[];
   editedAt: string;
 }
 
-export interface BeatDeleted {
+export interface PassageDeleted {
   id: number;
-  pulseId: number;
+  storyId: number;
 }
 
 export interface UserStatusChanged {

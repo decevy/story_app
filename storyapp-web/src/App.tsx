@@ -5,8 +5,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { PulsePage } from './pages/PulsePage';
-import { PulseProvider } from './contexts/PulseContext';
+import { StoryPage } from './pages/StoryPage';
+import { StoryProvider } from './contexts/StoryContext';
 
 function App() {
   return (
@@ -20,9 +20,9 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <PulseProvider>
-                  <PulsePage />
-                </PulseProvider>
+                <StoryProvider>
+                  <StoryPage />
+                </StoryProvider>
               </ProtectedRoute>
             }
           />

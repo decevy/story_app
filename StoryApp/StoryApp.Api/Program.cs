@@ -16,17 +16,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 // Database
-builder.Services.AddDbContext<PulseDbContext>(options =>
+builder.Services.AddDbContext<StoryDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Repository registrations
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IPulseRepository, PulseRepository>();
-builder.Services.AddScoped<IBeatRepository, BeatRepository>();
+builder.Services.AddScoped<IStoryRepository, StoryRepository>();
+builder.Services.AddScoped<IPassageRepository, PassageRepository>();
 
 // Service registrations
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IPulseService, PulseService>();
+builder.Services.AddScoped<IStoryService, StoryService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 // JWT Authentication
@@ -59,7 +59,7 @@ builder.Services.AddAuthentication(options =>
         {
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/pulseHub"))
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/storyHub"))
             {
                 context.Token = accessToken;
             }
@@ -77,7 +77,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "StoryApp API",
         Version = "v1",
-        Description = "Collaborative pulses API with real-time beats"
+        Description = "Collaborative stories API with real-time passages"
     });
 
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -139,11 +139,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapHub<PulseHub>("/pulseHub");
+app.MapHub<StoryHub>("/storyHub");
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<StoryDbContext>();
     dbContext.Database.Migrate();
 }
 

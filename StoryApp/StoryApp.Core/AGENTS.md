@@ -12,7 +12,7 @@
 |------|---------|
 | **`Entities/`** | EF-mapped domain types and enums |
 | **`Dtos/`** | Types exchanged by HTTP and SignalR (flat and nested) |
-| **`Dtos/Requests/`** | Input models for commands (register, login, create story, send beat, etc.) |
+| **`Dtos/Requests/`** | Input models for commands (register, login, create story, send passage, etc.) |
 | **`Dtos/Responses/`** | Shared response wrappers (`LoginResponse`, `PaginatedResponse`, `ErrorResponse`, etc.) |
 | **`Interfaces/`** | **Repository** and **application service** contracts |
 | **`Exceptions/`** | Domain-style errors consumed by **Api** middleware |
@@ -26,25 +26,25 @@
 | Type | Role |
 |------|------|
 | **`User`** | Account, password hash, refresh token fields, presence (`IsOnline`, `LastSeen`) |
-| **`Pulse`** | Collaborative pulse thread; creator relationship |
-| **`Pacer`** | User ↔ pulse participation (membership row) |
-| **`Beat`** | Contributions in a pulse (ordered **`BeatSegment`** rows) |
+| **`Story`** | Collaborative story thread; creator relationship |
+| **`Writer`** | User ↔ story participation (membership row) |
+| **`Passage`** | Contributions in a story (ordered **`PassageSegment`** rows) |
 
-**Relationships (conceptual):** users join pulses via memberships (**`Pacer`**); pulses contain **`Beat`**s. **Integer** primary keys; delete/cascade rules are defined in **Infrastructure** EF configuration, not here.
+**Relationships (conceptual):** users join stories via memberships (**`Writer`**); stories contain **`Passage`**s. **Integer** primary keys; delete/cascade rules are defined in **Infrastructure** EF configuration, not here.
 
 When you add or change an entity:
 
 1. Update **Core** entity (and enums if needed).
-2. Update **Infrastructure** `PulseDbContext` / configuration + **migration**.
+2. Update **Infrastructure** `StoryDbContext` / configuration + **migration**.
 3. Update DTOs and mapping helpers (`FromEntity`, etc.) where applicable.
 
 ---
 
 ## DTOs (`Dtos/`)
 
-- **API requests** live under **`Dtos/Requests/`** (e.g. `RegisterRequest`, `CreatePulseRequest`, `SendBeatRequest`).
+- **API requests** live under **`Dtos/Requests/`** (e.g. `RegisterRequest`, `CreateStoryRequest`, `SendPassageRequest`).
 - **Shared responses** under **`Dtos/Responses/`** (e.g. `LoginResponse`, `CurrentUserResponse`, `PaginatedResponse`, `ErrorResponse`).
-- **Pulse/beat/user payloads** and **SignalR event** shapes sit under **`Dtos/`** (e.g. `BeatDto`, `PulseDto`, `PulseSummaryDto`, `PulseEventDto`, `TypingIndicatorDto`, `UserStatusChangedDto`, `BeatEditedDto`, `BeatDeletedDto`).
+- **Story/passage/user payloads** and **SignalR event** shapes sit under **`Dtos/`** (e.g. `PassageDto`, `StoryDto`, `StorySummaryDto`, `StoryEventDto`, `TypingIndicatorDto`, `UserStatusChangedDto`, `PassageEditedDto`, `PassageDeletedDto`).
 
 **Pattern:** static **`FromEntity`** (or small factory methods) on DTOs map **entities → DTOs**; keep mapping logic close to the DTO type unless the team standard changes.
 
@@ -55,8 +55,8 @@ When you add or change an entity:
 ### Repositories
 
 - **`IUserRepository`** — users, search, uniqueness checks, CRUD-style methods used by auth and profiles.
-- **`IPulseRepository`** — pulses, pacer lookups, admin checks; exposes **`Query()`** and **`QueryPacers()`** (see query builders).
-- **`IBeatRepository`** — beats by pulse, last beat, CRUD helpers, etc.
+- **`IStoryRepository`** — stories, writer lookups, admin checks; exposes **`Query()`** and **`QueryWriters()`** (see query builders).
+- **`IPassageRepository`** — passages by story, last passage, CRUD helpers, etc.
 
 Repositories are **implemented in Infrastructure** and registered in **Api** `Program.cs`.
 
@@ -64,8 +64,8 @@ Repositories are **implemented in Infrastructure** and registered in **Api** `Pr
 
 - **`IAuthService`** — register, login, refresh, logout patterns (implemented in **Services**).
 - **`IUserService`** — profiles, search, updates, **`UpdateUserPresenceAsync`** (implemented in **Services**).
-- **`IPulseService`** — list/create/update pulses and pacer enrollment (implemented in **Services**).
-- **`IBeatService`** — beat API as a **service contract**; **no `BeatService` class** in **StoryApp.Services** at present—**`PulseHub`** talks to **`IBeatRepository`** directly. See root **`AGENTS.md`**.
+- **`IStoryService`** — list/create/update stories and writer enrollment (implemented in **Services**).
+- **`IPassageService`** — passage API as a **service contract**; **no `PassageService` class** in **StoryApp.Services** at present—**`StoryHub`** talks to **`IPassageRepository`** directly. See root **`AGENTS.md`**.
 - **`IPresenceService`** — typing/presence contract; **not implemented** as a dedicated service class yet. See root **`AGENTS.md`**.
 
 When adding a **new** cross-cutting use case, prefer **interface in Core** + **implementation in Services** + **registration in Api**, unless the feature is **SignalR-only** and tiny (then document the exception).
@@ -85,13 +85,13 @@ Used by **Services** and **Api**; **`ExceptionHandlingMiddleware`** maps them to
 
 Throw these from **Services** (or validated paths in **Api**) for **predictable client errors**. Anything else becomes **500** with a generic message.
 
-**SignalR:** hubs may use **`HubException`** for client-visible failures (see **`PulseHub`**).
+**SignalR:** hubs may use **`HubException`** for client-visible failures (see **`StoryHub`**).
 
 ---
 
 ## Query builders (`QueryBuilders/`)
 
-Repositories expose **`Query()`** (and similar) returning a **query builder** that wraps **`IQueryable<T>`** with methods such as **`WithPacers()`**, **`WhereUserIsMember`**, **`FindByIdAsync`**, etc.
+Repositories expose **`Query()`** (and similar) returning a **query builder** that wraps **`IQueryable<T>`** with methods such as **`WithWriters()`**, **`WhereUserIsMember`**, **`FindByIdAsync`**, etc.
 
 **Guidelines:**
 
