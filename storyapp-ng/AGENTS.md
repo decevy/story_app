@@ -1,0 +1,68 @@
+# Agent instructions — StoryApp Angular (`storyapp-ng`)
+
+Angular rebuild of **`storyapp-web`** (React) with feature parity. Behaviour follows
+**[`../storyapp-web/SPEC.md`](../storyapp-web/SPEC.md)**; do not edit that file from here.
+`storyapp-web` stays as the reference until parity is confirmed. The backend (`../StoryApp`)
+and its API contract are unchanged.
+
+## Stack
+
+- **Angular 22**, standalone components, **zoneless**, OnPush by default. Node **22.22.3+ or 24.15+** (`.nvmrc`: 24).
+- **Signals for all template state** (`signal`, `computed`, `linkedSignal`, `httpResource`). No plain mutable fields read by templates.
+- Template syntax: `@if`, `@for` (with `track`), `@switch`, `@defer`. No NgModules, no `*ngIf` / `*ngFor`.
+- `inject()`, never constructor injection.
+- Forms: **Signal Forms** (`@angular/forms/signals`). No Reactive or template-driven forms.
+- UI primitives: **Angular Aria** (`@angular/aria`) and **CDK**. **No Angular Material.**
+- Styling: **Tailwind CSS v4** (`@tailwindcss/postcss`, `.postcssrc.json`) + `@toolwind/corner-shape`; global rules in `src/styles.css`, adaptive radii in `src/styles/adaptive-rounded.css`. Keep classes identical to the React components.
+- HTTP: `HttpClient` (fetch backend is the v22 default; don't add `withFetch()`). `httpResource` for simple GETs; HttpClient + RxJS for mutations and refresh.
+- Real-time: `@microsoft/signalr` 9.0.6 (same as storyapp-web).
+- Domain names match the backend: `Story`, `Passage`, `PassageSegment`, `Writer`, `Seam`.
+
+## Naming
+
+New style guide: kebab-case files without type suffixes, class names without `Component`/`Service`
+unless clearer (`story-list.ts` → `StoryList`, `auth.ts` → `AuthService`).
+
+## Layout (`src/app`)
+
+| Folder | Contents |
+|--------|----------|
+| `core/config` | `APP_CONFIG` token (`apiUrl`, `hubUrl`), storage keys, URL helpers |
+| `core/http` | `authInterceptor`, `SKIP_AUTH_REFRESH` context token |
+| `core/signalr` | `SignalRService` (connection, hub methods, events as observables, `connectionState`) |
+| `core/models` | Types copied from `storyapp-web/src/types` |
+| `auth` | `TokenStore`, `AuthService`, guards, login/register pages |
+| `story` | `StoryStore` (route-level), `StoriesApi`, layout, list, page, view, `PassageSpan`, fonts |
+| `composer` | `passage-composer.ts`, `segment-visuals.ts`, `composer-dom.ts` (copied unchanged), `ComposerField`, `ComposerHold` |
+
+Config comes from `src/environments/` (dev: `apiUrl: ''`, `hubUrl: '/storyHub'`, through the proxy).
+
+## Key behaviour notes
+
+- **Auth**: `AuthService.initialize()` runs in `provideAppInitializer`; `index.html` shows the loading spinner meanwhile. The interceptor shares one refresh across concurrent 401s; refresh failure clears tokens and routes to `/login`.
+- **StoryStore** is provided on the lazy story route; `withAutoCleanupInjectors()` destroys it when the route is left (like unmounting `StoryProvider`). Hub join/leave is an effect on `selectedStoryId` + connection state, which also rejoins after a reconnect.
+- **Sending**: `StoryStore.sendPassage` goes through `exhaustMap` (DEC-7), so a send while one is in flight is ignored. `SignalRService.sendPassage` always passes `seamBefore` (`null` when unset): the hub rejects the two-argument call that storyapp-web makes.
+- **Composer**: `ComposerHold` (scoped to `StoryView`) owns the draft; `draftVersion` replaces React's `seedToken`. Don't change seam logic, rendering rules or composer interactions here; they follow SPEC.md, including the known cross-passage indentation issue (`it.todo` in `segment-visuals.spec.ts`).
+- Component hosts inside flex layouts use `display: contents` so the React markup structure (and its `h-full` / `flex-1` behaviour) is unchanged.
+
+## Commands
+
+Run from `storyapp-ng/`:
+
+| Task | Command |
+|------|---------|
+| Dev server (port 3000, proxies `/api` and `/storyHub`) | `npm start` |
+| Proxy to another API | `API_PROXY_TARGET=http://localhost:5056 npm start` |
+| Unit tests (Vitest, once) | `npx ng test --watch=false` |
+| Lint | `npm run lint` |
+| Build | `npm run build` |
+| E2E (Playwright; needs the API + seeded DB) | `npm run e2e` (first time: `npx playwright install chromium`) |
+
+The E2E config starts `ng serve --configuration e2e` (no Vite prebundling, so the page isn't
+reloaded mid-test) unless a server is already running on port 3000. The test user
+`aya@test.com` / `test123` comes from `StoryApp.Infrastructure/Data/StoryDbSeeder.cs`.
+
+CI: `../.github/workflows/ci.yml` (jobs `web`, `api`, `e2e`).
+
+`data-testid` hooks: `login-email`, `login-password`, `login-submit`, `story-list-item`,
+`composer-field` (active field), `end-passage`, `passages`, `connection-status`.
