@@ -5,7 +5,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withAutoCleanupInjectors } from '@angular/router';
 
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
@@ -18,7 +18,9 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     { provide: APP_CONFIG, useValue: environment },
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideRouter(routes),
+    // Destroys the story route injector (StoryStore) once the route is left, like
+    // unmounting StoryProvider in the React app.
+    provideRouter(routes, withAutoCleanupInjectors()),
     provideAppInitializer(() => inject(AuthService).initialize()),
   ],
 };
