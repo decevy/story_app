@@ -39,28 +39,6 @@
       }
     },
     {
-      "label": "react-dev",
-      "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/storyapp-web"
-      },
-      "isBackground": true,
-      "problemMatcher": {
-        "owner": "vite",
-        "pattern": { "regexp": "^$" },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".",
-          "endsPattern": "Local:\\s+http://localhost:3000/"
-        }
-      },
-      "presentation": {
-        "reveal": "silent",
-        "panel": "dedicated"
-      }
-    },
-    {
       "label": "ng-serve",
       "type": "shell",
       // Angular 22 needs Node >= 24.15; use storyapp-ng/.nvmrc when nvm is installed.

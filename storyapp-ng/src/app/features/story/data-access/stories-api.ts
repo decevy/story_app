@@ -7,7 +7,7 @@ import type { Observable } from 'rxjs';
 
 import type { AddWriterRequest, CreateStoryRequest, UpdateStoryRequest } from './story-dtos';
 
-/** Passages per page. Only the first page is loaded for now (as in storyapp-web). */
+/** Passages per page. Only the first page is loaded for now. */
 export const PASSAGE_PAGE_SIZE = 50;
 
 /**

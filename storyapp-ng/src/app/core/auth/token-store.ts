@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 
 import { LocalStorage } from '../storage/local-storage';
 
-/** localStorage keys; the same as storyapp-web, so a session carries over between the apps. */
+/** localStorage keys of the access and refresh token. */
 export const TOKEN_STORAGE_KEYS = {
   accessToken: 'storyapp_access_token',
   refreshToken: 'storyapp_refresh_token',

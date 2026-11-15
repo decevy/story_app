@@ -1,7 +1,7 @@
 # StoryApp Angular (storyapp-ng)
 
 Angular 22 client of StoryApp. See [AGENTS.md](./AGENTS.md) for structure, conventions and
-commands, and [`../storyapp-web/SPEC.md`](../storyapp-web/SPEC.md) for behaviour.
+commands, and [SPEC.md](./SPEC.md) for behaviour and the API contract.
 
 ```bash
 npm ci

@@ -1,12 +1,11 @@
 # Agent instructions — StoryApp monorepo
 
-This folder is the **workspace root** (`story_app`). It contains the backend and two frontends for one collaborative story application (REST + real-time passages):
+This folder is the **workspace root** (`story_app`). It contains the backend and the frontend of one collaborative story application (REST + real-time passages):
 
 | Folder | Stack | Role |
 |--------|--------|------|
 | **`StoryApp/`** | .NET (ASP.NET Core) | REST API, JWT auth, SignalR hub, PostgreSQL via EF Core |
-| **`storyapp-web/`** | React + TypeScript (Vite) | SPA: login/register, stories & passages, real-time collaborative UI (reference implementation) |
-| **`storyapp-ng/`** | Angular 22 (zoneless, signals) | Rebuild of `storyapp-web`; follows `storyapp-web/SPEC.md`, with deliberate differences listed in `storyapp-ng/AGENTS.md` |
+| **`storyapp-ng/`** | Angular 22 (zoneless, signals) | SPA: login/register, stories & passages, real-time collaborative UI; follows `storyapp-ng/SPEC.md` |
 
 For deeper detail, read the **nested `AGENTS.md`** files under each project; prefer the most specific doc for the code you are changing.
 
@@ -14,13 +13,13 @@ For deeper detail, read the **nested `AGENTS.md`** files under each project; pre
 
 ## How the frontend and backend connect
 
-1. **REST** — The web apps call JSON endpoints under **`/api`** (e.g. auth, users, stories). In `storyapp-web`, Axios uses `VITE_API_URL` as the base and appends `/api` (see `storyapp-web/src/api/axios-config.ts`); in `storyapp-ng`, `APP_CONFIG.apiUrl` from the runtime `config.json` (`storyapp-ng/public/config.json`, loaded before bootstrap) plays that role and `authInterceptor` handles the bearer token and refresh. The JWT is sent on protected requests (Bearer header).
+1. **REST** — The web app calls JSON endpoints under **`/api`** (e.g. auth, users, stories). The base is `APP_CONFIG.apiUrl` from the runtime `config.json` (`storyapp-ng/public/config.json`, loaded before bootstrap); `authInterceptor` handles the bearer token and refresh. The JWT is sent on protected requests (Bearer header).
 
-2. **SignalR** — Live passages, typing, and related events use a hub at **`/storyHub`**. The clients connect using `VITE_HUB_URL` (React) or `APP_CONFIG.hubUrl` (Angular). The API accepts the JWT for WebSocket connections via the **`access_token`** query parameter (configured in `StoryApp/StoryApp.Api/Program.cs`).
+2. **SignalR** — Live passages, typing, and related events use a hub at **`/storyHub`**. The client connects using `APP_CONFIG.hubUrl`. The API accepts the JWT for WebSocket connections via the **`access_token`** query parameter (configured in `StoryApp/StoryApp.Api/Program.cs`).
 
-3. **Local development** — Both dev servers run on **port 3000** (one at a time) and **proxy** `/api` and `/storyHub` to the API (default target **`https://localhost:7011`**; see `storyapp-web/vite.config.ts` and `storyapp-ng/proxy.conf.mjs`, which also reads `API_PROXY_TARGET`). For the React app, set env vars so the browser talks to the dev server origin, e.g. `VITE_API_URL=http://localhost:3000` and `VITE_HUB_URL=http://localhost:3000/storyHub`; the Angular app's `config.json` already uses the same origin. Run the API with the **https** profile so it listens on **7011**.
+3. **Local development** — The dev server runs on **port 3000** and **proxies** `/api` and `/storyHub` to the API (default target **`https://localhost:7011`**; see `storyapp-ng/proxy.conf.mjs`, which also reads `API_PROXY_TARGET`). `config.json` uses the dev server origin. Run the API with the **https** profile so it listens on **7011**.
 
-4. **CORS** — The API policy **`AllowReactApp`** allows the React dev origin (`localhost:3000`) with credentials so cookies/headers work when not using the proxy.
+4. **CORS** — The API policy **`AllowReactApp`** allows the dev origin (`localhost:3000`) with credentials so cookies/headers work when not using the proxy.
 
 **Summary:** HTTP + hub share the same host in dev (via proxy) or the same deployed domain in production; auth is **JWT** end-to-end (header for REST, query token for SignalR).
 
@@ -35,15 +34,14 @@ For deeper detail, read the **nested `AGENTS.md`** files under each project; pre
 | `StoryApp/StoryApp.Core/AGENTS.md` | Entities, DTOs, interfaces, query builders |
 | `StoryApp/StoryApp.Infrastructure/AGENTS.md` | DbContext, repositories, migrations |
 | `StoryApp/StoryApp.Services/AGENTS.md` | Application services |
-| `storyapp-web/AGENTS.md` | React app structure, env vars, conventions |
 | `storyapp-ng/AGENTS.md` | Angular app structure, conventions, commands, tests |
 
-The web client’s **SPEC.md** (`storyapp-web/SPEC.md`) describes API shapes and SignalR events in product terms when you need contract-level detail. Both frontends follow it.
+**`storyapp-ng/SPEC.md`** describes product behaviour, API shapes and SignalR events when you need contract-level detail.
 
 ## Design decisions
 
 For structural decisions (folder layout, boundaries, state management, abstractions), design for
-the roadmap in `storyapp-web/SPEC.md`, not the current feature set. The `roadmap` skill
+the roadmap in `storyapp-ng/SPEC.md`, not the current feature set. The `roadmap` skill
 (`.claude/skills/roadmap/SKILL.md`, `/roadmap`) has the full procedure.
 
 ## CI

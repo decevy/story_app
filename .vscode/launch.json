@@ -2,14 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Chrome (React dev)",
-      "type": "chrome",
-      "request": "launch",
-      "preLaunchTask": "react-dev",
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/storyapp-web"
-    },
-    {
       "name": "Chrome (Angular dev)",
       "type": "chrome",
       "request": "launch",
@@ -33,11 +25,6 @@
     }
   ],
   "compounds": [
-    {
-      "name": "API + Chrome (React)",
-      "configurations": ["StoryApp.Api (.NET)", "Chrome (React dev)"],
-      "stopAll": true
-    },
     {
       "name": "API + Chrome (Angular)",
       "configurations": ["StoryApp.Api (.NET)", "Chrome (Angular dev)"],

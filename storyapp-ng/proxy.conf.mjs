@@ -1,4 +1,4 @@
-// Dev-server proxy: same routes as storyapp-web/vite.config.ts.
+// Dev-server proxy: forwards /api and /storyHub to the API.
 // API_PROXY_TARGET lets CI point at the API over http (default: https profile on 7011).
 const target = process.env.API_PROXY_TARGET ?? 'https://localhost:7011';
 

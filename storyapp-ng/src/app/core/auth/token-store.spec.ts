@@ -10,7 +10,7 @@ describe('TokenStore', () => {
     store = TestBed.inject(TokenStore);
   });
 
-  it('stores both tokens under the storyapp-web keys', () => {
+  it('stores both tokens under their localStorage keys', () => {
     store.setTokens('access', 'refresh');
     expect(localStorage.getItem(TOKEN_STORAGE_KEYS.accessToken)).toBe('access');
     expect(localStorage.getItem(TOKEN_STORAGE_KEYS.refreshToken)).toBe('refresh');

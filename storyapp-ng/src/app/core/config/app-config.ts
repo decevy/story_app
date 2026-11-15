@@ -2,7 +2,7 @@ import { InjectionToken } from '@angular/core';
 
 /**
  * Runtime configuration, read from `config.json` before bootstrap (see `src/main.ts`), so one
- * build can be deployed to every environment. Replaces VITE_API_URL / VITE_HUB_URL.
+ * build can be deployed to every environment.
  */
 export interface AppConfig {
   /** Origin of the REST API; requests go to `${apiUrl}/api/...`. Empty = same origin. */

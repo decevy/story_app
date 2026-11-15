@@ -10,7 +10,7 @@ smallest option for its current size. Choosing for today often means reorganisin
 
 ## Steps
 
-1. **Read the roadmap.** In `storyapp-web/SPEC.md`, read "Current Limitations / Unused
+1. **Read the roadmap.** In `storyapp-ng/SPEC.md`, read "Current Limitations / Unused
    Features" and the API sections. Endpoints marked "available, not used in UI" are planned
    features. Also check the backend (`StoryApp/`) for hub methods and endpoints that no client
    uses yet. List the planned features that affect this decision.

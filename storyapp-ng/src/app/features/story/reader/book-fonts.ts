@@ -1,4 +1,4 @@
-/** localStorage key of the chosen book font (same as storyapp-web). */
+/** localStorage key of the chosen book font. */
 export const FONT_STORAGE_KEY = 'book-font';
 
 /** Fonts for the book page. The families are self-hosted (see `src/styles.css`). */

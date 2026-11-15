@@ -1,9 +1,9 @@
 # Agent instructions — StoryApp Angular (`storyapp-ng`)
 
-Angular client of StoryApp. Started as a rebuild of **`storyapp-web`** (React); product behaviour
-and the API contract are described in **[`../storyapp-web/SPEC.md`](../storyapp-web/SPEC.md)**
-(do not edit that file from here). Where this app deliberately differs from the React app, it is
-listed under "Differences from storyapp-web" below. The backend (`../StoryApp`) is unchanged.
+Angular client of StoryApp. It started as a rebuild of a React app (since removed); product
+behaviour and the API contract are described in **[`SPEC.md`](./SPEC.md)**. Deliberate changes
+made after the port are listed under "Changes since the React port" below. The backend
+(`../StoryApp`) is unchanged.
 
 ## Stack
 
@@ -103,7 +103,7 @@ between stories; `withAutoCleanupInjectors()` destroys it when the area is left.
 - **Composer**: `DraftStore` (scoped to `StoryView`) owns the draft; `draftVersion` tells the fields to rewrite their DOM text. Seam logic and rendering rules follow SPEC.md, including the known cross-passage indentation issue (`it.todo` in `segment-visuals.spec.ts`).
 - Component hosts inside flex layouts use `display: contents` so the markup structure (and its `h-full` / `flex-1` behaviour) stays flat. The routed main area is projected with `<router-outlet ngProjectAs="[storyMain]" />`.
 
-## Differences from storyapp-web
+## Changes since the React port
 
 Deliberate changes made after the port:
 

@@ -1,38 +1,18 @@
-# StoryApp Web - Application Specification
+# StoryApp - Application Specification
 
 ## Overview
 
-StoryApp Web is a collaborative story application built as a single-page application (SPA) that enables users to work together in **stories** (shared threads). The application provides user authentication, story-level **passages** (messages), and real-time delivery via WebSocket connections.
+StoryApp is a collaborative story application built as a single-page application (SPA) that enables users to work together in **stories** (shared threads). The application provides user authentication, story-level **passages** (messages), and real-time delivery via WebSocket connections.
 
-## Technology Stack
-
-### Frontend Framework
-- **React 19.1.1** - UI library
-- **TypeScript** - Type-safe development
-- **Vite** (rolldown-vite 7.1.14) - Build tool and dev server
-
-### Routing & State Management
-- **React Router DOM 7.9.4** - Client-side routing
-- **React Context API** - State management (AuthContext, StoryContext)
-
-### Real-time Communication
-- **Microsoft SignalR 9.0.6** - WebSocket-based real-time messaging
-
-### HTTP Client
-- **Axios 1.12.2** - REST API communication
-
-### Styling
-- **Tailwind CSS 4.1.14** - Utility-first CSS framework
-- **@toolwind/corner-shape 0.0.8-3** - Adaptive rounded corners styling
-
-### Utilities
-- **date-fns 4.1.0** - Date formatting and manipulation
+Implementation details (stack, configuration, folder layout, commands) live in
+[AGENTS.md](./AGENTS.md); this file describes product behaviour and the API contract.
 
 ## Core Features
 
 ### 1. User Authentication
 
 #### Registration
+
 - Users can create accounts with:
   - Username (required)
   - Email (required, validated)
@@ -42,17 +22,20 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - Access and refresh tokens are stored in localStorage
 
 #### Login
+
 - Users can log in with email and password
 - Successful login stores authentication tokens
 - Login page displays test account credentials for development
 
 #### Authentication State Management
+
 - Automatic token validation on app initialization
 - Token refresh mechanism for expired access tokens
 - Automatic redirect to login if authentication fails
 - Logout functionality that clears tokens and redirects to login
 
 #### Protected Routes
+
 - Main story interface is protected and requires authentication
 - Unauthenticated users are redirected to login page
 - Loading state shown during authentication check
@@ -60,6 +43,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ### 2. Stories
 
 #### Story list
+
 - Displays all stories where the user is a **writer** (collaborator)
 - Shows story information:
   - Story name
@@ -70,6 +54,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - Clicking a story selects it and loads its passages
 
 #### Story selection
+
 - Selecting a story:
   - Leaves the current story (if any)
   - Loads story details and passages (paginated, 50 passages per page)
@@ -77,6 +62,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - Story selection is visually indicated with highlighted background
 
 #### Story data model
+
 - Stories have:
   - ID, name, description (optional)
   - Privacy flag (isPrivate)
@@ -88,6 +74,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ### 3. Passages (messages in a story)
 
 #### Passage display
+
 - Passages are shown as **continuous book-style prose** in a single scrollable page (centered column)
 - Each passage’s **segments** render in `order` with typographic breaks derived from `seamAfter`:
   - **First alinea after section / major section / chapter** — large vertical gap (~3 lines), no first-line indent
@@ -99,6 +86,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - Empty state: short guidance text when the story has no passages yet
 
 #### Passage sending
+
 - **Inline composer**: a `contentEditable` caret directly after the last committed text (no placeholder text). Prior draft segments render in the same typography as sent passages before the active field.
 - **Draft appearance**: in-progress text uses a **random accent color**; holding Enter cycles the draft through a **rainbow** until the passage sends.
 - **Structure (Enter / Backspace)**:
@@ -114,6 +102,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - Connection status indicator remains in the app header
 
 #### Passage data model
+
 - Passages contain:
   - ID, **`order`**, optional **`seamBefore`**, **`segments[]`** (`id`, `order`, `text`, optional `seamAfter`)
   - Story ID (`storyId`), user information (sender), creation timestamp, optional edit timestamp
@@ -123,6 +112,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ### 4. Real-time Communication
 
 #### SignalR Connection
+
 - Automatic connection when user is authenticated
 - Connection uses JWT access token for authentication
 - Automatic reconnection on connection loss
@@ -130,6 +120,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - Connection status displayed in header (green/red indicator)
 
 #### Real-time events handled
+
 - **ReceivePassage** - New passages appear instantly
 - **PassageEdited** - Passage edit notifications (handler exists, not used in UI)
 - **PassageDeleted** - Passage deletion notifications (handler exists, not used in UI)
@@ -140,6 +131,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - **UserStatusChanged** - Online/offline status changes (handler exists, not used in UI)
 
 #### SignalR methods (client ↔ hub)
+
 - `JoinStory(storyId)` - Join a story group
 - `LeaveStory(storyId)` - Leave a story group
 - `SendPassage(storyId, segments)` — `segments`: `{ order, text, seamAfter? }[]`
@@ -151,6 +143,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ### 5. User Interface
 
 #### Layout Structure
+
 - **Header Bar**:
   - Application title ("StoryApp")
   - Connection status indicator
@@ -164,6 +157,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
   - Empty state when no story is selected
 
 #### Styling
+
 - Uses Tailwind CSS utility classes
 - Adaptive rounded corners (squircle style) via custom CSS
 - Responsive design considerations
@@ -173,6 +167,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ## API Integration
 
 ### Authentication API (`/api/auth`)
+
 - `POST /auth/register` - User registration
 - `POST /auth/login` - User login
 - `POST /auth/logout` - User logout
@@ -180,6 +175,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - `POST /auth/refresh` - Refresh access token
 
 ### Stories API (`/api/stories`)
+
 - `GET /stories` - Get user's stories (returns `StorySummary[]`)
 - `GET /stories/:id` - Get story details
 - `POST /stories` - Create story (available, not used in UI); body: `CreateStoryRequest` (`name`, `description`, `isPrivate`, etc.)
@@ -190,6 +186,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - `GET /stories/:storyId/passages` - Get story passages (paginated, `page` and `pageSize` query params)
 
 ### Users API (`/api/users`)
+
 - `GET /users/me` - Get current user profile (available, not used in UI)
 - `GET /users/:id` - Get user by ID (available, not used in UI)
 - `GET /users/search?query=...` - Search users (available, not used in UI)
@@ -197,7 +194,8 @@ StoryApp Web is a collaborative story application built as a single-page applica
 - `GET /users` - Get all users (available, not used in UI)
 
 ### HTTP Client Configuration
-- Base URL: `${VITE_API_URL}/api`
+
+- Base URL: `${apiUrl}/api` (`apiUrl` from the runtime `config.json`)
 - Automatic JWT token injection in Authorization header
 - Automatic token refresh on 401 responses
 - Request queuing during token refresh
@@ -206,6 +204,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ## Data Models
 
 ### User
+
 ```typescript
 {
   id: number;
@@ -217,6 +216,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ```
 
 ### Story
+
 ```typescript
 {
   id: number;
@@ -230,6 +230,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ```
 
 ### StorySummary
+
 ```typescript
 {
   id: number;
@@ -244,6 +245,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ```
 
 ### Passage
+
 ```typescript
 {
   id: number;
@@ -258,6 +260,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ```
 
 ### Writer (story collaborator)
+
 ```typescript
 {
   userId: number;
@@ -266,17 +269,6 @@ StoryApp Web is a collaborative story application built as a single-page applica
   joinedAt: string; // ISO date string
 }
 ```
-
-## Environment Configuration
-
-### Required Environment Variables
-- `VITE_API_URL` - Base URL for REST API (e.g., `http://localhost:3000`)
-- `VITE_HUB_URL` - SignalR hub URL (e.g., `http://localhost:3000/storyHub`)
-
-### Development Setup
-- Vite dev server runs on port 3000
-- Proxies `/api` requests to `https://localhost:7011`
-- Proxies `/storyHub` WebSocket connections to `https://localhost:7011`
 
 ## Application Flow
 
@@ -308,6 +300,7 @@ StoryApp Web is a collaborative story application built as a single-page applica
 ## Current Limitations / Unused Features
 
 The following API endpoints and SignalR handlers exist but are not currently used in the UI:
+
 - Story creation, update, deletion
 - Story writer management (add/remove)
 - Passage editing and deletion
@@ -315,28 +308,6 @@ The following API endpoints and SignalR handlers exist but are not currently use
 - User search and profile management
 - System passages
 
-## File Structure
-
-```
-src/
-├── api/              # API client functions
-├── components/       # React components
-├── config/           # Configuration files
-├── contexts/         # React Context providers
-├── pages/            # Page components
-├── services/         # Service layer (SignalR, token management)
-├── types/            # TypeScript type definitions
-└── styles/           # CSS files
-```
-
-## Build & Development
-
-- **Development**: `npm run dev` - Starts Vite dev server
-- **Build**: `npm run build` - Production build
-- **Preview**: `npm run preview` - Preview production build
-- **Lint**: `npm run lint` - Run ESLint
-
 ---
 
-*This specification documents the current state of the application as of the analysis date. It does not include planned or future features.*
-
+_This specification documents the current state of the application as of the analysis date. It does not include planned or future features._
