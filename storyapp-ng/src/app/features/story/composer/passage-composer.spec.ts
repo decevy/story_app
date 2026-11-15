@@ -1,10 +1,11 @@
-import { Seam } from '../../../core/models/story';
+import { Seam } from '@core/models/story';
+
 import {
   applyBackspace,
   applyEnter,
+  type ComposerState,
   createEmptyComposer,
   toSegmentInputs,
-  type ComposerState,
 } from './passage-composer';
 
 function state(partial: Partial<ComposerState> & Pick<ComposerState, 'segments'>): ComposerState {
@@ -28,7 +29,9 @@ describe('passage-composer', () => {
     });
 
     it('ignores Enter in an empty section slot', () => {
-      const current = state({ segments: [{ text: 'Once', seamAfter: Seam.Section }, { text: '' }] });
+      const current = state({
+        segments: [{ text: 'Once', seamAfter: Seam.Section }, { text: '' }],
+      });
       expect(applyEnter(current)).toBe(current);
     });
 
@@ -86,7 +89,10 @@ describe('passage-composer', () => {
     });
 
     it('drops seamBefore when it equals the previous passage seam', () => {
-      const result = applyBackspace({ ...createEmptyComposer(), seamBefore: Seam.Section }, Seam.Paragraph);
+      const result = applyBackspace(
+        { ...createEmptyComposer(), seamBefore: Seam.Section },
+        Seam.Paragraph,
+      );
       expect((result as { state: ComposerState }).state.seamBefore).toBeUndefined();
     });
 

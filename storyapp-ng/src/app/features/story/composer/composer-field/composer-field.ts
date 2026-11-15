@@ -1,9 +1,9 @@
 import {
-  Component,
-  DOCUMENT,
-  ElementRef,
   afterRenderEffect,
+  Component,
   computed,
+  DOCUMENT,
+  type ElementRef,
   inject,
   input,
   output,
@@ -21,57 +21,38 @@ import {
 } from '../composer-dom';
 import {
   segmentLayoutClass,
-  segmentStartVisualIsBlock,
   type SegmentStartVisual,
+  segmentStartVisualIsBlock,
 } from '../segment-visuals';
 
 /**
- * Port of storyapp-web/src/components/ComposerField.tsx: one contentEditable draft segment.
- * The host (display: contents) plays the role of the React wrapper span.
+ * One contentEditable segment of the draft. The host is `display: contents`, so the editable
+ * span sits directly in the text flow.
  */
 @Component({
-  selector: 'app-composer-field',
+  selector: 'sa-composer-field',
   host: {
     class: 'contents',
     '(mousedown)': 'onWrapperMouseDown($event)',
   },
-  template: `<span
-    #editable
-    role="textbox"
-    aria-label="Story continuation"
-    [attr.aria-multiline]="isBlock()"
-    [attr.aria-disabled]="disabled()"
-    [attr.contenteditable]="disabled() ? 'false' : 'true'"
-    spellcheck="true"
-    [attr.tabindex]="disabled() ? -1 : 0"
-    [attr.data-testid]="isActive() ? 'composer-field' : null"
-    [class]="fieldClass()"
-    (input)="onInput()"
-    (paste)="onPaste($event)"
-    (compositionstart)="onCompositionStart()"
-    (compositionend)="onCompositionEnd()"
-    (keydown)="onKeyDown($event)"
-    (keyup)="onKeyUp($event)"
-    (focus)="onFocus()"
-    (blur)="fieldBlur.emit()"
-  ></span>`,
+  templateUrl: './composer-field.html',
 })
 export class ComposerField {
   private readonly document = inject(DOCUMENT);
 
   readonly text = input.required<string>();
-  /** React seedToken: a change rewrites the DOM text and refocuses the active field. */
+  /** A change rewrites the DOM text and refocuses the active field (`DraftStore.draftVersion`). */
   readonly version = input.required<number>();
   readonly startVisual = input.required<SegmentStartVisual>();
   readonly isActive = input.required<boolean>();
   readonly disabled = input.required<boolean>();
 
   readonly textChange = output<string>();
-  readonly segmentFocus = output<void>();
+  readonly segmentFocus = output();
   readonly enterTap = output<string>();
   readonly composerKeyDown = output<KeyboardEvent>();
   readonly composerKeyUp = output<KeyboardEvent>();
-  readonly fieldBlur = output<void>();
+  readonly fieldBlur = output();
 
   private readonly editable = viewChild.required<ElementRef<HTMLSpanElement>>('editable');
 
@@ -90,7 +71,7 @@ export class ComposerField {
   );
 
   constructor() {
-    // useEffect(..., [seedToken, disabled]): write the draft text, focus the active field.
+    // On a new version (or enable/disable): write the draft text, focus the active field.
     afterRenderEffect(() => {
       this.version();
       const disabled = this.disabled();
@@ -99,6 +80,10 @@ export class ComposerField {
         writePlainText(element, this.text());
         if (!disabled && this.isActive()) {
           requestAnimationFrame(() => {
+            // The field may have been disabled or deactivated during this frame.
+            if (this.disabled() || !this.isActive()) {
+              return;
+            }
             if (this.document.activeElement !== element) {
               element.focus({ preventScroll: true });
             }
@@ -127,11 +112,13 @@ export class ComposerField {
       };
 
       this.document.addEventListener('selectionchange', restoreCaretIfLost);
-      onCleanup(() => this.document.removeEventListener('selectionchange', restoreCaretIfLost));
+      onCleanup(() => {
+        this.document.removeEventListener('selectionchange', restoreCaretIfLost);
+      });
     });
   }
 
-  /** ComposerFieldHandle.focus */
+  /** Puts the caret at the end of the field (used when the page around it is clicked). */
   focus(): void {
     const element = this.editable().nativeElement;
     if (this.disabled()) {
@@ -179,6 +166,8 @@ export class ComposerField {
       return;
     }
 
+    // Deprecated, but still the only way to insert text that the browser's undo stack tracks.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     this.document.execCommand('insertText', false, pasted);
     this.onInput();
   }

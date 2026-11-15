@@ -5,10 +5,9 @@ import { Directive, input } from '@angular/core';
  * (e.g. "Signing in...") stays in the template.
  */
 @Directive({
-  selector: 'button[appSubmitButton]',
+  selector: 'button[saSubmitButton]',
   host: {
-    type: 'submit',
-    class: 'p-3 text-base font-semibold text-white arounded-md corner-squircle mt-2 transition-all',
+    class: 'p-3 text-base font-semibold text-white squircle-md mt-2 transition-all',
     '[disabled]': 'busy()',
     '[class]':
       "busy() ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'",

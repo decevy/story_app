@@ -1,4 +1,5 @@
-import { Seam } from '../../../core/models/story';
+import { Seam } from '@core/models/story';
+
 import { getSegmentStartVisual, type SegmentLike } from './segment-visuals';
 
 describe('getSegmentStartVisual', () => {

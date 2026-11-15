@@ -5,7 +5,7 @@ import { SubmitButton } from './submit-button';
 
 @Component({
   imports: [SubmitButton],
-  template: `<button appSubmitButton [busy]="busy()">Save</button>`,
+  template: `<button type="submit" saSubmitButton [busy]="busy()">Save</button>`,
 })
 class Host {
   readonly busy = signal(false);

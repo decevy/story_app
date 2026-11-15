@@ -1,5 +1,6 @@
 {
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  // Debug the app in Chrome against `npm start` (port 3000). Unit tests debug through the
+  // Vitest extension; E2E tests through the Playwright extension.
   "version": "0.2.0",
   "configurations": [
     {
@@ -7,14 +8,7 @@
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "npm: start",
-      "url": "http://localhost:4200/"
-    },
-    {
-      "name": "ng test",
-      "type": "chrome",
-      "request": "launch",
-      "preLaunchTask": "npm: test",
-      "url": "http://localhost:9876/debug.html"
+      "url": "http://localhost:3000/"
     }
   ]
 }

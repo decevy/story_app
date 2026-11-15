@@ -1,13 +1,13 @@
 import { Component, signal, viewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CARET_ZWSP } from '../composer-dom';
-import { type SegmentStartVisual } from '../segment-visuals';
+import type { SegmentStartVisual } from '../segment-visuals';
 import { ComposerField } from './composer-field';
 
 @Component({
   imports: [ComposerField],
-  template: `<app-composer-field
+  template: `<sa-composer-field
     [text]="text()"
     [version]="version()"
     [startVisual]="startVisual()"
@@ -117,6 +117,7 @@ describe('ComposerField', () => {
     it('ignores input while disabled', async () => {
       host.disabled.set(true);
       await render();
+      host.events.length = 0;
       input('Hello');
       expect(host.events).toEqual([]);
     });
@@ -186,5 +187,40 @@ describe('ComposerField', () => {
       expect(selection.anchorNode).toBe(editable.firstChild);
       expect(selection.anchorOffset).toBe(3);
     });
+  });
+});
+
+// Own block: animation frames are faked before the first render, so no real frame from an
+// earlier render can focus the field halfway through the test.
+describe('ComposerField deferred focus', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame'] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function renderHost() {
+    const fixture = TestBed.createComponent(Host);
+    await fixture.whenStable();
+    const editable = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '[role="textbox"]',
+    )!;
+    return { fixture, editable };
+  }
+
+  it('focuses the active field on the next frame', async () => {
+    const { editable } = await renderHost();
+    vi.runAllTimers();
+    expect(document.activeElement).toBe(editable);
+  });
+
+  it('does not focus a field that was disabled before that frame', async () => {
+    const { fixture, editable } = await renderHost();
+    fixture.componentInstance.disabled.set(true);
+    await fixture.whenStable();
+    vi.runAllTimers();
+    expect(document.activeElement).not.toBe(editable);
   });
 });

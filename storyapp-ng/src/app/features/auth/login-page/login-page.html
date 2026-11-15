@@ -1,52 +1,49 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100 p-5">
-  <div class="bg-white p-10 arounded-lg corner-squircle shadow-lg w-full max-w-md">
-    <h1 class="text-3xl font-bold text-center mb-2 text-gray-800">StoryApp</h1>
-    <h2 class="text-2xl text-center mb-8 text-gray-600">Sign In</h2>
+<sa-auth-card subtitle="Sign In">
+  @if (formError()) {
+    <sa-form-error>{{ formError() }}</sa-form-error>
+  }
 
-    @if (error()) {
-      <app-form-error>{{ error() }}</app-form-error>
-    }
-
-    <form (submit)="onSubmit($event)" class="flex flex-col gap-5">
-      <div class="flex flex-col gap-2">
-        <label for="email" appFieldLabel>Email</label>
-        <input
-          appTextInput
-          id="email"
-          type="email"
-          [formField]="loginForm.email"
-          placeholder="your@email.com"
-          data-testid="login-email"
-        />
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <label for="password" appFieldLabel>Password</label>
-        <input
-          appTextInput
-          id="password"
-          type="password"
-          [formField]="loginForm.password"
-          placeholder="••••••••"
-          data-testid="login-password"
-        />
-      </div>
-
-      <button appSubmitButton [busy]="submitting()" data-testid="login-submit">
-        {{ submitting() ? 'Signing in...' : 'Sign In' }}
-      </button>
-    </form>
-
-    <p class="mt-5 text-center text-sm text-gray-600">
-      Don't have an account?
-      <a routerLink="/register" class="text-blue-500 font-semibold hover:underline">Sign up</a>
-    </p>
-
-    <div class="mt-8 p-4 bg-gray-50 arounded-md corner-squircle text-xs">
-      <p class="font-semibold mb-2 text-gray-600">Test Accounts:</p>
-      <p class="my-1 text-gray-600 font-mono">aya&#64;test.com / test123</p>
-      <p class="my-1 text-gray-600 font-mono">bobby&#64;test.com / test123</p>
-      <p class="my-1 text-gray-600 font-mono">carlos&#64;test.com / test123</p>
+  <form (submit)="onSubmit($event)" class="flex flex-col gap-5">
+    <div class="flex flex-col gap-2">
+      <label for="email" saFieldLabel>Email</label>
+      <input
+        saTextInput
+        id="email"
+        type="email"
+        [formField]="loginForm.email"
+        placeholder="your@email.com"
+        data-testid="login-email"
+      />
     </div>
-  </div>
-</div>
+
+    <div class="flex flex-col gap-2">
+      <label for="password" saFieldLabel>Password</label>
+      <input
+        saTextInput
+        id="password"
+        type="password"
+        [formField]="loginForm.password"
+        placeholder="••••••••"
+        data-testid="login-password"
+      />
+    </div>
+
+    <button type="submit" saSubmitButton [busy]="submitting()" data-testid="login-submit">
+      {{ submitting() ? 'Signing in...' : 'Sign In' }}
+    </button>
+  </form>
+
+  <p class="mt-5 text-center text-sm text-gray-600">
+    Don't have an account?
+    <a routerLink="/register" class="font-semibold text-blue-500 hover:underline">Sign up</a>
+  </p>
+
+  @if (showTestAccounts) {
+    <div class="mt-8 squircle-md bg-gray-50 p-4 text-xs" data-testid="test-accounts">
+      <p class="mb-2 font-semibold text-gray-600">Test Accounts:</p>
+      <p class="my-1 font-mono text-gray-600">aya&#64;test.com / test123</p>
+      <p class="my-1 font-mono text-gray-600">bobby&#64;test.com / test123</p>
+      <p class="my-1 font-mono text-gray-600">carlos&#64;test.com / test123</p>
+    </div>
+  }
+</sa-auth-card>

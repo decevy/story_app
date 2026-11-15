@@ -1,13 +1,24 @@
-@if (stories().length === 0) {
-  <div class="flex flex-col items-center justify-center h-full p-6 text-center">
-    <p class="text-gray-500 mb-2">No stories yet</p>
+@if (failed()) {
+  <div class="flex h-full flex-col items-center justify-center p-6 text-center" role="alert">
+    <p class="mb-2 text-gray-500">Stories could not be loaded</p>
+    <button
+      type="button"
+      (click)="retry()"
+      class="cursor-pointer text-sm font-semibold text-blue-500 hover:underline"
+    >
+      Try again
+    </button>
+  </div>
+} @else if (items().length === 0) {
+  <div class="flex h-full flex-col items-center justify-center p-6 text-center">
+    <p class="mb-2 text-gray-500">No stories yet</p>
     <p class="text-sm text-gray-400">Create or join a story to add passages</p>
   </div>
 } @else {
-  <div class="flex flex-col h-full">
-    <div class="p-4 border-b border-gray-200">
+  <div class="flex h-full flex-col">
+    <div class="border-b border-gray-200 p-4">
       <h2 id="story-list-heading" class="text-lg font-semibold text-gray-800">Stories</h2>
-      <p class="text-sm text-gray-500">{{ stories().length }} available</p>
+      <p class="text-sm text-gray-500">{{ items().length }} available</p>
     </div>
 
     <div
@@ -20,31 +31,31 @@
       [value]="selected()"
       (valueChange)="onSelectionChange($event)"
     >
-      @for (story of stories(); track story.id) {
+      @for (item of items(); track item.id) {
         <div
           ngOption
-          [value]="story.id"
-          [label]="story.name"
+          [value]="item.id"
+          [label]="item.name"
           data-testid="story-list-item"
-          class="p-4 border-b border-gray-100 cursor-pointer transition-colors"
-          [class]="
-            store.currentStory()?.id === story.id
-              ? 'bg-blue-50 border-l-4 border-l-blue-500'
-              : 'hover:bg-gray-50'
-          "
+          class="cursor-pointer border-b border-gray-100 p-4 transition-colors"
+          [class]="item.selected ? 'border-l-4 border-l-blue-500 bg-blue-50' : 'hover:bg-gray-50'"
         >
-          <div class="flex items-start justify-between mb-1">
-            <h3 class="font-semibold text-gray-800">{{ story.name }}</h3>
-            @if (story.lastPassage) {
-              <span class="text-xs text-gray-400">{{ lastPassageAge(story) }}</span>
+          <div class="mb-1 flex items-start justify-between">
+            <h3 class="font-semibold text-gray-800">{{ item.name }}</h3>
+            @if (item.lastPassageAt) {
+              <span class="text-xs text-gray-400">{{ item.lastPassageAt | timeAgo: now() }}</span>
             }
           </div>
 
-          <p class="text-sm text-gray-500 mb-1">
-            {{ story.writerCount }} writer{{ story.writerCount !== 1 ? 's' : '' }}
+          <p class="mb-1 text-sm text-gray-500">
+            {{ item.writerCount | plural: 'writer' : 'writers' }}
           </p>
 
-          <p class="text-sm text-gray-600 truncate">{{ lastPassagePreview(story) }}</p>
+          <p class="truncate text-sm text-gray-600">
+            {{
+              item.preview === null ? 'No passages yet' : (item.preview | truncate: previewLength)
+            }}
+          </p>
         </div>
       }
     </div>

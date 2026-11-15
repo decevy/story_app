@@ -1,26 +1,34 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
-import { STORAGE_KEYS } from '../config/constants';
+import { LocalStorage } from '../storage/local-storage';
 
-/** Port of storyapp-web/src/services/token.service.ts. */
+/** localStorage keys; the same as storyapp-web, so a session carries over between the apps. */
+export const TOKEN_STORAGE_KEYS = {
+  accessToken: 'storyapp_access_token',
+  refreshToken: 'storyapp_refresh_token',
+} as const;
+
+/** Keeps the access and refresh token in localStorage. */
 @Injectable({ providedIn: 'root' })
 export class TokenStore {
+  private readonly storage = inject(LocalStorage);
+
   getAccessToken(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    return this.storage.get(TOKEN_STORAGE_KEYS.accessToken);
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+    return this.storage.get(TOKEN_STORAGE_KEYS.refreshToken);
   }
 
   setTokens(accessToken: string, refreshToken: string): void {
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+    this.storage.set(TOKEN_STORAGE_KEYS.accessToken, accessToken);
+    this.storage.set(TOKEN_STORAGE_KEYS.refreshToken, refreshToken);
   }
 
   clearTokens(): void {
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    this.storage.remove(TOKEN_STORAGE_KEYS.accessToken);
+    this.storage.remove(TOKEN_STORAGE_KEYS.refreshToken);
   }
 
   hasTokens(): boolean {

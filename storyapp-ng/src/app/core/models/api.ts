@@ -7,3 +7,14 @@ export interface ErrorResponse {
 export interface MessageResponse {
   message: string;
 }
+
+/** A page of results (e.g. `GET /stories/:id/passages?page=1&pageSize=50`). */
+export interface PaginatedResponse<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}

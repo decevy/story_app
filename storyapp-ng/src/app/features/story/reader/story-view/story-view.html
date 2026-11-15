@@ -1,0 +1,73 @@
+@if (store.storyFailed()) {
+  <div class="flex h-full items-center justify-center p-6">
+    <div class="text-center text-gray-500">
+      <p class="mb-2 text-xl">This story could not be opened</p>
+      <p class="text-sm">
+        It may have been deleted, or you no longer have access.
+        <a routerLink="/" class="font-semibold text-blue-500 hover:underline"
+          >Back to your stories</a
+        >
+      </p>
+    </div>
+  </div>
+} @else if (store.currentStory(); as story) {
+  <div class="flex h-full min-h-0 flex-1 flex-col bg-stone-100">
+    <sa-story-toolbar
+      [storyName]="story.name"
+      [canSend]="draft.canSend()"
+      [(font)]="fontId"
+      (endPassage)="endPassage()"
+    />
+
+    <div class="min-h-0 flex-1 [scrollbar-width:thin] overflow-y-auto">
+      <!-- The book sheet: a click anywhere outside the draft puts the caret in the draft. -->
+      <div
+        class="mx-auto flex min-h-full max-w-[42rem] cursor-text flex-col bg-[#faf8f5] px-6 py-10 shadow-sm ring-1 ring-stone-200/60 min-[900px]:my-6 min-[900px]:min-h-[calc(100%-3rem)] min-[900px]:squircle-lg"
+        [style.font-family]="fontStack()"
+        (mousedown)="onSheetMouseDown($event)"
+      >
+        @if (store.passages().length === 0) {
+          <p class="mb-6 text-sm text-stone-500">No passages yet. Write the opening below.</p>
+        }
+
+        <div class="flex min-h-[12rem] flex-1 flex-col items-stretch text-lg leading-[1.75]">
+          <div
+            class="draft-zone min-w-0 flex-1 cursor-text text-stone-900 select-text"
+            [style.--draft-color]="draft.draftColor()"
+          >
+            <span class="contents" data-testid="passages">
+              @for (passage of store.passages(); track passage.id; let passageIndex = $index) {
+                <sa-passage-span
+                  [passage]="passage"
+                  [previousPassageLastSeam]="previousSeams()[passageIndex]"
+                />
+              }
+            </span>
+            @for (segment of draft.composer().segments; track $index; let index = $index) {
+              <span
+                ><sa-composer-field
+                  [text]="segment.text"
+                  [version]="draft.draftVersion()"
+                  [startVisual]="draftStartVisuals()[index] ?? 'inline'"
+                  [isActive]="index === draft.composer().activeIndex"
+                  [disabled]="draft.disabled()"
+                  (textChange)="draft.handleSegmentTextChange(index, $event)"
+                  (segmentFocus)="draft.handleSegmentFocus(index)"
+                  (enterTap)="draft.handleEnterTap($event)"
+                  (composerKeyDown)="draft.handleComposerKeyDown($event)"
+                  (composerKeyUp)="draft.handleComposerKeyUp($event)"
+                  (fieldBlur)="draft.clearHoldTimers()"
+              /></span>
+            }
+            <span #anchor class="inline-block h-0 w-0 align-baseline" aria-hidden="true"></span>
+          </div>
+          <span class="block min-h-[6rem] w-full flex-1 cursor-text" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="flex h-full items-center justify-center text-gray-500" role="status">
+    Loading story...
+  </div>
+}

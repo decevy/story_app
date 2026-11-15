@@ -1,22 +1,21 @@
-import { PassageSegmentInput, Seam } from '../../../core/models/story';
+import { type PassageSegmentInput, Seam } from '@core/models/story';
+
 import { isSectionBreak } from './segment-visuals';
 
-export type DraftSegment = {
+export interface DraftSegment {
   text: string;
   seamAfter?: Seam;
-};
+}
 
-export type ComposerState = {
+export interface ComposerState {
   segments: DraftSegment[];
   activeIndex: number;
   /** Break before the first draft segment. Overrides the previous passage while drafting. */
   seamBefore?: Seam;
-};
+}
 
 export type BackspaceResult =
-  | { type: 'structural'; state: ComposerState }
-  | { type: 'deleteChar' }
-  | { type: 'noop' };
+  { type: 'structural'; state: ComposerState } | { type: 'deleteChar' } | { type: 'noop' };
 
 export function createEmptyComposer(): ComposerState {
   return { segments: [{ text: '' }], activeIndex: 0 };
@@ -30,10 +29,7 @@ export function cloneComposer(state: ComposerState): ComposerState {
   };
 }
 
-export function updateActiveSegmentText(
-  state: ComposerState,
-  text: string,
-): ComposerState {
+export function updateActiveSegmentText(state: ComposerState, text: string): ComposerState {
   return updateSegmentText(state, state.activeIndex, text);
 }
 
@@ -43,14 +39,15 @@ export function updateSegmentText(
   text: string,
 ): ComposerState {
   const next = cloneComposer(state);
-  next.segments[index]!.text = text;
+  const segment = next.segments[index];
+  if (!segment) {
+    return state;
+  }
+  segment.text = text;
   return next;
 }
 
-export function setActiveSegmentIndex(
-  state: ComposerState,
-  index: number,
-): ComposerState {
+export function setActiveSegmentIndex(state: ComposerState, index: number): ComposerState {
   if (state.activeIndex === index) {
     return state;
   }
@@ -67,19 +64,16 @@ function insertEmptySegmentAfterActive(composer: ComposerState): void {
   composer.activeIndex = insertAt;
 }
 
-function effectiveLeading(
-  state: ComposerState,
-  previousPassageLastSeam?: Seam,
-): Seam | undefined {
+function effectiveLeading(state: ComposerState, previousPassageLastSeam?: Seam): Seam | undefined {
   return state.seamBefore ?? previousPassageLastSeam;
 }
 
-export function applyEnter(
-  state: ComposerState,
-  previousPassageLastSeam?: Seam,
-): ComposerState {
+export function applyEnter(state: ComposerState, previousPassageLastSeam?: Seam): ComposerState {
   const next = cloneComposer(state);
-  const active = next.segments[next.activeIndex]!;
+  const active = next.segments[next.activeIndex];
+  if (!active) {
+    return state;
+  }
 
   if (active.text.length > 0) {
     const hasSegmentAfter = next.activeIndex < next.segments.length - 1;
@@ -106,18 +100,15 @@ export function applyEnter(
     if (isSectionBreak(leading)) {
       return state;
     }
-    next.seamBefore =
-      leading === Seam.Paragraph
-        ? Seam.Section
-        : Seam.Paragraph;
+    next.seamBefore = leading === Seam.Paragraph ? Seam.Section : Seam.Paragraph;
     return next;
   }
 
   // Otherwise, we're on an empty segment that isn't the first; look at the previous segment.
-  const previous = next.segments[next.activeIndex - 1]!;
+  const previous = next.segments[next.activeIndex - 1];
 
-  // If the previous segment ended with a section break, do nothing:
-  if (previous.seamAfter === Seam.Section) {
+  // If the previous segment ended with a section break (or there is none), do nothing:
+  if (!previous || previous.seamAfter === Seam.Section) {
     return state;
   }
 
@@ -137,7 +128,10 @@ export function applyBackspace(
   state: ComposerState,
   previousPassageLastSeam?: Seam,
 ): BackspaceResult {
-  const active = state.segments[state.activeIndex]!;
+  const active = state.segments[state.activeIndex];
+  if (!active) {
+    return { type: 'noop' };
+  }
 
   if (active.text.length > 0) {
     return { type: 'deleteChar' };
@@ -161,7 +155,10 @@ export function applyBackspace(
   }
 
   const next = cloneComposer(state);
-  const previous = next.segments[next.activeIndex - 1]!;
+  const previous = next.segments[next.activeIndex - 1];
+  if (!previous) {
+    return { type: 'noop' };
+  }
 
   if (previous.seamAfter === Seam.Section) {
     previous.seamAfter = Seam.Paragraph;
@@ -177,10 +174,12 @@ export function applyBackspace(
 export function toSegmentInputs(state: ComposerState): PassageSegmentInput[] {
   const segments = cloneComposer(state).segments;
 
-  while (segments.length > 1 && segments[segments.length - 1]!.text.trim() === '') {
+  // Drop trailing empty segments; the segment before a dropped one loses its break.
+  while (segments.length > 1 && segments.at(-1)?.text.trim() === '') {
     segments.pop();
-    if (segments.length > 0) {
-      delete segments[segments.length - 1]!.seamAfter;
+    const newLast = segments.at(-1);
+    if (newLast) {
+      delete newLast.seamAfter;
     }
   }
 

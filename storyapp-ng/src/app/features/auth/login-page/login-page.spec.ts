@@ -1,84 +1,124 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { Router } from '@angular/router';
+import { AuthService } from '@core/auth/auth-service';
+import { DEV_MODE } from '@core/config/dev-mode';
+import { Logger } from '@core/logging/logger';
+import { Notifier } from '@core/notifications/notifier';
+import { fakeLogger, fakeNotifier } from '@testing/fakes';
+import { deferred } from '@testing/helpers';
+import { render, screen } from '@testing-library/angular';
+import { userEvent } from '@testing-library/user-event';
 
-import { AuthService } from '../../../core/auth/auth';
 import { LoginPage } from './login-page';
 
 describe('LoginPage', () => {
-  let resolveLogin: () => void;
-  let rejectLogin: (error: unknown) => void;
   let login: ReturnType<typeof vi.fn>;
+  let notifier: ReturnType<typeof fakeNotifier>;
 
   beforeEach(() => {
-    login = vi.fn(
-      () =>
-        new Promise<void>((resolve, reject) => {
-          resolveLogin = resolve;
-          rejectLogin = reject;
-        }),
-    );
-    TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: AuthService, useValue: { login } }],
-    });
-    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    login = vi.fn(async () => undefined);
+    notifier = fakeNotifier();
   });
 
-  /** Lets the submit action's promise chain settle, then renders. */
-  async function settle(page: Awaited<ReturnType<typeof render>>) {
-    await new Promise((resolve) => setTimeout(resolve));
-    await page.fixture.whenStable();
+  async function setup(inputs: { returnUrl?: string } = {}, devMode = true) {
+    const view = await render(LoginPage, {
+      inputs,
+      providers: [
+        { provide: DEV_MODE, useValue: devMode },
+        { provide: AuthService, useValue: { login } },
+        { provide: Logger, useValue: fakeLogger() },
+        { provide: Notifier, useValue: notifier },
+      ],
+    });
+    const navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const button = () => screen.getByTestId<HTMLButtonElement>('login-submit');
+    return { ...view, navigateByUrl, button };
   }
 
-  async function render() {
-    const fixture = TestBed.createComponent(LoginPage);
-    await fixture.whenStable();
-    const element = fixture.nativeElement as HTMLElement;
-    const input = (testId: string) =>
-      element.querySelector<HTMLInputElement>(`[data-testid="${testId}"]`)!;
-    const button = element.querySelector<HTMLButtonElement>('[data-testid="login-submit"]')!;
-    return { fixture, element, input, button };
+  async function fillAndSubmit(view: Awaited<ReturnType<typeof setup>>) {
+    await userEvent.type(screen.getByLabelText('Email'), 'aya@test.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'test123');
+    await userEvent.click(view.button());
+    await view.fixture.whenStable();
   }
 
-  async function fillAndSubmit(page: Awaited<ReturnType<typeof render>>) {
-    for (const [testId, value] of [
-      ['login-email', 'aya@test.com'],
-      ['login-password', 'test123'],
-    ]) {
-      const field = page.input(testId);
-      field.value = value;
-      field.dispatchEvent(new Event('input'));
-    }
-    page.element.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
-    await page.fixture.whenStable();
-  }
-
-  it('disables the form while signing in and re-enables it afterwards', async () => {
-    const page = await render();
-    await fillAndSubmit(page);
+  it('disables the form while signing in, then goes home', async () => {
+    const pending = deferred<undefined>();
+    login.mockReturnValueOnce(pending.promise);
+    const view = await setup();
+    await fillAndSubmit(view);
 
     expect(login).toHaveBeenCalledWith({ email: 'aya@test.com', password: 'test123' });
-    expect(page.button.disabled).toBe(true);
-    expect(page.button.textContent?.trim()).toBe('Signing in...');
-    expect(page.input('login-email').disabled).toBe(true);
+    expect(view.button().disabled).toBe(true);
+    expect(view.button().textContent.trim()).toBe('Signing in...');
+    expect(screen.getByLabelText<HTMLInputElement>('Email').disabled).toBe(true);
 
-    resolveLogin();
-    await settle(page);
-
-    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/']);
-    expect(page.button.disabled).toBe(false);
-    expect(page.button.textContent?.trim()).toBe('Sign In');
-    expect(page.input('login-email').disabled).toBe(false);
+    pending.resolve(undefined);
+    await vi.waitFor(() => {
+      expect(view.navigateByUrl).toHaveBeenCalledWith('/');
+    });
+    await view.fixture.whenStable();
+    expect(view.button().disabled).toBe(false);
+    expect(view.button().textContent.trim()).toBe('Sign In');
   });
 
-  it('shows an error and re-enables the form when sign-in fails', async () => {
-    const page = await render();
-    await fillAndSubmit(page);
+  it('returns to the page the user came from', async () => {
+    const view = await setup({ returnUrl: '/stories/3' });
+    await fillAndSubmit(view);
+    await vi.waitFor(() => {
+      expect(view.navigateByUrl).toHaveBeenCalledWith('/stories/3');
+    });
+  });
 
-    rejectLogin(new Error('401'));
-    await settle(page);
+  it('ignores a return URL to another site', async () => {
+    const view = await setup({ returnUrl: '//evil.test' });
+    await fillAndSubmit(view);
+    await vi.waitFor(() => {
+      expect(view.navigateByUrl).toHaveBeenCalledWith('/');
+    });
+  });
 
-    expect(page.element.textContent).toContain('Invalid email or password. Please try again.');
-    expect(page.button.disabled).toBe(false);
+  it('shows an error on wrong credentials until a field changes', async () => {
+    login.mockRejectedValueOnce(new HttpErrorResponse({ status: 401 }));
+    const view = await setup();
+    await fillAndSubmit(view);
+
+    await vi.waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toContain(
+        'Invalid email or password. Please try again.',
+      );
+    });
+    expect(view.button().disabled).toBe(false);
+
+    await userEvent.type(screen.getByLabelText('Password'), '4');
+    await view.fixture.whenStable();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('reports a network failure as a notification and keeps the form usable', async () => {
+    login.mockRejectedValueOnce(new HttpErrorResponse({ status: 0 }));
+    const view = await setup();
+    await fillAndSubmit(view);
+
+    await vi.waitFor(() => {
+      expect(notifier.error).toHaveBeenCalledWith(
+        'Could not sign in. Check your connection and try again.',
+      );
+    });
+    expect(screen.queryByRole('alert')).toBeNull();
+
+    await userEvent.click(view.button());
+    expect(login).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the test accounts in development only', async () => {
+    await setup();
+    expect(screen.getByTestId('test-accounts')).toBeTruthy();
+  });
+
+  it('hides the test accounts in production', async () => {
+    await setup({}, false);
+    expect(screen.queryByTestId('test-accounts')).toBeNull();
   });
 });

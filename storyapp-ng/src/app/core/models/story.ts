@@ -1,4 +1,4 @@
-import { User } from './user';
+import type { User } from './user';
 
 export enum Seam {
   Inline = 0,
@@ -33,31 +33,18 @@ export interface Passage {
   editedAt?: string;
 }
 
-export function passageText(passage: Passage): string {
-  return [...passage.segments]
-    .sort((a, b) => a.order - b.order)
-    .map((segment) => segment.text)
-    .join('');
-}
-
 export function sortedPassageSegments(passage: Passage): PassageSegment[] {
   return [...passage.segments].sort((a, b) => a.order - b.order);
 }
 
-export function lastPassageEndsWithStructuralSeam(passage: Passage): boolean {
-  const segments = sortedPassageSegments(passage);
-  const last = segments[segments.length - 1];
-  return (
-    last?.seamAfter === Seam.Paragraph ||
-    last?.seamAfter === Seam.Section ||
-    last?.seamAfter === Seam.MajorSection ||
-    last?.seamAfter === Seam.Chapter
-  );
+export function passageText(passage: Passage): string {
+  return sortedPassageSegments(passage)
+    .map((segment) => segment.text)
+    .join('');
 }
 
 export function lastPassageSeam(passage: Passage): Seam | undefined {
-  const segments = sortedPassageSegments(passage);
-  return segments[segments.length - 1]?.seamAfter;
+  return sortedPassageSegments(passage).at(-1)?.seamAfter;
 }
 
 export interface Writer {
@@ -86,29 +73,4 @@ export interface StorySummary {
   createdAt: string;
   writerCount: number;
   lastPassage?: Passage;
-}
-
-export interface CreateStoryRequest {
-  name: string;
-  description?: string;
-  isPrivate: boolean;
-}
-
-export interface UpdateStoryRequest {
-  name: string;
-  description?: string;
-}
-
-export interface AddWriterRequest {
-  userId: number;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
 }

@@ -1,12 +1,12 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
-import { AuthService } from './auth';
-import { TokenStore } from './token-store';
 import { APP_CONFIG } from '../config/app-config';
 import { authInterceptor } from './auth-interceptor';
+import { AuthService } from './auth-service';
+import { TokenStore } from './token-store';
 
 const API = 'http://api.test';
 
@@ -33,7 +33,9 @@ describe('authInterceptor', () => {
     tokens.setTokens('old-access', 'old-refresh');
   });
 
-  afterEach(() => controller.verify());
+  afterEach(() => {
+    controller.verify();
+  });
 
   function refreshSucceeds(): void {
     const refresh = controller.expectOne(`${API}/api/auth/refresh`);
@@ -59,7 +61,9 @@ describe('authInterceptor', () => {
     let result: unknown;
     http.get(`${API}/api/stories`).subscribe((value) => (result = value));
 
-    controller.expectOne(`${API}/api/stories`).flush(null, { status: 401, statusText: 'Unauthorized' });
+    controller
+      .expectOne(`${API}/api/stories`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
     refreshSucceeds();
 
     const retry = controller.expectOne(`${API}/api/stories`);
@@ -76,8 +80,12 @@ describe('authInterceptor', () => {
     http.get(`${API}/api/stories`).subscribe((value) => results.push(value));
     http.get(`${API}/api/stories/1`).subscribe((value) => results.push(value));
 
-    controller.expectOne(`${API}/api/stories`).flush(null, { status: 401, statusText: 'Unauthorized' });
-    controller.expectOne(`${API}/api/stories/1`).flush(null, { status: 401, statusText: 'Unauthorized' });
+    controller
+      .expectOne(`${API}/api/stories`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+    controller
+      .expectOne(`${API}/api/stories/1`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
 
     // expectOne fails if a second refresh was started.
     refreshSucceeds();
@@ -96,21 +104,28 @@ describe('authInterceptor', () => {
     let error: unknown;
     http.get(`${API}/api/stories`).subscribe({ error: (e) => (error = e) });
 
-    controller.expectOne(`${API}/api/stories`).flush(null, { status: 401, statusText: 'Unauthorized' });
+    controller
+      .expectOne(`${API}/api/stories`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
     controller
       .expectOne(`${API}/api/auth/refresh`)
-      .flush({ error: 'Invalid or expired refresh token' }, { status: 401, statusText: 'Unauthorized' });
+      .flush(
+        { error: 'Invalid or expired refresh token' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
 
     expect(error).toBeTruthy();
     expect(tokens.getAccessToken()).toBeNull();
     expect(tokens.getRefreshToken()).toBeNull();
     expect(auth.user()).toBeNull();
-    expect(navigate).toHaveBeenCalledWith(['/login']);
+    expect(navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/' } });
   });
 
   it('does not intercept the refresh call itself', () => {
     http.get(`${API}/api/stories`).subscribe({ error: () => undefined });
-    controller.expectOne(`${API}/api/stories`).flush(null, { status: 401, statusText: 'Unauthorized' });
+    controller
+      .expectOne(`${API}/api/stories`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
 
     const refresh = controller.expectOne(`${API}/api/auth/refresh`);
     expect(refresh.request.headers.has('Authorization')).toBe(false);
@@ -124,9 +139,13 @@ describe('authInterceptor', () => {
   it('does not retry a request a second time', () => {
     let error: unknown;
     http.get(`${API}/api/stories`).subscribe({ error: (e) => (error = e) });
-    controller.expectOne(`${API}/api/stories`).flush(null, { status: 401, statusText: 'Unauthorized' });
+    controller
+      .expectOne(`${API}/api/stories`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
     refreshSucceeds();
-    controller.expectOne(`${API}/api/stories`).flush(null, { status: 401, statusText: 'Unauthorized' });
+    controller
+      .expectOne(`${API}/api/stories`)
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
 
     controller.expectNone(`${API}/api/auth/refresh`);
     expect(error).toBeTruthy();

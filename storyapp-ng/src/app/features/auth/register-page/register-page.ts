@@ -1,22 +1,24 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import {
-  FormField,
   disabled,
-  email,
+  email as validEmail,
   form,
+  FormField,
   required,
   submit,
   validate,
 } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '@core/auth/auth-service';
+import { apiErrorMessage, isRejection } from '@core/http/api-errors';
+import { Logger } from '@core/logging/logger';
+import { Notifier } from '@core/notifications/notifier';
+import { FieldLabel } from '@shared/ui/field-label';
+import { FormError } from '@shared/ui/form-error/form-error';
+import { SubmitButton } from '@shared/ui/submit-button';
+import { TextInput } from '@shared/ui/text-input';
 
-import { AuthService } from '../../../core/auth/auth';
-import { ErrorResponse } from '../../../core/models/api';
-import { FieldLabel } from '../../../shared/ui/field-label';
-import { FormError } from '../../../shared/ui/form-error/form-error';
-import { SubmitButton } from '../../../shared/ui/submit-button';
-import { TextInput } from '../../../shared/ui/text-input';
+import { AuthCard } from '../auth-card/auth-card';
 
 interface RegisterModel {
   username: string;
@@ -26,18 +28,18 @@ interface RegisterModel {
 }
 
 const PASSWORD_MISMATCH = 'passwordMismatch';
+const MIN_PASSWORD_LENGTH = 6;
 
-/** Port of storyapp-web/src/pages/RegisterPage.tsx. */
 @Component({
-  selector: 'app-register-page',
-  imports: [FieldLabel, FormError, FormField, RouterLink, SubmitButton, TextInput],
+  selector: 'sa-register-page',
+  imports: [AuthCard, FieldLabel, FormError, FormField, RouterLink, SubmitButton, TextInput],
   templateUrl: './register-page.html',
 })
 export class RegisterPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-
-  protected readonly error = signal('');
+  private readonly logger = inject(Logger);
+  private readonly notifier = inject(Notifier);
 
   private readonly model = signal<RegisterModel>({
     username: '',
@@ -46,17 +48,20 @@ export class RegisterPage {
     confirmPassword: '',
   });
 
-  // Min length and the match check use validate() rather than minLength(): minLength()
-  // would add a native `minlength` attribute, and the React page reports both problems in
-  // its own error box instead of a browser bubble.
+  // Min length and the match check use validate() rather than minLength(): minLength() would add
+  // a native `minlength` attribute, and both problems are reported in the form's error box
+  // instead of a browser bubble.
   protected readonly registerForm = form(this.model, (path) => {
     required(path.username, { message: 'Username is required' });
     required(path.email, { message: 'Email is required' });
-    email(path.email, { message: 'Please enter a valid email address' });
+    validEmail(path.email, { message: 'Please enter a valid email address' });
     required(path.password, { message: 'Password is required' });
     validate(path.password, ({ value }) =>
-      value().length > 0 && value().length < 6
-        ? { kind: 'minLength', message: 'Password must be at least 6 characters' }
+      value().length > 0 && value().length < MIN_PASSWORD_LENGTH
+        ? {
+            kind: 'minLength',
+            message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+          }
         : undefined,
     );
     required(path.confirmPassword, { message: 'Please confirm your password' });
@@ -65,36 +70,44 @@ export class RegisterPage {
         ? { kind: PASSWORD_MISMATCH, message: 'Passwords do not match' }
         : undefined,
     );
-    disabled(path, () => this.submitting());
+    disabled(path, { when: () => this.submitting() });
   });
 
-  /** True while submit() runs the action; tracked by Signal Forms. */
   protected readonly submitting = computed(() => this.registerForm().submitting());
+
+  /**
+   * Errors show after the first submit, and then follow the form as the user fixes it. A
+   * mismatch is reported before the other problems.
+   */
+  private readonly submitted = signal(false);
+  protected readonly formError = computed(() => {
+    if (!this.submitted()) {
+      return '';
+    }
+    const errors = this.registerForm().errorSummary();
+    return (errors.find((error) => error.kind === PASSWORD_MISMATCH) ?? errors[0])?.message ?? '';
+  });
 
   protected async onSubmit(event: Event): Promise<void> {
     event.preventDefault();
-    this.error.set('');
+    this.submitted.set(true);
 
-    await submit(this.registerForm, {
-      action: async () => {
-        try {
-          const { username, email: emailValue, password } = this.model();
-          await this.auth.register({ username, email: emailValue, password });
-          await this.router.navigate(['/']); // Redirect to home after successful registration
-        } catch (err) {
-          const body =
-            err instanceof HttpErrorResponse ? (err.error as Partial<ErrorResponse> | null) : null;
-          this.error.set(body?.error || 'Registration failed. Please try again.');
-          console.error('Registration error:', err);
+    await submit(this.registerForm, async () => {
+      const { username, email, password } = this.model();
+      try {
+        await this.auth.register({ username, email, password });
+      } catch (error) {
+        this.logger.error('Registration failed:', error);
+        if (isRejection(error)) {
+          // E.g. "Email already exists"; stays on the form until a field changes.
+          const message = apiErrorMessage(error) ?? 'Registration failed. Please try again.';
+          return { kind: 'server', message };
         }
+        this.notifier.error('Could not create your account. Check your connection and try again.');
         return undefined;
-      },
-      onInvalid: (tree) => {
-        // Same precedence as the React page: mismatch first, then length.
-        const errors = tree().errorSummary();
-        const shown = errors.find((e) => e.kind === PASSWORD_MISMATCH) ?? errors[0];
-        this.error.set(shown?.message ?? '');
-      },
+      }
+      await this.router.navigate(['/']);
+      return undefined;
     });
   }
 }

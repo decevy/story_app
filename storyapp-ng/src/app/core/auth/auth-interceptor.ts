@@ -1,21 +1,20 @@
-import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
+import { HttpErrorResponse, type HttpInterceptorFn, type HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 
-import { AuthService } from './auth';
-import { TokenStore } from './token-store';
-import { APP_CONFIG } from '../config/app-config';
 import { isApiUrl } from '../config/api-url';
-import { SKIP_AUTH_REFRESH } from './http-context';
+import { APP_CONFIG } from '../config/app-config';
+import { AuthService } from './auth-service';
+import { SKIP_AUTH_REFRESH } from './skip-auth-refresh';
+import { TokenStore } from './token-store';
 
 function withBearer<T>(request: HttpRequest<T>, token: string): HttpRequest<T> {
   return request.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 }
 
 /**
- * Replaces the request/response interceptors in storyapp-web/src/api/axios-config.ts:
- * adds the bearer token and, on a 401, refreshes once (shared by concurrent requests)
- * and retries. The retry goes to `next`, so it is never intercepted (or retried) again.
+ * Adds the bearer token to API requests and, on a 401, refreshes once (shared by concurrent
+ * requests) and retries. The retry goes to `next`, so it is never intercepted (or retried) again.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const config = inject(APP_CONFIG);

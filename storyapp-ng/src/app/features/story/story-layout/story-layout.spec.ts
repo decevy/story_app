@@ -1,73 +1,62 @@
-import { Component, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { AuthService } from '@core/auth/auth-service';
+import { StoryHubClient } from '@core/story-hub/story-hub-client';
+import { fakeAuth, type FakeHub, fakeHub } from '@testing/fakes';
+import { render, screen } from '@testing-library/angular';
+import { userEvent } from '@testing-library/user-event';
 
-import { AuthService } from '../../../core/auth/auth';
-import { ConnectionState, SignalRService } from '../../../core/signalr/signalr';
-import { testUser } from '../../../../testing/fixtures';
 import { StoryLayout } from './story-layout';
 
-@Component({
-  imports: [StoryLayout],
-  template: `<app-story-layout>
-    <p storySidebar>sidebar content</p>
-    <p storyMain>main content</p>
-  </app-story-layout>`,
-})
-class Host {}
-
 describe('StoryLayout', () => {
-  const connectionState = signal<ConnectionState>('connected');
-  const logout = vi.fn(async () => undefined);
+  let auth: ReturnType<typeof fakeAuth>;
+  let hub: FakeHub;
 
   beforeEach(() => {
-    connectionState.set('connected');
-    logout.mockClear();
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        { provide: AuthService, useValue: { user: signal(testUser), logout } },
-        { provide: SignalRService, useValue: { connectionState } },
-      ],
-    });
-    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    auth = fakeAuth();
+    hub = fakeHub('connected');
   });
 
-  async function render() {
-    const fixture = TestBed.createComponent(Host);
-    await fixture.whenStable();
-    return { fixture, element: fixture.nativeElement as HTMLElement };
+  function setup() {
+    return render(
+      `<sa-story-layout>
+        <p storySidebar>sidebar content</p>
+        <p storyMain>main content</p>
+      </sa-story-layout>`,
+      {
+        imports: [StoryLayout],
+        providers: [
+          { provide: AuthService, useValue: auth },
+          { provide: StoryHubClient, useValue: hub },
+        ],
+      },
+    );
   }
 
   it('shows the signed-in user', async () => {
-    const { element } = await render();
-    expect(element.querySelector('header')!.textContent).toContain('aya');
-    expect(element.querySelector('header')!.textContent).toContain('aya@test.com');
+    await setup();
+    const header = screen.getByRole('banner');
+    expect(header.textContent).toContain('aya');
+    expect(header.textContent).toContain('aya@test.com');
   });
 
   it('projects the sidebar and main content', async () => {
-    const { element } = await render();
-    expect(element.querySelector('aside')!.textContent).toContain('sidebar content');
-    expect(element.querySelector('main')!.textContent).toContain('main content');
+    await setup();
+    expect(screen.getByRole('complementary').textContent).toContain('sidebar content');
+    expect(screen.getByRole('main').textContent).toContain('main content');
   });
 
   it('shows the connection status; reconnecting counts as disconnected', async () => {
-    const { fixture, element } = await render();
-    const status = () => element.querySelector('[data-testid="connection-status"]')!.textContent;
-    expect(status()).toContain('Connected');
+    const { fixture } = await setup();
+    const status = screen.getByTestId('connection-status');
+    expect(status.textContent).toContain('Connected');
 
-    connectionState.set('reconnecting');
+    hub.connectionState.set('reconnecting');
     await fixture.whenStable();
-    expect(status()).toContain('Disconnected');
+    expect(status.textContent).toContain('Disconnected');
   });
 
-  it('logs out and goes to /login', async () => {
-    const { element } = await render();
-    element.querySelector<HTMLButtonElement>('header button')!.click();
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(logout).toHaveBeenCalledOnce();
-    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/login']);
+  it('logs out (AuthService then goes to /login)', async () => {
+    await setup();
+    await userEvent.click(screen.getByRole('button', { name: 'Logout' }));
+    expect(auth.logout).toHaveBeenCalledOnce();
   });
 });

@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { STORAGE_KEYS } from '../config/constants';
-import { TokenStore } from './token-store';
+import { TOKEN_STORAGE_KEYS, TokenStore } from './token-store';
 
 describe('TokenStore', () => {
   let store: TokenStore;
@@ -13,17 +12,17 @@ describe('TokenStore', () => {
 
   it('stores both tokens under the storyapp-web keys', () => {
     store.setTokens('access', 'refresh');
-    expect(localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)).toBe('access');
-    expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBe('refresh');
+    expect(localStorage.getItem(TOKEN_STORAGE_KEYS.accessToken)).toBe('access');
+    expect(localStorage.getItem(TOKEN_STORAGE_KEYS.refreshToken)).toBe('refresh');
     expect(store.getAccessToken()).toBe('access');
     expect(store.getRefreshToken()).toBe('refresh');
   });
 
   it('reports tokens only when both are present', () => {
     expect(store.hasTokens()).toBe(false);
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'access');
+    localStorage.setItem(TOKEN_STORAGE_KEYS.accessToken, 'access');
     expect(store.hasTokens()).toBe(false);
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'refresh');
+    localStorage.setItem(TOKEN_STORAGE_KEYS.refreshToken, 'refresh');
     expect(store.hasTokens()).toBe(true);
   });
 

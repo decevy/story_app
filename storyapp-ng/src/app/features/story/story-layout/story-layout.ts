@@ -1,25 +1,20 @@
-import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { AuthService } from '@core/auth/auth-service';
+import { StoryHubClient } from '@core/story-hub/story-hub-client';
 
-import { AuthService } from '../../../core/auth/auth';
-import { SignalRService } from '../../../core/signalr/signalr';
-
-/** Port of storyapp-web/src/components/StoryLayout.tsx; sidebar and main are projected. */
+/** Page frame of the story area: header with user and connection status, sidebar and main. */
 @Component({
-  selector: 'app-story-layout',
+  selector: 'sa-story-layout',
   templateUrl: './story-layout.html',
 })
 export class StoryLayout {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly signalR = inject(SignalRService);
 
   protected readonly user = this.auth.user;
-  // 'reconnecting' shows as disconnected, as in the React header.
-  protected readonly isConnected = computed(() => this.signalR.connectionState() === 'connected');
+  // 'reconnecting' shows as disconnected.
+  protected readonly isConnected = inject(StoryHubClient).isConnected;
 
-  protected async logout(): Promise<void> {
-    await this.auth.logout();
-    await this.router.navigate(['/login']);
+  protected logout(): void {
+    void this.auth.logout();
   }
 }

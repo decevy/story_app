@@ -1,60 +1,44 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 
-import { Story } from '../../../core/models/story';
 import { StoryLayout } from '../story-layout/story-layout';
 import { StoryList } from '../story-list/story-list';
-import { StoryStore } from '../story-store';
-import { StoryView } from '../story-view/story-view';
 import { StoryPage } from './story-page';
 
-// Stubs keep this spec about which child is shown, not about the children themselves.
+// Stubs keep this spec about where the children go, not about the children themselves.
 @Component({
-  selector: 'app-story-layout',
+  selector: 'sa-story-layout',
   template: `<aside><ng-content select="[storySidebar]" /></aside>
     <main><ng-content select="[storyMain]" /></main>`,
 })
 class StubLayout {}
 
-@Component({ selector: 'app-story-list', template: 'list' })
+@Component({ selector: 'sa-story-list', template: 'list' })
 class StubList {}
 
-@Component({ selector: 'app-story-view', template: 'view' })
-class StubView {}
+@Component({ selector: 'sa-child', template: 'child route' })
+class Child {}
 
 describe('StoryPage', () => {
-  const currentStory = signal<Story | null>(null);
-
-  beforeEach(() => {
-    currentStory.set(null);
+  it('shows the list in the sidebar and the child route in the main area', async () => {
     TestBed.configureTestingModule({
-      providers: [{ provide: StoryStore, useValue: { currentStory } }],
+      providers: [
+        provideRouter([
+          { path: '', component: StoryPage, children: [{ path: '', component: Child }] },
+        ]),
+      ],
     });
     TestBed.overrideComponent(StoryPage, {
-      remove: { imports: [StoryLayout, StoryList, StoryView] },
-      add: { imports: [StubLayout, StubList, StubView] },
+      remove: { imports: [StoryLayout, StoryList] },
+      add: { imports: [StubLayout, StubList] },
     });
-  });
 
-  async function render() {
-    const fixture = TestBed.createComponent(StoryPage);
-    await fixture.whenStable();
-    return { fixture, element: fixture.nativeElement as HTMLElement };
-  }
+    const harness = await RouterTestingHarness.create('/');
+    const element = harness.routeNativeElement!;
 
-  it('shows the list and a prompt until a story is selected', async () => {
-    const { element } = await render();
-    expect(element.querySelector('aside app-story-list')).not.toBeNull();
-    expect(element.querySelector('main')!.textContent).toContain('Select a story to get started');
-    expect(element.querySelector('app-story-view')).toBeNull();
-  });
-
-  it('shows the story view once a story is loaded', async () => {
-    const { fixture, element } = await render();
-    currentStory.set({ id: 1 } as Story);
-    await fixture.whenStable();
-
-    expect(element.querySelector('main app-story-view')).not.toBeNull();
-    expect(element.textContent).not.toContain('Select a story to get started');
+    expect(element.querySelector('aside sa-story-list')).not.toBeNull();
+    expect(element.querySelector('main')!.textContent).toContain('child route');
   });
 });

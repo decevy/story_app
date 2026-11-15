@@ -1,14 +1,14 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { FormField, form } from '@angular/forms/signals';
+import { form, FormField } from '@angular/forms/signals';
 
 import { FieldLabel } from './field-label';
 import { TextInput } from './text-input';
 
 @Component({
   imports: [FieldLabel, FormField, TextInput],
-  template: `<label for="name" appFieldLabel>Name</label>
-    <input appTextInput id="name" class="extra" [formField]="nameForm.name" />`,
+  template: `<label for="name" saFieldLabel>Name</label>
+    <input saTextInput id="name" class="extra" [formField]="nameForm.name" />`,
 })
 class Host {
   readonly model = signal({ name: 'Aya' });

@@ -1,0 +1,20 @@
+<span
+  #editable
+  role="textbox"
+  aria-label="Story continuation"
+  [attr.aria-multiline]="isBlock()"
+  [attr.aria-disabled]="disabled()"
+  [attr.contenteditable]="disabled() ? 'false' : 'true'"
+  spellcheck="true"
+  [attr.tabindex]="disabled() ? -1 : 0"
+  [attr.data-testid]="isActive() ? 'composer-field' : null"
+  [class]="fieldClass()"
+  (input)="onInput()"
+  (paste)="onPaste($event)"
+  (compositionstart)="onCompositionStart()"
+  (compositionend)="onCompositionEnd()"
+  (keydown)="onKeyDown($event)"
+  (keyup)="onKeyUp($event)"
+  (focus)="onFocus()"
+  (blur)="fieldBlur.emit()"
+></span>

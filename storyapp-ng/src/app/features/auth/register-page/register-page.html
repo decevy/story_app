@@ -1,65 +1,60 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100 p-5">
-  <div class="bg-white p-10 arounded-lg corner-squircle shadow-lg w-full max-w-md">
-    <h1 class="text-3xl font-bold text-center mb-2 text-gray-800">StoryApp</h1>
-    <h2 class="text-2xl text-center mb-8 text-gray-600">Create Account</h2>
+<sa-auth-card subtitle="Create Account">
+  @if (formError()) {
+    <sa-form-error>{{ formError() }}</sa-form-error>
+  }
 
-    @if (error()) {
-      <app-form-error>{{ error() }}</app-form-error>
-    }
+  <form (submit)="onSubmit($event)" class="flex flex-col gap-5">
+    <div class="flex flex-col gap-2">
+      <label for="username" saFieldLabel>Username</label>
+      <input
+        saTextInput
+        id="username"
+        type="text"
+        [formField]="registerForm.username"
+        placeholder="johndoe"
+      />
+    </div>
 
-    <form (submit)="onSubmit($event)" class="flex flex-col gap-5">
-      <div class="flex flex-col gap-2">
-        <label for="username" appFieldLabel>Username</label>
-        <input
-          appTextInput
-          id="username"
-          type="text"
-          [formField]="registerForm.username"
-          placeholder="johndoe"
-        />
-      </div>
+    <div class="flex flex-col gap-2">
+      <label for="email" saFieldLabel>Email</label>
+      <input
+        saTextInput
+        id="email"
+        type="email"
+        [formField]="registerForm.email"
+        placeholder="your@email.com"
+      />
+    </div>
 
-      <div class="flex flex-col gap-2">
-        <label for="email" appFieldLabel>Email</label>
-        <input
-          appTextInput
-          id="email"
-          type="email"
-          [formField]="registerForm.email"
-          placeholder="your@email.com"
-        />
-      </div>
+    <div class="flex flex-col gap-2">
+      <label for="password" saFieldLabel>Password</label>
+      <input
+        saTextInput
+        id="password"
+        type="password"
+        [formField]="registerForm.password"
+        placeholder="••••••••"
+      />
+    </div>
 
-      <div class="flex flex-col gap-2">
-        <label for="password" appFieldLabel>Password</label>
-        <input
-          appTextInput
-          id="password"
-          type="password"
-          [formField]="registerForm.password"
-          placeholder="••••••••"
-        />
-      </div>
+    <div class="flex flex-col gap-2">
+      <label for="confirmPassword" saFieldLabel>Confirm Password</label>
+      <input
+        saTextInput
+        id="confirmPassword"
+        type="password"
+        [formField]="registerForm.confirmPassword"
+        placeholder="••••••••"
+      />
+    </div>
 
-      <div class="flex flex-col gap-2">
-        <label for="confirmPassword" appFieldLabel>Confirm Password</label>
-        <input
-          appTextInput
-          id="confirmPassword"
-          type="password"
-          [formField]="registerForm.confirmPassword"
-          placeholder="••••••••"
-        />
-      </div>
+    <button type="submit" saSubmitButton [busy]="submitting()">
+      {{ submitting() ? 'Creating account...' : 'Sign Up' }}
+    </button>
+  </form>
 
-      <button appSubmitButton [busy]="submitting()">
-        {{ submitting() ? 'Creating account...' : 'Sign Up' }}
-      </button>
-    </form>
-
-    <p class="mt-5 text-center text-sm text-gray-600">
-      Already have an account?
-      <a routerLink="/login" class="text-blue-500 font-semibold hover:underline">Sign in</a>
-    </p>
-  </div>
-</div>
+  <p class="mt-5 text-center text-sm text-gray-600">
+    Already have an account?
+    <a routerLink="/login" class="font-semibold text-blue-500 hover:underline">Sign in</a>
+  </p>
+</sa-auth-card>

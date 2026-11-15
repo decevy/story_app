@@ -1,4 +1,5 @@
 // Test helpers shared by specs. Only spec files may import from src/testing.
+import { TestBed } from '@angular/core/testing';
 
 /** A promise with its resolve and reject exposed, to control when async work settles. */
 export function deferred<T>() {
@@ -9,6 +10,18 @@ export function deferred<T>() {
     reject = rej;
   });
   return { promise, resolve, reject };
+}
+
+/**
+ * Runs pending effects, lets already-resolved promises continue (a few microtask turns), then
+ * runs effects and change detection again. Replaces `TestBed.tick(); await Promise.resolve(); …`.
+ */
+export async function settle(turns = 3): Promise<void> {
+  TestBed.tick();
+  for (let turn = 0; turn < turns; turn++) {
+    await Promise.resolve();
+  }
+  TestBed.tick();
 }
 
 /** True when the element has every class in `classes` (Angular does not keep class order). */

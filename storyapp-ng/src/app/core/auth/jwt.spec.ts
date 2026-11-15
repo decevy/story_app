@@ -1,4 +1,5 @@
-import { unsignedJwt } from '../../../testing/helpers';
+import { unsignedJwt } from '@testing/helpers';
+
 import { isTokenExpiring, readJwtExpiry } from './jwt';
 
 describe('readJwtExpiry', () => {

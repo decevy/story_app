@@ -1,0 +1,17 @@
+<div
+  class="flex shrink-0 items-center justify-between gap-4 border-b border-stone-200 bg-white/90 px-6 py-3 backdrop-blur-sm"
+>
+  <h2 class="truncate text-lg font-semibold text-stone-800">{{ storyName() }}</h2>
+  <div class="flex shrink-0 items-center gap-3">
+    <button
+      type="button"
+      data-testid="end-passage"
+      [disabled]="!canSend()"
+      (click)="endPassage.emit()"
+      class="squircle-md border border-stone-200 bg-white px-3 py-1 text-sm leading-[19px] text-stone-800 hover:bg-stone-50 focus:border-stone-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      End passage
+    </button>
+    <sa-font-picker [(font)]="font" />
+  </div>
+</div>

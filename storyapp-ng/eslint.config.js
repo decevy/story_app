@@ -4,43 +4,91 @@ const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
 const boundaries = require('eslint-plugin-boundaries');
+const simpleImportSort = require('eslint-plugin-simple-import-sort');
+const prettier = require('eslint-config-prettier/flat');
 
 module.exports = defineConfig([
   {
     files: ['**/*.ts'],
     extends: [
       eslint.configs.recommended,
-      tseslint.configs.recommended,
-      tseslint.configs.stylistic,
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
       angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
-    // Type information for rules such as no-uncalled-signals.
     languageOptions: {
       parserOptions: {
         projectService: true,
         tsconfigRootDir: __dirname,
       },
     },
+    plugins: { 'simple-import-sort': simpleImportSort },
     rules: {
       '@angular-eslint/directive-selector': [
         'error',
-        {
-          type: 'attribute',
-          prefix: 'app',
-          style: 'camelCase',
-        },
+        { type: 'attribute', prefix: 'sa', style: 'camelCase' },
       ],
       '@angular-eslint/component-selector': [
         'error',
-        {
-          type: 'element',
-          prefix: 'app',
-          style: 'kebab-case',
-        },
+        { type: 'element', prefix: 'sa', style: 'kebab-case' },
       ],
       '@angular-eslint/prefer-signals': 'error',
       '@angular-eslint/no-uncalled-signals': 'error',
+
+      '@typescript-eslint/consistent-type-imports': ['error', { fixStyle: 'inline-type-imports' }],
+      '@typescript-eslint/no-import-type-side-effects': 'error',
+      // `${count}` and `${id}` in URLs and messages are fine.
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      // Angular classes (components, services) are extended by the framework, not by us.
+      '@typescript-eslint/no-extraneous-class': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
+
+      // Logging goes through Logger (core/logging); see the override for logger.ts and main.ts.
+      'no-console': 'error',
+
+      // Cross-area imports use the path aliases; relative imports stay inside one area.
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(\\.\\./)+(app/)?(core|shared|features)/',
+              message: 'Import other areas through @core/, @shared/ or @features/.',
+            },
+            {
+              regex: '^(\\.\\./)+testing/',
+              message: 'Import test fixtures and helpers through @testing/.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/app/core/logging/logger.ts', 'src/main.ts'],
+    rules: { 'no-console': 'off' },
+  },
+  {
+    // Specs use vitest mocks and partial fakes; these rules fight that more than they help.
+    files: ['**/*.spec.ts', 'src/testing/**/*.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      // Fakes mirror async APIs without awaiting anything.
+      '@typescript-eslint/require-await': 'off',
     },
   },
   {
@@ -49,7 +97,9 @@ module.exports = defineConfig([
     files: ['src/**/*.ts'],
     plugins: { boundaries },
     settings: {
-      'import/resolver': { node: { extensions: ['.ts', '.js'] } },
+      'import/resolver': {
+        typescript: { project: 'tsconfig.json' },
+      },
       'boundaries/elements': [
         { type: 'core', pattern: 'src/app/core', partialMatch: false },
         { type: 'shared', pattern: 'src/app/shared', partialMatch: false },
@@ -59,7 +109,6 @@ module.exports = defineConfig([
           capture: ['feature'],
           partialMatch: false,
         },
-        { type: 'environments', pattern: 'src/environments', partialMatch: false },
         { type: 'testing', pattern: 'src/testing', partialMatch: false },
       ],
       'boundaries/files': [{ pattern: '**/*.spec.ts', category: 'test' }],
@@ -72,20 +121,15 @@ module.exports = defineConfig([
           policies: [
             {
               from: { element: { type: 'core' } },
-              allow: { to: { element: { types: ['core', 'environments'] } } },
-            },
-            {
-              // Environment files are typed with AppConfig.
-              from: { element: { type: 'environments' } },
               allow: { to: { element: { type: 'core' } } },
             },
             {
-              // Test fixtures build domain types.
+              // Test fixtures and fakes build domain types and fake core services.
               from: { element: { type: 'testing' } },
               allow: { to: { element: { types: ['core', 'testing'] } } },
             },
             {
-              // Only specs may use src/testing (fixtures and helpers).
+              // Only specs may use src/testing (fixtures, fakes and helpers).
               from: { file: { categories: 'test' } },
               allow: { to: { element: { type: 'testing' } } },
             },
@@ -114,22 +158,12 @@ module.exports = defineConfig([
     },
   },
   {
-    // Copied unchanged from storyapp-web (pure TS); keep them diffable with the original.
-    files: [
-      'src/app/features/story/composer/passage-composer.ts',
-      'src/app/features/story/composer/segment-visuals.ts',
-      'src/app/features/story/composer/composer-dom.ts',
-      'src/app/features/story/book-fonts.ts',
-    ],
-    rules: {
-      '@typescript-eslint/consistent-type-definitions': 'off',
-    },
-  },
-  {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {
       '@angular-eslint/template/prefer-self-closing-tags': 'error',
+      '@angular-eslint/template/button-has-type': 'error',
     },
   },
+  prettier,
 ]);

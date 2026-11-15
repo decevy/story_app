@@ -1,27 +1,16 @@
-import { Seam } from '../../../core/models/story';
+import { Seam } from '@core/models/story';
 
-export type SegmentStartVisual =
-  | 'inline'
-  | 'indentedAlinea'
-  | 'plainAlinea'
-  | 'afterSection';
+export type SegmentStartVisual = 'inline' | 'indentedAlinea' | 'plainAlinea' | 'afterSection';
 
-export type SegmentLike = {
+export interface SegmentLike {
   seamAfter?: Seam;
-};
-
-export function isSectionBreak(seam?: Seam): boolean {
-  return (
-    seam === Seam.Section ||
-    seam === Seam.MajorSection ||
-    seam === Seam.Chapter
-  );
 }
 
-function countParagraphsSinceSection(
-  segments: SegmentLike[],
-  fromIndex: number,
-): number {
+export function isSectionBreak(seam?: Seam): boolean {
+  return seam === Seam.Section || seam === Seam.MajorSection || seam === Seam.Chapter;
+}
+
+function countParagraphsSinceSection(segments: SegmentLike[], fromIndex: number): number {
   let count = 0;
   for (let index = fromIndex; index >= 0; index -= 1) {
     const seam = segments[index]?.seamAfter;

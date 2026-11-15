@@ -1,17 +1,17 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
-  ActivatedRouteSnapshot,
-  GuardResult,
-  MaybeAsync,
-  Router,
-  RouterStateSnapshot,
-  UrlTree,
+  type ActivatedRouteSnapshot,
+  type GuardResult,
+  type MaybeAsync,
   provideRouter,
+  Router,
+  type RouterStateSnapshot,
+  UrlTree,
 } from '@angular/router';
 
-import { AuthService } from './auth';
-import { authGuard, guestGuard } from './auth-guard';
+import { authGuard, guestGuard, safeReturnUrl } from './auth-guard';
+import { AuthService } from './auth-service';
 
 describe('auth guards', () => {
   const authenticated = signal(false);
@@ -26,9 +26,9 @@ describe('auth guards', () => {
     });
   });
 
-  function run(guard: typeof authGuard): string | boolean {
+  function run(guard: typeof authGuard, url = '/'): string | boolean {
     const result: MaybeAsync<GuardResult> = TestBed.runInInjectionContext(() =>
-      guard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+      guard({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot),
     );
     if (result instanceof UrlTree) {
       return TestBed.inject(Router).serializeUrl(result);
@@ -48,6 +48,10 @@ describe('auth guards', () => {
     it('redirects an unauthenticated user to /login', () => {
       expect(run(authGuard)).toBe('/login');
     });
+
+    it('remembers a deep link as returnUrl', () => {
+      expect(run(authGuard, '/stories/3')).toBe('/login?returnUrl=%2Fstories%2F3');
+    });
   });
 
   describe('guestGuard', () => {
@@ -58,6 +62,19 @@ describe('auth guards', () => {
 
     it('lets a guest through', () => {
       expect(run(guestGuard)).toBe(true);
+    });
+  });
+
+  describe('safeReturnUrl', () => {
+    it('keeps in-app paths', () => {
+      expect(safeReturnUrl('/stories/3')).toBe('/stories/3');
+    });
+
+    it('falls back to / for missing or external targets', () => {
+      expect(safeReturnUrl(null)).toBe('/');
+      expect(safeReturnUrl('https://evil.test')).toBe('/');
+      expect(safeReturnUrl('//evil.test')).toBe('/');
+      expect(safeReturnUrl('/\\evil.test')).toBe('/');
     });
   });
 });

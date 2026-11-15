@@ -1,11 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+
 import { App } from './app';
 
 describe('App', () => {
-  it('creates the root component', () => {
+  it('renders the router outlet and the toast outlet', async () => {
     TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([])] });
     const fixture = TestBed.createComponent(App);
-    expect(fixture.componentInstance).toBeTruthy();
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('router-outlet')).not.toBeNull();
+    expect(element.querySelector('sa-toast-outlet')).not.toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 // Test data builders shared by specs. Only spec files may import from src/testing.
-import { User } from '../app/core/models/user';
-import { Passage, Story, StorySummary } from '../app/core/models/story';
+import type { Passage, Story, StorySummary } from '@core/models/story';
+import type { User } from '@core/models/user';
 
 export const testUser: User = {
   id: 1,
