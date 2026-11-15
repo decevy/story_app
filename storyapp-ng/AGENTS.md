@@ -62,6 +62,20 @@ Config comes from `src/environments/` (dev: `apiUrl: ''`, `hubUrl: '/storyHub'`,
 - **Composer**: `ComposerHold` (scoped to `StoryView`) owns the draft; `draftVersion` replaces React's `seedToken`. Don't change seam logic, rendering rules or composer interactions here; they follow SPEC.md, including the known cross-passage indentation issue (`it.todo` in `segment-visuals.spec.ts`).
 - Component hosts inside flex layouts use `display: contents` so the React markup structure (and its `h-full` / `flex-1` behaviour) is unchanged.
 
+## Tests
+
+Every file with logic has a colocated `*.spec.ts` (Vitest + TestBed, zoneless): services, stores,
+APIs, guards, interceptors, components, pure functions. Files without logic don't: types, config,
+constants, route files, `app.config.ts`. `ng g` creates the spec; keep it.
+
+- Components with dependencies get fakes (`{ provide: StoryStore, useValue: {...} }`); a page that
+  only composes children overrides its imports with stubs (`story-page.spec.ts`).
+- Hold timers use `vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'] })`.
+- `SignalRService` is tested against a fake connection by spying on `HubConnectionBuilder.prototype.build`.
+- jsdom lacks `document.execCommand` and `scrollIntoView`; specs stub them. Caret and real
+  contenteditable behaviour belong in the Playwright E2E tests.
+- Check classes with `classList`, not `className`: Angular does not keep class order.
+
 ## Commands
 
 Run from `storyapp-ng/`:
