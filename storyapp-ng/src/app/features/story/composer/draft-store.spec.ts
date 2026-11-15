@@ -13,10 +13,6 @@ import {
   toSegmentInputs,
 } from './passage-composer';
 
-function key(type: 'keydown' | 'keyup', key: string, init: KeyboardEventInit = {}): KeyboardEvent {
-  return new KeyboardEvent(type, { key, cancelable: true, ...init });
-}
-
 describe('DraftStore', () => {
   let hold: DraftStore;
   const isConnected = signal(true);
@@ -85,20 +81,25 @@ describe('DraftStore', () => {
       const before = hold.composer();
       const version = hold.draftVersion();
 
-      const down = key('keydown', 'Enter');
-      hold.handleComposerKeyDown(down);
-      expect(down.defaultPrevented).toBe(true);
-      hold.handleEnterTap('Hello');
+      hold.handleEnter({ phase: 'press' });
+      hold.handleEnter({ phase: 'release', text: 'Hello' });
 
       expect(hold.composer()).toEqual(applyEnter(before));
       expect(hold.draftVersion()).toBe(version + 1);
       expect(sendPassage).not.toHaveBeenCalled();
     });
 
-    it('uses the stored text when the field reports none', () => {
+    it('takes the released text as the segment text', () => {
+      type('Hel');
+      hold.handleEnter({ phase: 'press' });
+      hold.handleEnter({ phase: 'release', text: 'Hello' });
+      expect(hold.composer().segments[0]!.text).toBe('Hello');
+    });
+
+    it('keeps the stored text when the field reports none', () => {
       type('Stored');
-      hold.handleComposerKeyDown(key('keydown', 'Enter'));
-      hold.handleEnterTap('');
+      hold.handleEnter({ phase: 'press' });
+      hold.handleEnter({ phase: 'release', text: '' });
       expect(hold.composer().segments[0]!.text).toBe('Stored');
     });
 
@@ -107,7 +108,7 @@ describe('DraftStore', () => {
       const segments = toSegmentInputs(hold.composer());
       const version = hold.draftVersion();
 
-      hold.handleComposerKeyDown(key('keydown', 'Enter'));
+      hold.handleEnter({ phase: 'press' });
       vi.advanceTimersByTime(HOLD_MS / 2);
       expect(sendPassage).not.toHaveBeenCalled();
 
@@ -118,33 +119,19 @@ describe('DraftStore', () => {
       expect(hold.composer()).toEqual(createEmptyComposer());
       expect(hold.draftVersion()).toBe(version + 1);
 
-      // The key-up after the hold must not add a paragraph.
-      hold.handleEnterTap('');
+      // The release after the hold must not add a paragraph or bring the old text back.
+      hold.handleEnter({ phase: 'release', text: 'Hello' });
       expect(hold.composer()).toEqual(createEmptyComposer());
     });
 
     it('shifts the draft colour while Enter is held', () => {
       type('Hello');
       const resting = hold.draftColor();
-      hold.handleComposerKeyDown(key('keydown', 'Enter'));
+      hold.handleEnter({ phase: 'press' });
       vi.advanceTimersByTime(HOLD_MS / 2);
       expect(hold.draftColor()).not.toBe(resting);
       hold.clearHoldTimers();
       expect(hold.draftColor()).toBe(resting);
-    });
-
-    it('ignores repeats and modifier combinations', () => {
-      type('Hello');
-      const repeat = key('keydown', 'Enter', { repeat: true });
-      hold.handleComposerKeyDown(repeat);
-      expect(repeat.defaultPrevented).toBe(true);
-
-      const withCtrl = key('keydown', 'Enter', { ctrlKey: true });
-      hold.handleComposerKeyDown(withCtrl);
-      expect(withCtrl.defaultPrevented).toBe(false);
-
-      vi.advanceTimersByTime(HOLD_MS * 2);
-      expect(sendPassage).not.toHaveBeenCalled();
     });
   });
 
@@ -172,26 +159,24 @@ describe('DraftStore', () => {
   });
 
   describe('Backspace', () => {
-    it('lets the browser delete characters while the segment has text', () => {
+    it('leaves a segment with text alone (the browser deletes the character)', () => {
       type('Hello');
-      const down = key('keydown', 'Backspace');
-      hold.handleComposerKeyDown(down);
-      expect(down.defaultPrevented).toBe(false);
-      hold.handleComposerKeyUp(key('keyup', 'Backspace'));
+      const version = hold.draftVersion();
+      hold.handleBackspace('press');
+      hold.handleBackspace('release');
       expect(hold.composer().segments[0]!.text).toBe('Hello');
+      expect(hold.draftVersion()).toBe(version);
     });
 
     it('applies a structural Backspace on an empty segment', () => {
       type('Hello');
-      hold.handleComposerKeyDown(key('keydown', 'Enter'));
-      hold.handleEnterTap('Hello');
+      hold.handleEnter({ phase: 'press' });
+      hold.handleEnter({ phase: 'release', text: 'Hello' });
       const before = hold.composer();
       const version = hold.draftVersion();
 
-      const down = key('keydown', 'Backspace');
-      hold.handleComposerKeyDown(down);
-      expect(down.defaultPrevented).toBe(true);
-      hold.handleComposerKeyUp(key('keyup', 'Backspace'));
+      hold.handleBackspace('press');
+      hold.handleBackspace('release');
 
       const expected = applyBackspace(before, undefined);
       expect(expected.type).toBe('structural');
@@ -201,13 +186,13 @@ describe('DraftStore', () => {
 
     it('clears the whole draft when Backspace is held', () => {
       type('Hello');
-      hold.handleComposerKeyDown(key('keydown', 'Backspace'));
+      hold.handleBackspace('press');
       vi.advanceTimersByTime(HOLD_MS + 50);
       expect(hold.composer()).toEqual(createEmptyComposer());
 
-      // The key-up after the hold does nothing more.
+      // The release after the hold does nothing more.
       const version = hold.draftVersion();
-      hold.handleComposerKeyUp(key('keyup', 'Backspace'));
+      hold.handleBackspace('release');
       expect(hold.draftVersion()).toBe(version);
     });
   });

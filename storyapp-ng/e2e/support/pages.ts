@@ -29,7 +29,7 @@ export class StoryPage {
     this.connectionStatus = page.getByTestId('connection-status');
     this.storyItems = page.getByTestId('story-list-item');
     this.passages = page.getByTestId('passages');
-    this.composer = page.getByTestId('composer-field');
+    this.composer = page.getByRole('textbox', { name: 'Story continuation' });
     this.endPassage = page.getByTestId('end-passage');
   }
 

@@ -57,6 +57,16 @@ export function segmentStartVisualIsBlock(visual: SegmentStartVisual): boolean {
   return visual !== 'inline';
 }
 
+/**
+ * Layout of a draft field. An inline field stays `inline` (not `inline-block`), so a long draft
+ * breaks mid-line instead of jumping to the next line as one box.
+ */
+export function composerFieldLayoutClass(visual: SegmentStartVisual): string {
+  return segmentStartVisualIsBlock(visual)
+    ? `${segmentLayoutClass(visual)} min-h-[1.75em] w-full`
+    : 'inline';
+}
+
 export function segmentLayoutClass(visual: SegmentStartVisual): string {
   switch (visual) {
     case 'indentedAlinea':

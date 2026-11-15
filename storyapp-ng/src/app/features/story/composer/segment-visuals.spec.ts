@@ -1,6 +1,11 @@
 import { Seam } from '@core/models/story';
 
-import { getSegmentStartVisual, type SegmentLike } from './segment-visuals';
+import {
+  composerFieldLayoutClass,
+  getSegmentStartVisual,
+  segmentLayoutClass,
+  type SegmentLike,
+} from './segment-visuals';
 
 describe('getSegmentStartVisual', () => {
   const segments: SegmentLike[] = [
@@ -39,4 +44,18 @@ describe('getSegmentStartVisual', () => {
   // passage, so a passage that starts with a Paragraph seam is always indented, even
   // when it is not the first paragraph of its section.
   it.todo('carries paragraph counting across passages (a later paragraph should not be indented)');
+});
+
+describe('composerFieldLayoutClass', () => {
+  it('keeps an inline field inline, so it wraps mid-line', () => {
+    expect(composerFieldLayoutClass('inline')).toBe('inline');
+  });
+
+  it('makes a block start a full-width line, on top of its segment layout', () => {
+    for (const visual of ['indentedAlinea', 'plainAlinea', 'afterSection'] as const) {
+      const classes = composerFieldLayoutClass(visual).split(' ');
+      expect(classes).toEqual(expect.arrayContaining(segmentLayoutClass(visual).split(' ')));
+      expect(classes).toEqual(expect.arrayContaining(['w-full', 'min-h-[1.75em]']));
+    }
+  });
 });

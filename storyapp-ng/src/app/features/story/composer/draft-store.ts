@@ -2,6 +2,7 @@ import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core'
 import { lastPassageSeam } from '@core/models/story';
 
 import { StoryStore } from '../data-access/story-store';
+import type { EnterGesture, KeyPhase } from './composer-field/composer-field';
 import { createHoldTimer } from './hold-timer';
 import {
   applyBackspace,
@@ -54,7 +55,6 @@ export class DraftStore {
   readonly disabled = computed(() => !this.store.isConnected() || this.store.isSending());
   readonly canSend = computed(() => !this.disabled() && composerHasContent(this.composer()));
 
-  /** Holding Enter sends the draft; the colour shifts while it is held. */
   private readonly enterHold = createHoldTimer({
     onProgress: (progress) => {
       this.enterHoldProgress.set(progress);
@@ -62,7 +62,6 @@ export class DraftStore {
     onComplete: () => void this.sendDraft(),
   });
 
-  /** Holding Backspace clears the whole draft. */
   private readonly backspaceHold = createHoldTimer({
     onComplete: () => {
       this.resetDraft();
@@ -95,51 +94,33 @@ export class DraftStore {
     }
   }
 
-  handleComposerKeyDown(event: KeyboardEvent): void {
-    if (event.ctrlKey || event.metaKey || event.altKey) {
+  /** Enter: a tap adds a break, a hold sends the draft (the colour shifts while it is held). */
+  handleEnter(gesture: EnterGesture): void {
+    if (gesture.phase === 'press') {
+      this.stopEnterHold();
+      this.enterHold.start();
       return;
     }
-
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      if (!event.repeat) {
-        this.stopEnterHold();
-        this.enterHold.start();
-      }
-      return;
-    }
-
-    if (event.key === 'Backspace') {
-      if (event.repeat) {
-        event.preventDefault();
-        return;
-      }
-      this.backspaceHold.start();
-      if (this.canStructuralBackspace(this.composer())) {
-        event.preventDefault();
-      }
-    }
-  }
-
-  /** Enter released: a tap adds a break; after a completed hold (draft sent) it does nothing. */
-  handleEnterTap(activeText: string): void {
     const sent = this.enterHold.takeCompleted();
     this.stopEnterHold();
     if (sent) {
       return;
     }
+    const { text } = gesture;
     const previousPassageLastSeam = this.previousPassageLastSeam();
-    this.composer.update((previous) => {
-      const existing = previous.segments[previous.activeIndex]?.text ?? '';
-      const textToApply = activeText.length > 0 ? activeText : existing;
-      return applyEnter(updateActiveSegmentText(previous, textToApply), previousPassageLastSeam);
-    });
+    this.composer.update((previous) =>
+      applyEnter(
+        text.length > 0 ? updateActiveSegmentText(previous, text) : previous,
+        previousPassageLastSeam,
+      ),
+    );
     this.bumpDraftVersion();
   }
 
-  /** Backspace released: a tap on an empty segment removes a break; after a hold, nothing. */
-  handleComposerKeyUp(event: KeyboardEvent): void {
-    if (event.key !== 'Backspace') {
+  /** Backspace: a tap on an empty segment removes a break, a hold clears the draft. */
+  handleBackspace(phase: KeyPhase): void {
+    if (phase === 'press') {
+      this.backspaceHold.start();
       return;
     }
     const cleared = this.backspaceHold.takeCompleted();
@@ -176,13 +157,5 @@ export class DraftStore {
   private stopEnterHold(): void {
     this.enterHold.stop();
     this.enterHoldProgress.set(0);
-  }
-
-  private canStructuralBackspace(state: ComposerState): boolean {
-    const active = state.segments[state.activeIndex];
-    if (active == null || active.text.length > 0) {
-      return false;
-    }
-    return state.activeIndex > 0 || state.seamBefore != null;
   }
 }

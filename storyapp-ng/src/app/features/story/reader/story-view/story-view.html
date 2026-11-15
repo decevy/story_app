@@ -52,11 +52,10 @@
                   [isActive]="index === draft.composer().activeIndex"
                   [disabled]="draft.disabled()"
                   (textChange)="draft.handleSegmentTextChange(index, $event)"
-                  (segmentFocus)="draft.handleSegmentFocus(index)"
-                  (enterTap)="draft.handleEnterTap($event)"
-                  (composerKeyDown)="draft.handleComposerKeyDown($event)"
-                  (composerKeyUp)="draft.handleComposerKeyUp($event)"
-                  (fieldBlur)="draft.clearHoldTimers()"
+                  (focused)="draft.handleSegmentFocus(index)"
+                  (blurred)="draft.clearHoldTimers()"
+                  (enter)="draft.handleEnter($event)"
+                  (backspace)="draft.handleBackspace($event)"
               /></span>
             }
             <span #anchor class="inline-block h-0 w-0 align-baseline" aria-hidden="true"></span>

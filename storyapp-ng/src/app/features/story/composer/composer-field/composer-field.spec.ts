@@ -14,11 +14,10 @@ import { ComposerField } from './composer-field';
     [isActive]="isActive()"
     [disabled]="disabled()"
     (textChange)="events.push(['textChange', $event])"
-    (segmentFocus)="events.push(['segmentFocus'])"
-    (enterTap)="events.push(['enterTap', $event])"
-    (composerKeyDown)="events.push(['keydown', $event.key])"
-    (composerKeyUp)="events.push(['keyup', $event.key])"
-    (fieldBlur)="events.push(['fieldBlur'])"
+    (focused)="events.push(['focused'])"
+    (blurred)="events.push(['blurred'])"
+    (enter)="events.push(['enter', $event])"
+    (backspace)="events.push(['backspace', $event])"
   />`,
 })
 class Host {
@@ -56,14 +55,11 @@ describe('ComposerField', () => {
   }
 
   describe('rendering', () => {
-    it('is an editable textbox; the active one carries the test id', async () => {
+    it('is an editable textbox', () => {
       expect(editable.getAttribute('contenteditable')).toBe('true');
       expect(editable.getAttribute('tabindex')).toBe('0');
-      expect(editable.getAttribute('data-testid')).toBe('composer-field');
-
-      host.isActive.set(false);
-      await render();
-      expect(editable.hasAttribute('data-testid')).toBe(false);
+      expect(editable.getAttribute('aria-label')).toBe('Story continuation');
+      expect(editable.classList).toContain('cursor-text');
     });
 
     it('is not editable or focusable while disabled', async () => {
@@ -76,6 +72,7 @@ describe('ComposerField', () => {
     });
 
     it('renders block starts as a full-width multiline field', async () => {
+      expect(editable.classList).toContain('story-composer');
       expect(editable.classList).toContain('inline');
       expect(editable.classList).not.toContain('inline-block');
       expect(editable.getAttribute('aria-multiline')).toBe('false');
@@ -83,6 +80,8 @@ describe('ComposerField', () => {
       host.startVisual.set('plainAlinea');
       await render();
       expect(editable.classList).toContain('w-full');
+      expect(editable.classList).not.toContain('inline');
+      expect(editable.classList).toContain('story-composer');
       expect(editable.getAttribute('aria-multiline')).toBe('true');
     });
 
@@ -115,14 +114,6 @@ describe('ComposerField', () => {
       expect(editable.textContent).toBe('Hello ');
     });
 
-    it('ignores input while disabled', async () => {
-      host.disabled.set(true);
-      await render();
-      host.events.length = 0;
-      input('Hello');
-      expect(host.events).toEqual([]);
-    });
-
     it('pastes plain text as a single line', () => {
       const paste = new Event('paste', { cancelable: true }) as ClipboardEvent;
       Object.defineProperty(paste, 'clipboardData', {
@@ -136,37 +127,77 @@ describe('ComposerField', () => {
   });
 
   describe('keys and focus', () => {
-    it('reports Enter as a tap with the text in the field', () => {
+    function key(type: 'keydown' | 'keyup', key: string, init: KeyboardEventInit = {}) {
+      const event = new KeyboardEvent(type, { key, cancelable: true, ...init });
+      editable.dispatchEvent(event);
+      return event;
+    }
+
+    it('reports Enter as press and release, with the text at release', () => {
       editable.textContent = 'Line';
-      editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-      editable.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' }));
+      const down = key('keydown', 'Enter');
+      key('keyup', 'Enter');
+      expect(down.defaultPrevented).toBe(true);
       expect(host.events).toEqual([
-        ['keydown', 'Enter'],
-        ['enterTap', 'Line'],
+        ['enter', { phase: 'press' }],
+        ['enter', { phase: 'release', text: 'Line' }],
       ]);
     });
 
-    it('falls back to the text captured on keydown when the field emptied', () => {
+    it('releases Enter with the text from the press when the field emptied', () => {
       editable.textContent = 'Captured';
-      editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      key('keydown', 'Enter');
       editable.textContent = '';
-      editable.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' }));
-      expect(host.events).toContainEqual(['enterTap', 'Captured']);
+      key('keyup', 'Enter');
+      expect(host.events).toContainEqual(['enter', { phase: 'release', text: 'Captured' }]);
     });
 
-    it('passes other keys through', () => {
-      editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace' }));
-      editable.dispatchEvent(new KeyboardEvent('keyup', { key: 'Backspace' }));
+    it('never inserts a line break, but reports a repeated Enter only once', () => {
+      key('keydown', 'Enter');
+      const repeat = key('keydown', 'Enter', { repeat: true });
+      expect(repeat.defaultPrevented).toBe(true);
+      expect(host.events).toEqual([['enter', { phase: 'press' }]]);
+    });
+
+    it('leaves Enter and Backspace with a modifier to the browser', () => {
+      const enter = key('keydown', 'Enter', { ctrlKey: true });
+      const backspace = key('keydown', 'Backspace', { altKey: true });
+      expect(enter.defaultPrevented).toBe(false);
+      expect(backspace.defaultPrevented).toBe(false);
+      expect(host.events).toEqual([]);
+    });
+
+    it('lets the browser delete characters while the field has text', () => {
+      editable.textContent = 'Hello';
+      const down = key('keydown', 'Backspace');
+      key('keyup', 'Backspace');
+      expect(down.defaultPrevented).toBe(false);
       expect(host.events).toEqual([
-        ['keydown', 'Backspace'],
-        ['keyup', 'Backspace'],
+        ['backspace', 'press'],
+        ['backspace', 'release'],
       ]);
+    });
+
+    it('prevents Backspace in an empty field and while it repeats', () => {
+      const empty = key('keydown', 'Backspace');
+      expect(empty.defaultPrevented).toBe(true);
+
+      editable.textContent = 'Hello';
+      const repeat = key('keydown', 'Backspace', { repeat: true });
+      expect(repeat.defaultPrevented).toBe(true);
+      expect(host.events).toEqual([['backspace', 'press']]);
+    });
+
+    it('ignores other keys', () => {
+      key('keydown', 'a');
+      key('keyup', 'a');
+      expect(host.events).toEqual([]);
     });
 
     it('ignores keys during IME composition and reads the text when it ends', () => {
       editable.dispatchEvent(new CompositionEvent('compositionstart'));
-      editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-      editable.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' }));
+      key('keydown', 'Enter');
+      key('keyup', 'Enter');
       expect(host.events).toEqual([]);
 
       editable.textContent = 'かな';
@@ -177,7 +208,7 @@ describe('ComposerField', () => {
     it('reports focus and blur', () => {
       editable.dispatchEvent(new FocusEvent('focus'));
       editable.dispatchEvent(new FocusEvent('blur'));
-      expect(host.events).toEqual([['segmentFocus'], ['fieldBlur']]);
+      expect(host.events).toEqual([['focused'], ['blurred']]);
     });
 
     it('focus() puts the caret at the end of the field', () => {

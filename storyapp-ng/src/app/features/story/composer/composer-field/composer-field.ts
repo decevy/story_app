@@ -20,21 +20,28 @@ import {
   writePlainText,
 } from '../composer-dom';
 import {
-  segmentLayoutClass,
+  composerFieldLayoutClass,
   type SegmentStartVisual,
   segmentStartVisualIsBlock,
 } from '../segment-visuals';
 
+/** Enter went down (auto-repeat excluded) or came back up; `text` is the field's text then. */
+export type EnterGesture = { phase: 'press' } | { phase: 'release'; text: string };
+
+/** Backspace went down (auto-repeat excluded) or came back up. */
+export type KeyPhase = 'press' | 'release';
+
 /**
  * One contentEditable segment of the draft. The host is `display: contents`, so the editable
  * span sits directly in the text flow.
+ *
+ * Enter and Backspace are reported as press/release gestures; the draft decides what a tap or a
+ * hold means. The field only handles the key mechanics: Enter never inserts a line break, and
+ * auto-repeated Backspace deletes nothing (holding it clears the draft instead).
  */
 @Component({
   selector: 'sa-composer-field',
-  host: {
-    class: 'contents',
-    '(mousedown)': 'onWrapperMouseDown($event)',
-  },
+  host: { class: 'contents' },
   templateUrl: './composer-field.html',
 })
 export class ComposerField {
@@ -48,29 +55,20 @@ export class ComposerField {
   readonly disabled = input.required<boolean>();
 
   readonly textChange = output<string>();
-  readonly segmentFocus = output();
-  readonly enterTap = output<string>();
-  readonly composerKeyDown = output<KeyboardEvent>();
-  readonly composerKeyUp = output<KeyboardEvent>();
-  readonly fieldBlur = output();
+  readonly focused = output();
+  readonly blurred = output();
+  readonly enter = output<EnterGesture>();
+  readonly backspace = output<KeyPhase>();
 
   private readonly editable = viewChild.required<ElementRef<HTMLSpanElement>>('editable');
 
-  // Plain fields: IME / Enter bookkeeping is never rendered.
+  // IME / Enter bookkeeping is never rendered.
   private isComposing = false;
-  private enterCapturedText: string | null = null;
+  /** Text at Enter press; used on release if the field emptied in between. */
+  private textAtEnterPress = '';
 
   protected readonly isBlock = computed(() => segmentStartVisualIsBlock(this.startVisual()));
-  protected readonly fieldClass = computed(
-    () =>
-      `story-composer break-words whitespace-pre-wrap ${segmentLayoutClass(this.startVisual())} ${
-        this.isBlock()
-          ? 'min-h-[1.75em] w-full'
-          : // `inline`, not `inline-block`: an inline-block wraps as one box, so a long draft
-            // would jump to the next line whole instead of breaking mid-line.
-            'inline'
-      } ${this.disabled() ? '' : 'cursor-text'}`,
-  );
+  protected readonly layoutClass = computed(() => composerFieldLayoutClass(this.startVisual()));
 
   constructor() {
     // On a new version (or enable/disable): write the draft text, focus the active field.
@@ -122,20 +120,16 @@ export class ComposerField {
 
   /** Puts the caret at the end of the field (used when the page around it is clicked). */
   focus(): void {
-    const element = this.editable().nativeElement;
     if (this.disabled()) {
       return;
     }
     this.ensureCaretHost();
-    placeCaretAtEnd(element);
+    placeCaretAtEnd(this.editable().nativeElement);
   }
 
+  // `input` and `paste` only fire while the field is editable, so they need no disabled check.
   protected onInput(): void {
     const element = this.editable().nativeElement;
-    if (this.disabled()) {
-      return;
-    }
-
     const previous = this.text();
     const plain = readPlainText(element);
 
@@ -156,9 +150,6 @@ export class ComposerField {
 
   protected onPaste(event: ClipboardEvent): void {
     event.preventDefault();
-    if (this.disabled()) {
-      return;
-    }
 
     const pasted = (event.clipboardData?.getData('text/plain') ?? '')
       .replace(/\r?\n/g, '')
@@ -188,9 +179,29 @@ export class ComposerField {
       return;
     }
     if (event.key === 'Enter' && !event.repeat) {
-      this.enterCapturedText = readPlainText(this.editable().nativeElement);
+      this.textAtEnterPress = this.plainText();
     }
-    this.composerKeyDown.emit(event);
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (!event.repeat) {
+        this.enter.emit({ phase: 'press' });
+      }
+      return;
+    }
+
+    if (event.key === 'Backspace') {
+      // An empty field has nothing to delete; the draft may remove a break instead.
+      if (event.repeat || this.plainText().length === 0) {
+        event.preventDefault();
+      }
+      if (!event.repeat) {
+        this.backspace.emit('press');
+      }
+    }
   }
 
   protected onKeyUp(event: KeyboardEvent): void {
@@ -198,31 +209,21 @@ export class ComposerField {
       return;
     }
     if (event.key === 'Enter') {
-      const domText = readPlainText(this.editable().nativeElement);
-      const captured = this.enterCapturedText;
-      const activeText =
-        domText.length > 0 ? domText : captured && captured.length > 0 ? captured : this.text();
-      this.enterCapturedText = null;
-      this.enterTap.emit(activeText);
-      return;
+      const text = this.plainText() || this.textAtEnterPress;
+      this.textAtEnterPress = '';
+      this.enter.emit({ phase: 'release', text });
+    } else if (event.key === 'Backspace') {
+      this.backspace.emit('release');
     }
-    this.composerKeyUp.emit(event);
   }
 
   protected onFocus(): void {
     this.ensureCaretHost();
-    this.segmentFocus.emit();
+    this.focused.emit();
   }
 
-  protected onWrapperMouseDown(event: MouseEvent): void {
-    if (this.disabled()) {
-      return;
-    }
-    if (event.target === this.editable().nativeElement) {
-      return;
-    }
-    event.preventDefault();
-    this.focus();
+  private plainText(): string {
+    return readPlainText(this.editable().nativeElement);
   }
 
   private ensureCaretHost(): void {

@@ -66,7 +66,7 @@ describe('StoryView', () => {
   }
 
   const endButton = () => screen.getByRole<HTMLButtonElement>('button', { name: 'End passage' });
-  const field = () => screen.getByTestId('composer-field');
+  const field = () => screen.getByRole('textbox', { name: 'Story continuation' });
   const sheet = (container: Element) =>
     container.querySelector<HTMLElement>('[style*="font-family"]')!;
 
