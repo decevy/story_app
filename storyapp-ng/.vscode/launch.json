@@ -1,25 +1,14 @@
 {
-  // Open the app in the Claude Code Context Picker browser against `npm start` (port 3000). The extension has no
-  // debug type: "Open Context Picker" only runs its openBrowser command (URL from
-  // `claudeCodeContextPicker.defaultUrl` in settings.json), and VS Code cancels that config afterwards. The compound
-  // runs `npm start` first so the page is up when the picker opens. Unit tests debug through the Vitest extension;
-  // E2E tests through the Playwright extension.
+  // Debug the app in Chrome against `npm start` (port 3000). Unit tests debug through the
+  // Vitest extension; E2E tests through the Playwright extension.
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Open Context Picker",
-      "type": "node",
-      "request": "launch",
-      "env": {
-        "OPEN_PICKER": "${command:claudeCodeContextPicker.openBrowser}"
-      }
-    }
-  ],
-  "compounds": [
-    {
       "name": "ng serve",
+      "type": "chrome",
+      "request": "launch",
       "preLaunchTask": "npm: start",
-      "configurations": ["Open Context Picker"]
+      "url": "http://localhost:3000/"
     }
   ]
 }
