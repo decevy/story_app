@@ -3,6 +3,7 @@ const eslint = require('@eslint/js');
 const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
+const boundaries = require('eslint-plugin-boundaries');
 
 module.exports = defineConfig([
   {
@@ -43,12 +44,70 @@ module.exports = defineConfig([
     },
   },
   {
+    // Architecture: dependencies point one way, app -> features -> shared -> core.
+    // Features never import each other; move what two features need to shared/ or core/.
+    files: ['src/**/*.ts'],
+    plugins: { boundaries },
+    settings: {
+      'import/resolver': { node: { extensions: ['.ts', '.js'] } },
+      'boundaries/elements': [
+        { type: 'core', pattern: 'src/app/core', partialMatch: false },
+        { type: 'shared', pattern: 'src/app/shared', partialMatch: false },
+        {
+          type: 'feature',
+          pattern: 'src/app/features/*',
+          capture: ['feature'],
+          partialMatch: false,
+        },
+        { type: 'environments', pattern: 'src/environments', partialMatch: false },
+      ],
+    },
+    rules: {
+      'boundaries/dependencies': [
+        'error',
+        {
+          default: 'disallow',
+          policies: [
+            {
+              from: { element: { type: 'core' } },
+              allow: { to: { element: { types: ['core', 'environments'] } } },
+            },
+            {
+              // Environment files are typed with AppConfig.
+              from: { element: { type: 'environments' } },
+              allow: { to: { element: { type: 'core' } } },
+            },
+            {
+              from: { element: { type: 'shared' } },
+              allow: { to: { element: { types: ['core', 'shared'] } } },
+            },
+            {
+              from: { element: { type: 'feature' } },
+              allow: { to: { element: { types: ['core', 'shared'] } } },
+            },
+            {
+              from: { element: { type: 'feature' } },
+              allow: {
+                to: {
+                  element: {
+                    type: 'feature',
+                    captured: { feature: '{{ from.element.captured.feature }}' },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // Copied unchanged from storyapp-web (pure TS); keep them diffable with the original.
     files: [
-      'src/app/composer/passage-composer.ts',
-      'src/app/composer/segment-visuals.ts',
-      'src/app/composer/composer-dom.ts',
-      'src/app/story/book-fonts.ts',
+      'src/app/features/story/composer/passage-composer.ts',
+      'src/app/features/story/composer/segment-visuals.ts',
+      'src/app/features/story/composer/composer-dom.ts',
+      'src/app/features/story/book-fonts.ts',
       'src/app/core/models/*.ts',
     ],
     rules: {

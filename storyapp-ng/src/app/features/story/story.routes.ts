@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { StoryPage } from './story-page';
+import { StoryPage } from './story-page/story-page';
 import { StoryStore } from './story-store';
 
 /** Lazy-loaded story area. StoryStore lives as long as this route (see app.config.ts). */

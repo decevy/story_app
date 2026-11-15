@@ -1,8 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { AuthService } from '../auth/auth';
-import { SignalRService } from '../core/signalr/signalr';
+import { AuthService } from '../../../core/auth/auth';
+import { SignalRService } from '../../../core/signalr/signalr';
 
 /** Port of storyapp-web/src/components/StoryLayout.tsx; sidebar and main are projected. */
 @Component({

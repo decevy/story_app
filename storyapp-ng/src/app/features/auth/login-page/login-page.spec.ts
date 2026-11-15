@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
-import { AuthService } from './auth';
+import { AuthService } from '../../../core/auth/auth';
 import { LoginPage } from './login-page';
 
 describe('LoginPage', () => {

@@ -1,4 +1,4 @@
-import { Seam } from '../core/models/story.types';
+import { Seam } from '../../../core/models/story.types';
 import {
   applyBackspace,
   applyEnter,

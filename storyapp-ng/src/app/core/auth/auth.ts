@@ -11,9 +11,9 @@ import {
   throwError,
 } from 'rxjs';
 
-import { APP_CONFIG } from '../core/config/app-config';
-import { apiUrl } from '../core/config/api-url';
-import { SKIP_AUTH_REFRESH } from '../core/http/http-context';
+import { APP_CONFIG } from '../config/app-config';
+import { apiUrl } from '../config/api-url';
+import { SKIP_AUTH_REFRESH } from './http-context';
 import {
   CurrentUserResponse,
   LoginRequest,
@@ -21,7 +21,7 @@ import {
   RefreshTokenRequest,
   RegisterRequest,
   User,
-} from '../core/models/auth.types';
+} from '../models/auth.types';
 import { isTokenExpiring } from './jwt';
 import { TokenStore } from './token-store';
 

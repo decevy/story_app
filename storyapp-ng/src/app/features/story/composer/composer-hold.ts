@@ -1,7 +1,7 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 
-import { lastPassageSeam } from '../core/models/story.types';
-import { StoryStore } from '../story/story-store';
+import { lastPassageSeam } from '../../../core/models/story.types';
+import { StoryStore } from '../story-store';
 import {
   applyBackspace,
   applyEnter,

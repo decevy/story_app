@@ -28,16 +28,29 @@ unless clearer (`story-list.ts` → `StoryList`, `auth.ts` → `AuthService`).
 
 ## Layout (`src/app`)
 
+`core/` + `shared/` + `features/`. Dependencies point one way, **app → features → shared → core**,
+enforced by `eslint-plugin-boundaries` (`eslint.config.js`):
+
+- `core/` imports nothing else from the app (only `src/environments`).
+- `shared/` may import `core/`.
+- A feature may import `core/` and `shared/`, never another feature. When two features need the
+  same thing, move it to `shared/` (UI) or `core/` (services, types).
+
+**Folder per component** (CLI default, `ng g c`): `story-view/story-view.ts`, `.html`, `.spec.ts`.
+Services, stores, APIs, guards and plain TS stay flat at the feature (or `core/` sub-folder) root.
+Components have no CSS files (Tailwind); `angular.json` sets `style: none` for `ng g c`.
+
 | Folder | Contents |
 |--------|----------|
+| `core/auth` | `AuthService`, `TokenStore`, `jwt`, `authGuard` / `guestGuard`, `authInterceptor`, `SKIP_AUTH_REFRESH` |
 | `core/config` | `APP_CONFIG` token (`apiUrl`, `hubUrl`), storage keys, URL helpers |
-| `core/http` | `authInterceptor`, `SKIP_AUTH_REFRESH` context token |
 | `core/logging` | `debugLog()` (dev-mode-only `console.log`) |
 | `core/signalr` | `SignalRService` (connection, hub methods, events as observables, `connectionState`) |
-| `core/models` | Types copied from `storyapp-web/src/types` |
-| `auth` | `TokenStore`, `AuthService`, guards, login/register pages |
-| `story` | `StoryStore` (route-level), `StoriesApi`, layout, list, page, view, `PassageSpan`, fonts |
-| `composer` | `passage-composer.ts`, `segment-visuals.ts`, `composer-dom.ts` (copied unchanged), `ComposerField`, `ComposerHold` |
+| `core/models` | Shared domain types copied from `storyapp-web/src/types` |
+| `shared/` | Reusable UI used by more than one feature (created with its first component) |
+| `features/auth` | `login-page/`, `register-page/` (lazy via `loadComponent`) |
+| `features/story` | `story.routes.ts`, `StoryStore` (route-level), `StoriesApi`, fonts; `story-page/`, `story-layout/`, `story-list/`, `story-view/`, `passage-span/` |
+| `features/story/composer` | `passage-composer.ts`, `segment-visuals.ts`, `composer-dom.ts` (copied unchanged), `ComposerHold`; `composer-field/` |
 
 Config comes from `src/environments/` (dev: `apiUrl: ''`, `hubUrl: '/storyHub'`, through the proxy).
 

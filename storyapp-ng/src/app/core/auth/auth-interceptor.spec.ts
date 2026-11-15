@@ -3,8 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
-import { AuthService } from '../../auth/auth';
-import { TokenStore } from '../../auth/token-store';
+import { AuthService } from './auth';
+import { TokenStore } from './token-store';
 import { APP_CONFIG } from '../config/app-config';
 import { authInterceptor } from './auth-interceptor';
 

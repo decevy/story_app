@@ -18,12 +18,12 @@ import {
   placeCaretAtOffset,
   readPlainText,
   writePlainText,
-} from './composer-dom';
+} from '../composer-dom';
 import {
   segmentLayoutClass,
   segmentStartVisualIsBlock,
   type SegmentStartVisual,
-} from './segment-visuals';
+} from '../segment-visuals';
 
 /**
  * Port of storyapp-web/src/components/ComposerField.tsx: one contentEditable draft segment.

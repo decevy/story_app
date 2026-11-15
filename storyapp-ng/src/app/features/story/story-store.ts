@@ -11,10 +11,10 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, catchError, exhaustMap, finalize, from, tap } from 'rxjs';
 
-import { AuthService } from '../auth/auth';
-import { APP_CONFIG } from '../core/config/app-config';
-import { apiUrl } from '../core/config/api-url';
-import { debugLog } from '../core/logging/debug-log';
+import { AuthService } from '../../core/auth/auth';
+import { APP_CONFIG } from '../../core/config/app-config';
+import { apiUrl } from '../../core/config/api-url';
+import { debugLog } from '../../core/logging/debug-log';
 import {
   PaginatedResponse,
   Passage,
@@ -22,8 +22,8 @@ import {
   Seam,
   Story,
   StorySummary,
-} from '../core/models/story.types';
-import { SignalRService } from '../core/signalr/signalr';
+} from '../../core/models/story.types';
+import { SignalRService } from '../../core/signalr/signalr';
 
 interface SendRequest {
   storyId: number;

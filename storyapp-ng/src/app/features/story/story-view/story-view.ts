@@ -11,13 +11,13 @@ import {
   viewChildren,
 } from '@angular/core';
 
-import { ComposerField } from '../composer/composer-field';
+import { ComposerField } from '../composer/composer-field/composer-field';
 import { ComposerHold } from '../composer/composer-hold';
 import { getSegmentStartVisual, type SegmentStartVisual } from '../composer/segment-visuals';
-import { lastPassageSeam } from '../core/models/story.types';
-import { BOOK_FONTS, FONT_STORAGE_KEY, readStoredFontId, type BookFontId } from './book-fonts';
-import { PassageSpan } from './passage-span';
-import { StoryStore } from './story-store';
+import { lastPassageSeam } from '../../../core/models/story.types';
+import { BOOK_FONTS, FONT_STORAGE_KEY, readStoredFontId, type BookFontId } from '../book-fonts';
+import { PassageSpan } from '../passage-span/passage-span';
+import { StoryStore } from '../story-store';
 
 /** Port of storyapp-web/src/components/StoryView.tsx (book view + inline composer). */
 @Component({

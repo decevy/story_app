@@ -4,11 +4,11 @@ import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 
-import { AuthService } from '../auth/auth';
-import { APP_CONFIG } from '../core/config/app-config';
-import { User } from '../core/models/auth.types';
-import { Passage, PassageSegmentInput, Story } from '../core/models/story.types';
-import { ConnectionState, SignalRService } from '../core/signalr/signalr';
+import { AuthService } from '../../core/auth/auth';
+import { APP_CONFIG } from '../../core/config/app-config';
+import { User } from '../../core/models/auth.types';
+import { Passage, PassageSegmentInput, Story } from '../../core/models/story.types';
+import { ConnectionState, SignalRService } from '../../core/signalr/signalr';
 import { StoryStore } from './story-store';
 
 const user: User = { id: 1, username: 'aya', email: 'aya@test.com', isOnline: true, lastSeen: '' };

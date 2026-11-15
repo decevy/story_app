@@ -2,7 +2,7 @@ import { Injectable, inject, isDevMode, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { Observable, Subject } from 'rxjs';
 
-import { AuthService } from '../../auth/auth';
+import { AuthService } from '../auth/auth';
 import { APP_CONFIG } from '../config/app-config';
 import { debugLog } from '../logging/debug-log';
 import {

@@ -1,17 +1,24 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, guestGuard } from './auth/auth-guard';
-import { LoginPage } from './auth/login-page';
-import { RegisterPage } from './auth/register-page';
+import { authGuard, guestGuard } from './core/auth/auth-guard';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginPage, canActivate: [guestGuard] },
-  { path: 'register', component: RegisterPage, canActivate: [guestGuard] },
+  {
+    path: 'login',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/login-page/login-page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'register',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./features/auth/register-page/register-page').then((m) => m.RegisterPage),
+  },
   {
     path: '',
     pathMatch: 'full',
     canActivate: [authGuard],
-    loadChildren: () => import('./story/story.routes').then((m) => m.storyRoutes),
+    loadChildren: () => import('./features/story/story.routes').then((m) => m.storyRoutes),
   },
   { path: '**', redirectTo: '' },
 ];

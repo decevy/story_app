@@ -1,9 +1,9 @@
 import { Component, inject } from '@angular/core';
 
-import { StoryLayout } from './story-layout';
-import { StoryList } from './story-list';
-import { StoryStore } from './story-store';
-import { StoryView } from './story-view';
+import { StoryLayout } from '../story-layout/story-layout';
+import { StoryList } from '../story-list/story-list';
+import { StoryStore } from '../story-store';
+import { StoryView } from '../story-view/story-view';
 
 /** Port of storyapp-web/src/pages/StoryPage.tsx. */
 @Component({

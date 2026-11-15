@@ -9,9 +9,9 @@ import { provideRouter, withAutoCleanupInjectors } from '@angular/router';
 
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
-import { AuthService } from './auth/auth';
+import { AuthService } from './core/auth/auth';
 import { APP_CONFIG } from './core/config/app-config';
-import { authInterceptor } from './core/http/auth-interceptor';
+import { authInterceptor } from './core/auth/auth-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [

@@ -2,8 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, disabled, email, form, required, submit } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 
-import { LoginRequest } from '../core/models/auth.types';
-import { AuthService } from './auth';
+import { LoginRequest } from '../../../core/models/auth.types';
+import { AuthService } from '../../../core/auth/auth';
 
 /** Port of storyapp-web/src/pages/LoginPage.tsx. */
 @Component({

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { STORAGE_KEYS } from '../core/config/constants';
+import { STORAGE_KEYS } from '../config/constants';
 
 /** Port of storyapp-web/src/services/token.service.ts. */
 @Injectable({ providedIn: 'root' })

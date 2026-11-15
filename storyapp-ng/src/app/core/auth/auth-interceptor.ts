@@ -2,8 +2,8 @@ import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/comm
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 
-import { AuthService } from '../../auth/auth';
-import { TokenStore } from '../../auth/token-store';
+import { AuthService } from './auth';
+import { TokenStore } from './token-store';
 import { APP_CONFIG } from '../config/app-config';
 import { isApiUrl } from '../config/api-url';
 import { SKIP_AUTH_REFRESH } from './http-context';

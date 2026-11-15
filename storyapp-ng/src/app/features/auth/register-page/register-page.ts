@@ -11,7 +11,7 @@ import {
 } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 
-import { AuthService } from './auth';
+import { AuthService } from '../../../core/auth/auth';
 
 interface RegisterModel {
   username: string;

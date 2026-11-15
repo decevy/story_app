@@ -2,15 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { APP_CONFIG } from '../core/config/app-config';
-import { apiUrl } from '../core/config/api-url';
-import { MessageResponse } from '../core/models/common.types';
+import { APP_CONFIG } from '../../core/config/app-config';
+import { apiUrl } from '../../core/config/api-url';
+import { MessageResponse } from '../../core/models/common.types';
 import {
   AddWriterRequest,
   CreateStoryRequest,
   Story,
   UpdateStoryRequest,
-} from '../core/models/story.types';
+} from '../../core/models/story.types';
 
 /** Mutation endpoints from SPEC.md (not used in the UI yet). Reads live in StoryStore. */
 @Injectable({ providedIn: 'root' })
