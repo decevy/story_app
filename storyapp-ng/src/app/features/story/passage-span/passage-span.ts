@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 
 import { getSegmentStartVisual, segmentLayoutClass } from '../composer/segment-visuals';
-import { Passage, Seam, sortedPassageSegments } from '../../../core/models/story.types';
+import { Passage, Seam, sortedPassageSegments } from '../../../core/models/story';
 
 /** Port of storyapp-web/src/components/PassageSpan.tsx. */
 @Component({

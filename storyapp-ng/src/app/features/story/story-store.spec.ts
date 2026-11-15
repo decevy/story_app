@@ -6,8 +6,8 @@ import { Subject } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth';
 import { APP_CONFIG } from '../../core/config/app-config';
-import { User } from '../../core/models/auth.types';
-import { Passage, PassageSegmentInput } from '../../core/models/story.types';
+import { User } from '../../core/models/user';
+import { Passage, PassageSegmentInput } from '../../core/models/story';
 import { ConnectionState, SignalRService } from '../../core/signalr/signalr';
 import { makePassage, makeStory, testUser } from '../../../testing/fixtures';
 import { deferred } from '../../../testing/helpers';

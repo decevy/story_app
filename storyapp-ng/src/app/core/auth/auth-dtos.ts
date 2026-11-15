@@ -1,12 +1,4 @@
-// src/app/core/models/auth.types.ts
-
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  isOnline: boolean;
-  lastSeen: string;
-}
+import { User } from '../models/user';
 
 export interface LoginRequest {
   email: string;

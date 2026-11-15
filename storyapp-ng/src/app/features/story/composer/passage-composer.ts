@@ -1,7 +1,4 @@
-import {
-  PassageSegmentInput,
-  Seam,
-} from '../../../core/models/story.types';
+import { PassageSegmentInput, Seam } from '../../../core/models/story';
 import { isSectionBreak } from './segment-visuals';
 
 export type DraftSegment = {

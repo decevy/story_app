@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { APP_CONFIG } from '../config/app-config';
-import { LoginResponse } from '../models/auth.types';
+import { LoginResponse } from './auth-dtos';
 import { testUser } from '../../../testing/fixtures';
 import { unsignedJwt } from '../../../testing/helpers';
 import { AuthService } from './auth';

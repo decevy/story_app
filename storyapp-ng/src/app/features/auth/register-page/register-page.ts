@@ -12,6 +12,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth';
+import { ErrorResponse } from '../../../core/models/api';
 import { FieldLabel } from '../../../shared/ui/field-label';
 import { FormError } from '../../../shared/ui/form-error/form-error';
 import { SubmitButton } from '../../../shared/ui/submit-button';
@@ -82,7 +83,7 @@ export class RegisterPage {
           await this.router.navigate(['/']); // Redirect to home after successful registration
         } catch (err) {
           const body =
-            err instanceof HttpErrorResponse ? (err.error as { error?: string } | null) : null;
+            err instanceof HttpErrorResponse ? (err.error as Partial<ErrorResponse> | null) : null;
           this.error.set(body?.error || 'Registration failed. Please try again.');
           console.error('Registration error:', err);
         }

@@ -4,13 +4,8 @@ import { Observable } from 'rxjs';
 
 import { APP_CONFIG } from '../../core/config/app-config';
 import { apiUrl } from '../../core/config/api-url';
-import { MessageResponse } from '../../core/models/common.types';
-import {
-  AddWriterRequest,
-  CreateStoryRequest,
-  Story,
-  UpdateStoryRequest,
-} from '../../core/models/story.types';
+import { MessageResponse } from '../../core/models/api';
+import { AddWriterRequest, CreateStoryRequest, Story, UpdateStoryRequest } from '../../core/models/story';
 
 /** Mutation endpoints from SPEC.md (not used in the UI yet). Reads live in StoryStore. */
 @Injectable({ providedIn: 'root' })

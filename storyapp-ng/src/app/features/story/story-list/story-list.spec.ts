@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { Passage, Story, StorySummary } from '../../../core/models/story.types';
+import { Passage, Story, StorySummary } from '../../../core/models/story';
 import { StoryStore } from '../story-store';
 import { makePassage, makeStorySummary } from '../../../../testing/fixtures';
 import { StoryList } from './story-list';

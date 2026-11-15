@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { Passage, Seam } from '../../../core/models/story.types';
+import { Passage, Seam } from '../../../core/models/story';
 import { StoryStore } from '../story-store';
 import { ComposerHold } from './composer-hold';
 import {

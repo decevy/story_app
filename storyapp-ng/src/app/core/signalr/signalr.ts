@@ -5,14 +5,8 @@ import { Observable, Subject } from 'rxjs';
 import { AuthService } from '../auth/auth';
 import { APP_CONFIG } from '../config/app-config';
 import { debugLog } from '../logging/debug-log';
-import {
-  PassageDeleted,
-  PassageEdited,
-  StoryEvent,
-  TypingIndicator,
-  UserStatusChanged,
-} from '../models/signalr.types';
-import { Passage, PassageSegmentInput, Seam } from '../models/story.types';
+import { PassageDeleted, PassageEdited, StoryEvent, TypingIndicator, UserStatusChanged } from './hub-events';
+import { Passage, PassageSegmentInput, Seam } from '../models/story';
 
 export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected';
 

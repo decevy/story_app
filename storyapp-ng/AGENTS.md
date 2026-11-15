@@ -24,7 +24,9 @@ and its API contract are unchanged.
 ## Naming
 
 New style guide: kebab-case files without type suffixes, class names without `Component`/`Service`
-unless clearer (`story-list.ts` → `StoryList`, `auth.ts` → `AuthService`).
+unless clearer (`story-list.ts` → `StoryList`, `auth.ts` → `AuthService`). Type files too: `story.ts`,
+not `story.types.ts` or `story.model.ts`. Types live next to the code that owns them; only types
+shared across features go in `core/models`.
 
 ## Layout (`src/app`)
 
@@ -42,11 +44,11 @@ Components have no CSS files (Tailwind); `angular.json` sets `style: none` for `
 
 | Folder | Contents |
 |--------|----------|
-| `core/auth` | `AuthService`, `TokenStore`, `jwt`, `authGuard` / `guestGuard`, `authInterceptor`, `SKIP_AUTH_REFRESH` |
+| `core/auth` | `AuthService`, `TokenStore`, `jwt`, `authGuard` / `guestGuard`, `authInterceptor`, `SKIP_AUTH_REFRESH`; `auth-dtos.ts` (login, register, refresh, `/auth/me` request and response types) |
 | `core/config` | `APP_CONFIG` token (`apiUrl`, `hubUrl`), storage keys, URL helpers |
 | `core/logging` | `debugLog()` (dev-mode-only `console.log`) |
-| `core/signalr` | `SignalRService` (connection, hub methods, events as observables, `connectionState`) |
-| `core/models` | Shared domain types copied from `storyapp-web/src/types` |
+| `core/signalr` | `SignalRService` (connection, hub methods, events as observables, `connectionState`); `hub-events.ts` (event payloads) |
+| `core/models` | Domain types shared across features, one file per entity: `story.ts` (`Story`, `Passage`, `Seam`, ...), `user.ts` (`User`, profile and search types), `api.ts` (`ErrorResponse`, `MessageResponse`) |
 | `shared/ui` | Form UI for every form: `appTextInput` and `appFieldLabel` (directives on the native elements, so `[formField]` keeps working), `appSubmitButton` (`[busy]`), `<app-form-error>`. Planned users: profile, create/edit story, add writer |
 | `features/auth` | `login-page/`, `register-page/` (lazy via `loadComponent`) |
 | `features/story` | `story.routes.ts`, `StoryStore` (route-level), `StoriesApi`, fonts; `story-page/`, `story-layout/`, `story-list/`, `story-view/`, `passage-span/` |

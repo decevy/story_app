@@ -14,14 +14,8 @@ import {
 import { APP_CONFIG } from '../config/app-config';
 import { apiUrl } from '../config/api-url';
 import { SKIP_AUTH_REFRESH } from './http-context';
-import {
-  CurrentUserResponse,
-  LoginRequest,
-  LoginResponse,
-  RefreshTokenRequest,
-  RegisterRequest,
-  User,
-} from '../models/auth.types';
+import { CurrentUserResponse, LoginRequest, LoginResponse, RefreshTokenRequest, RegisterRequest } from './auth-dtos';
+import { User } from '../models/user';
 import { isTokenExpiring } from './jwt';
 import { TokenStore } from './token-store';
 

@@ -1,6 +1,5 @@
-// src/app/core/models/signalr.types.ts
-
-import { PassageSegment } from './story.types';
+// Payloads of the events the StoryHub sends to clients.
+import { PassageSegment } from '../models/story';
 
 export interface StoryEvent {
   userId: number;

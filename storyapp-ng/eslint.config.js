@@ -120,7 +120,6 @@ module.exports = defineConfig([
       'src/app/features/story/composer/segment-visuals.ts',
       'src/app/features/story/composer/composer-dom.ts',
       'src/app/features/story/book-fonts.ts',
-      'src/app/core/models/*.ts',
     ],
     rules: {
       '@typescript-eslint/consistent-type-definitions': 'off',

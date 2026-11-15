@@ -1,7 +1,7 @@
 import { computed, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Passage, Seam } from '../../../core/models/story.types';
+import { Passage, Seam } from '../../../core/models/story';
 import { BOOK_FONTS, FONT_STORAGE_KEY } from '../book-fonts';
 import { StoryStore } from '../story-store';
 import { makePassage, makeStory } from '../../../../testing/fixtures';

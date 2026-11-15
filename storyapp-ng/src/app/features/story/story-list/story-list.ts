@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { Listbox, Option } from '@angular/aria/listbox';
 import { formatDistanceToNow } from 'date-fns';
 
-import { StorySummary, passageText } from '../../../core/models/story.types';
+import { StorySummary, passageText } from '../../../core/models/story';
 import { StoryStore } from '../story-store';
 
 /** Port of storyapp-web/src/components/StoryList.tsx as an Angular Aria listbox. */

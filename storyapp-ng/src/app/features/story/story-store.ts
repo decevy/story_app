@@ -15,14 +15,7 @@ import { AuthService } from '../../core/auth/auth';
 import { APP_CONFIG } from '../../core/config/app-config';
 import { apiUrl } from '../../core/config/api-url';
 import { debugLog } from '../../core/logging/debug-log';
-import {
-  PaginatedResponse,
-  Passage,
-  PassageSegmentInput,
-  Seam,
-  Story,
-  StorySummary,
-} from '../../core/models/story.types';
+import { PaginatedResponse, Passage, PassageSegmentInput, Seam, Story, StorySummary } from '../../core/models/story';
 import { SignalRService } from '../../core/signalr/signalr';
 
 interface SendRequest {

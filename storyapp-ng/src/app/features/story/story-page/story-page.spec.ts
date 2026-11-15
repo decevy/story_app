@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { Story } from '../../../core/models/story.types';
+import { Story } from '../../../core/models/story';
 import { StoryLayout } from '../story-layout/story-layout';
 import { StoryList } from '../story-list/story-list';
 import { StoryStore } from '../story-store';

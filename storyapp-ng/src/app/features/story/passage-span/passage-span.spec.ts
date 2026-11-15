@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Passage, Seam } from '../../../core/models/story.types';
+import { Passage, Seam } from '../../../core/models/story';
 import { makePassage } from '../../../../testing/fixtures';
 import { hasClasses } from '../../../../testing/helpers';
 import { PassageSpan } from './passage-span';

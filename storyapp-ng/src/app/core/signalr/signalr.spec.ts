@@ -3,7 +3,7 @@ import * as signalR from '@microsoft/signalr';
 
 import { AuthService } from '../auth/auth';
 import { APP_CONFIG } from '../config/app-config';
-import { Passage } from '../models/story.types';
+import { Passage } from '../models/story';
 import { SignalRService } from './signalr';
 
 type Handler = (...args: unknown[]) => void;

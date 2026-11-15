@@ -14,7 +14,7 @@ import {
 import { ComposerField } from '../composer/composer-field/composer-field';
 import { ComposerHold } from '../composer/composer-hold';
 import { getSegmentStartVisual, type SegmentStartVisual } from '../composer/segment-visuals';
-import { lastPassageSeam } from '../../../core/models/story.types';
+import { lastPassageSeam } from '../../../core/models/story';
 import { BOOK_FONTS, FONT_STORAGE_KEY, readStoredFontId, type BookFontId } from '../book-fonts';
 import { PassageSpan } from '../passage-span/passage-span';
 import { StoryStore } from '../story-store';

@@ -1,6 +1,4 @@
-// src/app/core/models/story.types.ts
-
-import { User } from './auth.types';
+import { User } from './user';
 
 export enum Seam {
   Inline = 0,

@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, disabled, email, form, required, submit } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 
-import { LoginRequest } from '../../../core/models/auth.types';
+import { LoginRequest } from '../../../core/auth/auth-dtos';
 import { AuthService } from '../../../core/auth/auth';
 import { FieldLabel } from '../../../shared/ui/field-label';
 import { FormError } from '../../../shared/ui/form-error/form-error';
