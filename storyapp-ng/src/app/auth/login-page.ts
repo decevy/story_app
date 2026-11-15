@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, disabled, email, form, required, submit } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 
@@ -15,7 +15,6 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  protected readonly submitting = signal(false);
   protected readonly error = signal('');
 
   private readonly model = signal<LoginRequest>({ email: '', password: '' });
@@ -26,21 +25,21 @@ export class LoginPage {
     disabled(path, () => this.submitting());
   });
 
+  /** True while submit() runs the action; tracked by Signal Forms. */
+  protected readonly submitting = computed(() => this.loginForm().submitting());
+
   protected async onSubmit(event: Event): Promise<void> {
     event.preventDefault();
     this.error.set('');
 
     await submit(this.loginForm, {
       action: async () => {
-        this.submitting.set(true);
         try {
           await this.auth.login(this.model());
           await this.router.navigate(['/']); // Redirect to home after successful login
         } catch (err) {
           this.error.set('Invalid email or password. Please try again.');
           console.error('Login error:', err);
-        } finally {
-          this.submitting.set(false);
         }
         return undefined;
       },

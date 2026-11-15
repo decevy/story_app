@@ -14,6 +14,13 @@ module.exports = defineConfig([
       angular.configs.tsRecommended,
     ],
     processor: angular.processInlineTemplates,
+    // Type information for rules such as no-uncalled-signals.
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
     rules: {
       '@angular-eslint/directive-selector': [
         'error',
@@ -31,6 +38,8 @@ module.exports = defineConfig([
           style: 'kebab-case',
         },
       ],
+      '@angular-eslint/prefer-signals': 'error',
+      '@angular-eslint/no-uncalled-signals': 'error',
     },
   },
   {
@@ -49,6 +58,8 @@ module.exports = defineConfig([
   {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
-    rules: {},
+    rules: {
+      '@angular-eslint/template/prefer-self-closing-tags': 'error',
+    },
   },
 ]);

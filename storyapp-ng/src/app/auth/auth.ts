@@ -1,7 +1,15 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, firstValueFrom, map, shareReplay, throwError } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  finalize,
+  firstValueFrom,
+  map,
+  shareReplay,
+  throwError,
+} from 'rxjs';
 
 import { APP_CONFIG } from '../core/config/app-config';
 import { apiUrl } from '../core/config/api-url';
@@ -26,10 +34,8 @@ export class AuthService {
   private readonly router = inject(Router);
 
   private readonly userState = signal<User | null>(null);
-  private readonly initializedState = signal(false);
 
   readonly user = this.userState.asReadonly();
-  readonly initialized = this.initializedState.asReadonly();
   readonly isAuthenticated = computed(() => this.userState() !== null);
 
   /** One in-flight refresh shared by every caller (interceptor and SignalR). */
@@ -37,27 +43,24 @@ export class AuthService {
 
   /** Validates stored tokens on startup (AuthContext initializeAuth). */
   async initialize(): Promise<void> {
+    if (!this.tokens.hasTokens()) {
+      return;
+    }
     try {
-      if (this.tokens.hasTokens()) {
-        try {
-          const currentUser = await firstValueFrom(
-            this.http.get<CurrentUserResponse>(apiUrl(this.config, '/auth/me')),
-          );
-          this.userState.set({
-            id: currentUser.userId,
-            username: currentUser.username,
-            email: currentUser.email,
-            isOnline: true,
-            lastSeen: new Date().toISOString(),
-          });
-        } catch {
-          // Token invalid, clear it
-          this.tokens.clearTokens();
-          this.userState.set(null);
-        }
-      }
-    } finally {
-      this.initializedState.set(true);
+      const currentUser = await firstValueFrom(
+        this.http.get<CurrentUserResponse>(apiUrl(this.config, '/auth/me')),
+      );
+      this.userState.set({
+        id: currentUser.userId,
+        username: currentUser.username,
+        email: currentUser.email,
+        isOnline: true,
+        lastSeen: new Date().toISOString(),
+      });
+    } catch {
+      // Token invalid, clear it
+      this.tokens.clearTokens();
+      this.userState.set(null);
     }
   }
 

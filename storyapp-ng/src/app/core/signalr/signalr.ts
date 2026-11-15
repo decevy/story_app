@@ -1,9 +1,10 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, isDevMode, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { Observable, Subject } from 'rxjs';
 
 import { AuthService } from '../../auth/auth';
 import { APP_CONFIG } from '../config/app-config';
+import { debugLog } from '../logging/debug-log';
 import {
   PassageDeleted,
   PassageEdited,
@@ -44,7 +45,8 @@ export class SignalRService {
   readonly userLeftStory$: Observable<StoryEvent> = this.userLeftStory.asObservable();
   readonly userStartedTyping$: Observable<TypingIndicator> = this.userStartedTyping.asObservable();
   readonly userStoppedTyping$: Observable<TypingIndicator> = this.userStoppedTyping.asObservable();
-  readonly userStatusChanged$: Observable<UserStatusChanged> = this.userStatusChanged.asObservable();
+  readonly userStatusChanged$: Observable<UserStatusChanged> =
+    this.userStatusChanged.asObservable();
   /** Emits after an automatic reconnect succeeds. */
   readonly reconnected$: Observable<void> = this.reconnected.asObservable();
 
@@ -63,7 +65,7 @@ export class SignalRService {
           accessTokenFactory: () => this.auth.getFreshAccessToken(),
         })
         .withAutomaticReconnect()
-        .configureLogging(signalR.LogLevel.Information)
+        .configureLogging(isDevMode() ? signalR.LogLevel.Information : signalR.LogLevel.Warning)
         .build();
 
       this.setupEventHandlers(this.connection);
@@ -71,7 +73,7 @@ export class SignalRService {
       try {
         await this.connection.start();
         this.state.set('connected');
-        console.log('SignalR Connection Started');
+        debugLog('SignalR Connection Started');
       } catch (error) {
         console.error('SignalR Connection Error:', error);
         throw error;
@@ -107,7 +109,11 @@ export class SignalRService {
    * SignalR does not apply the C# default (`Seam? seamBefore = null`) and rejects a
    * two-argument call with a server error, so an explicit `null` is sent instead.
    */
-  async sendPassage(storyId: number, segments: PassageSegmentInput[], seamBefore?: Seam): Promise<void> {
+  async sendPassage(
+    storyId: number,
+    segments: PassageSegmentInput[],
+    seamBefore?: Seam,
+  ): Promise<void> {
     await this.requireConnection().invoke('SendPassage', storyId, segments, seamBefore ?? null);
   }
 
@@ -150,23 +156,29 @@ export class SignalRService {
     connection.on('PassageDeleted', (data: PassageDeleted) => this.passageDeleted.next(data));
     connection.on('UserJoinedStory', (data: StoryEvent) => this.userJoinedStory.next(data));
     connection.on('UserLeftStory', (data: StoryEvent) => this.userLeftStory.next(data));
-    connection.on('UserStartedTyping', (data: TypingIndicator) => this.userStartedTyping.next(data));
-    connection.on('UserStoppedTyping', (data: TypingIndicator) => this.userStoppedTyping.next(data));
-    connection.on('UserStatusChanged', (data: UserStatusChanged) => this.userStatusChanged.next(data));
+    connection.on('UserStartedTyping', (data: TypingIndicator) =>
+      this.userStartedTyping.next(data),
+    );
+    connection.on('UserStoppedTyping', (data: TypingIndicator) =>
+      this.userStoppedTyping.next(data),
+    );
+    connection.on('UserStatusChanged', (data: UserStatusChanged) =>
+      this.userStatusChanged.next(data),
+    );
 
     connection.onreconnecting(() => {
-      console.log('SignalR Reconnecting');
+      debugLog('SignalR Reconnecting');
       this.state.set('reconnecting');
     });
 
     connection.onreconnected(() => {
-      console.log('SignalR Reconnected');
+      debugLog('SignalR Reconnected');
       this.state.set('connected');
       this.reconnected.next();
     });
 
     connection.onclose(() => {
-      console.log('SignalR Disconnected');
+      debugLog('SignalR Disconnected');
       // Ignore close events from a connection that has already been replaced.
       if (this.connection === null || this.connection === connection) {
         this.state.set('disconnected');

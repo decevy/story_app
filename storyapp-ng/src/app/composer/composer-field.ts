@@ -1,8 +1,10 @@
 import {
   Component,
+  DOCUMENT,
   ElementRef,
   afterRenderEffect,
   computed,
+  inject,
   input,
   output,
   untracked,
@@ -55,6 +57,8 @@ import {
   ></span>`,
 })
 export class ComposerField {
+  private readonly document = inject(DOCUMENT);
+
   readonly text = input.required<string>();
   /** React seedToken: a change rewrites the DOM text and refocuses the active field. */
   readonly version = input.required<number>();
@@ -95,7 +99,7 @@ export class ComposerField {
         writePlainText(element, this.text());
         if (!disabled && this.isActive()) {
           requestAnimationFrame(() => {
-            if (document.activeElement !== element) {
+            if (this.document.activeElement !== element) {
               element.focus({ preventScroll: true });
             }
             placeCaretAtEnd(element);
@@ -112,18 +116,18 @@ export class ComposerField {
       const element = this.editable().nativeElement;
 
       const restoreCaretIfLost = () => {
-        if (this.isComposing || document.activeElement !== element) {
+        if (this.isComposing || this.document.activeElement !== element) {
           return;
         }
-        const selection = window.getSelection();
+        const selection = this.document.getSelection();
         if (!selection || selection.rangeCount === 0 || !element.contains(selection.anchorNode)) {
           this.ensureCaretHost();
           placeCaretAtEnd(element);
         }
       };
 
-      document.addEventListener('selectionchange', restoreCaretIfLost);
-      onCleanup(() => document.removeEventListener('selectionchange', restoreCaretIfLost));
+      this.document.addEventListener('selectionchange', restoreCaretIfLost);
+      onCleanup(() => this.document.removeEventListener('selectionchange', restoreCaretIfLost));
     });
   }
 
@@ -175,7 +179,7 @@ export class ComposerField {
       return;
     }
 
-    document.execCommand('insertText', false, pasted);
+    this.document.execCommand('insertText', false, pasted);
     this.onInput();
   }
 

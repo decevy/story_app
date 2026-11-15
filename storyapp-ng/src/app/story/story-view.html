@@ -45,17 +45,20 @@
             [style.--draft-color]="hold.draftColor()"
             (mousedown)="onDraftZoneMouseDown($event)"
           >
-            <span class="contents" data-testid="passages"
-              >@for (passage of store.passages(); track passage.id; let passageIndex = $index) {<app-passage-span
+            <span class="contents" data-testid="passages">
+              @for (passage of store.passages(); track passage.id; let passageIndex = $index) {
+                <app-passage-span
                   [passage]="passage"
-                  [previousPassageLastSeam]="previousSeamFor(passageIndex)"
-                />}</span
-            >@for (segment of hold.composer().segments; track $index; let index = $index) {<span
-                data-draft-text=""
+                  [previousPassageLastSeam]="previousSeams()[passageIndex]"
+                />
+              }
+            </span>
+            @for (segment of hold.composer().segments; track $index; let index = $index) {
+              <span data-draft-text=""
                 ><app-composer-field
                   [text]="segment.text"
                   [version]="hold.draftVersion()"
-                  [startVisual]="draftStartVisual(index)"
+                  [startVisual]="draftStartVisuals()[index]"
                   [isActive]="index === hold.composer().activeIndex"
                   [disabled]="hold.disabled()"
                   (textChange)="hold.handleSegmentTextChange(index, $event)"
@@ -63,8 +66,10 @@
                   (enterTap)="hold.handleEnterTap($event)"
                   (composerKeyDown)="hold.handleComposerKeyDown($event)"
                   (composerKeyUp)="hold.handleComposerKeyUp($event)"
-                  (fieldBlur)="hold.clearHoldTimers()" /></span
-            >}<span #anchor class="inline-block h-0 w-0 align-baseline" aria-hidden="true"></span>
+                  (fieldBlur)="hold.clearHoldTimers()"
+              /></span>
+            }
+            <span #anchor class="inline-block h-0 w-0 align-baseline" aria-hidden="true"></span>
           </div>
           <span
             class="draft-zone-fill block min-h-[6rem] w-full flex-1 cursor-text"

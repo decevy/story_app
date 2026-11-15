@@ -14,6 +14,7 @@ import { EMPTY, Subject, catchError, exhaustMap, finalize, from, tap } from 'rxj
 import { AuthService } from '../auth/auth';
 import { APP_CONFIG } from '../core/config/app-config';
 import { apiUrl } from '../core/config/api-url';
+import { debugLog } from '../core/logging/debug-log';
 import {
   PaginatedResponse,
   Passage,
@@ -122,7 +123,7 @@ export class StoryStore {
       untracked(() => {
         this.signalR
           .joinStory(storyId)
-          .then(() => console.log(`Joined story: ${storyId}`))
+          .then(() => debugLog(`Joined story: ${storyId}`))
           .catch((error) => console.error(`Failed to join story ${storyId}:`, error));
       });
       onCleanup(() => {
@@ -135,7 +136,7 @@ export class StoryStore {
     });
 
     this.signalR.passageReceived$.pipe(takeUntilDestroyed()).subscribe((passage) => {
-      console.log('New passage received:', passage);
+      debugLog('New passage received:', passage);
       if (passage.storyId !== this.selectedStoryId()) {
         return;
       }
@@ -152,7 +153,7 @@ export class StoryStore {
           return from(
             this.signalR.sendPassage(request.storyId, request.segments, request.seamBefore),
           ).pipe(
-            tap(() => console.log(`Passage sent in story ${request.storyId}`)),
+            tap(() => debugLog(`Passage sent in story ${request.storyId}`)),
             catchError((error: unknown) => {
               console.error(`Failed to send passage in story ${request.storyId}:`, error);
               failure = { error };

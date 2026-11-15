@@ -14,7 +14,7 @@ import {
 import { ComposerField } from '../composer/composer-field';
 import { ComposerHold } from '../composer/composer-hold';
 import { getSegmentStartVisual, type SegmentStartVisual } from '../composer/segment-visuals';
-import { Seam, lastPassageSeam } from '../core/models/story.types';
+import { lastPassageSeam } from '../core/models/story.types';
 import { BOOK_FONTS, FONT_STORAGE_KEY, readStoredFontId, type BookFontId } from './book-fonts';
 import { PassageSpan } from './passage-span';
 import { StoryStore } from './story-store';
@@ -39,6 +39,23 @@ export class StoryView {
 
   private readonly anchor = viewChild<ElementRef<HTMLSpanElement>>('anchor');
   private readonly composerFields = viewChildren(ComposerField);
+
+  /** Last seam of the passage before each passage (undefined for the first). */
+  protected readonly previousSeams = computed(() => {
+    const passages = this.store.passages();
+    return passages.map((_, index) =>
+      index > 0 ? lastPassageSeam(passages[index - 1]!) : undefined,
+    );
+  });
+
+  /** Start visual per draft segment; only the first one depends on the story so far. */
+  protected readonly draftStartVisuals = computed<SegmentStartVisual[]>(() => {
+    const { segments, seamBefore } = this.hold.composer();
+    const firstSeam = seamBefore ?? this.hold.previousPassageLastSeam();
+    return segments.map((_, index) =>
+      getSegmentStartVisual(segments, index, index === 0 ? firstSeam : undefined),
+    );
+  });
 
   private readonly passagesSignature = computed(() => {
     const last = this.store.passages().at(-1);
@@ -73,20 +90,6 @@ export class StoryView {
 
   protected onFontChange(event: Event): void {
     this.fontId.set((event.target as HTMLSelectElement).value as BookFontId);
-  }
-
-  protected previousSeamFor(passageIndex: number): Seam | undefined {
-    const passages = this.store.passages();
-    return passageIndex > 0 ? lastPassageSeam(passages[passageIndex - 1]!) : undefined;
-  }
-
-  protected draftStartVisual(index: number): SegmentStartVisual {
-    const composer = this.hold.composer();
-    return getSegmentStartVisual(
-      composer.segments,
-      index,
-      index === 0 ? (composer.seamBefore ?? this.hold.previousPassageLastSeam()) : undefined,
-    );
   }
 
   protected endPassage(): void {

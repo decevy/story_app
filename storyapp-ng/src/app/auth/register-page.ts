@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
   FormField,
   disabled,
@@ -32,7 +32,6 @@ export class RegisterPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  protected readonly submitting = signal(false);
   protected readonly error = signal('');
 
   private readonly model = signal<RegisterModel>({
@@ -64,23 +63,24 @@ export class RegisterPage {
     disabled(path, () => this.submitting());
   });
 
+  /** True while submit() runs the action; tracked by Signal Forms. */
+  protected readonly submitting = computed(() => this.registerForm().submitting());
+
   protected async onSubmit(event: Event): Promise<void> {
     event.preventDefault();
     this.error.set('');
 
     await submit(this.registerForm, {
       action: async () => {
-        this.submitting.set(true);
         try {
           const { username, email: emailValue, password } = this.model();
           await this.auth.register({ username, email: emailValue, password });
           await this.router.navigate(['/']); // Redirect to home after successful registration
         } catch (err) {
-          const body = err instanceof HttpErrorResponse ? (err.error as { error?: string } | null) : null;
+          const body =
+            err instanceof HttpErrorResponse ? (err.error as { error?: string } | null) : null;
           this.error.set(body?.error || 'Registration failed. Please try again.');
           console.error('Registration error:', err);
-        } finally {
-          this.submitting.set(false);
         }
         return undefined;
       },

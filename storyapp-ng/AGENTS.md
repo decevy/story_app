@@ -11,11 +11,14 @@ and its API contract are unchanged.
 - **Signals for all template state** (`signal`, `computed`, `linkedSignal`, `httpResource`). No plain mutable fields read by templates.
 - Template syntax: `@if`, `@for` (with `track`), `@switch`, `@defer`. No NgModules, no `*ngIf` / `*ngFor`.
 - `inject()`, never constructor injection.
-- Forms: **Signal Forms** (`@angular/forms/signals`). No Reactive or template-driven forms.
+- Forms: **Signal Forms** (`@angular/forms/signals`). No Reactive or template-driven forms. Use the form's own `submitting()` state rather than a separate signal. The pages keep `(submit)` + `submit()` instead of `[formRoot]`, because `formRoot` sets `novalidate` and the React pages rely on native validation.
 - UI primitives: **Angular Aria** (`@angular/aria`) and **CDK**. **No Angular Material.**
 - Styling: **Tailwind CSS v4** (`@tailwindcss/postcss`, `.postcssrc.json`) + `@toolwind/corner-shape`; global rules in `src/styles.css`, adaptive radii in `src/styles/adaptive-rounded.css`. Keep classes identical to the React components.
 - HTTP: `HttpClient` (fetch backend is the v22 default; don't add `withFetch()`). `httpResource` for simple GETs; HttpClient + RxJS for mutations and refresh.
 - Real-time: `@microsoft/signalr` 9.0.6 (same as storyapp-web).
+- Strict TypeScript (`strict`) and strict templates (`strictTemplates`, `typeCheckHostBindings`). ESLint uses type information (`projectService`).
+- Template values derived per item (classes, seams) are `computed()` arrays, not method calls in the template.
+- Debug output goes through `debugLog()` (`core/logging`), which logs only in dev mode; SignalR logs at `Warning` in production.
 - Domain names match the backend: `Story`, `Passage`, `PassageSegment`, `Writer`, `Seam`.
 
 ## Naming
@@ -29,6 +32,7 @@ unless clearer (`story-list.ts` → `StoryList`, `auth.ts` → `AuthService`).
 |--------|----------|
 | `core/config` | `APP_CONFIG` token (`apiUrl`, `hubUrl`), storage keys, URL helpers |
 | `core/http` | `authInterceptor`, `SKIP_AUTH_REFRESH` context token |
+| `core/logging` | `debugLog()` (dev-mode-only `console.log`) |
 | `core/signalr` | `SignalRService` (connection, hub methods, events as observables, `connectionState`) |
 | `core/models` | Types copied from `storyapp-web/src/types` |
 | `auth` | `TokenStore`, `AuthService`, guards, login/register pages |
@@ -39,7 +43,7 @@ Config comes from `src/environments/` (dev: `apiUrl: ''`, `hubUrl: '/storyHub'`,
 
 ## Key behaviour notes
 
-- **Auth**: `AuthService.initialize()` runs in `provideAppInitializer`; `index.html` shows the loading spinner meanwhile. The interceptor shares one refresh across concurrent 401s; refresh failure clears tokens and routes to `/login`.
+- **Auth**: `AuthService.initialize()` runs in `provideAppInitializer`; `index.html` shows the loading spinner meanwhile. The initializer finishes before the first navigation, so `authGuard` / `guestGuard` decide synchronously. The interceptor shares one refresh across concurrent 401s; refresh failure clears tokens and routes to `/login`.
 - **StoryStore** is provided on the lazy story route; `withAutoCleanupInjectors()` destroys it when the route is left (like unmounting `StoryProvider`). Hub join/leave is an effect on `selectedStoryId` + connection state, which also rejoins after a reconnect.
 - **Sending**: `StoryStore.sendPassage` goes through `exhaustMap` (DEC-7), so a send while one is in flight is ignored. `SignalRService.sendPassage` always passes `seamBefore` (`null` when unset): the hub rejects the two-argument call that storyapp-web makes.
 - **Composer**: `ComposerHold` (scoped to `StoryView`) owns the draft; `draftVersion` replaces React's `seedToken`. Don't change seam logic, rendering rules or composer interactions here; they follow SPEC.md, including the known cross-passage indentation issue (`it.todo` in `segment-visuals.spec.ts`).
