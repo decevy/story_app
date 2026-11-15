@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth';
-import { User } from '../../../core/models/auth.types';
 import { ConnectionState, SignalRService } from '../../../core/signalr/signalr';
+import { testUser } from '../../../../testing/fixtures';
 import { StoryLayout } from './story-layout';
 
 @Component({
@@ -16,8 +16,6 @@ import { StoryLayout } from './story-layout';
 })
 class Host {}
 
-const user: User = { id: 1, username: 'aya', email: 'aya@test.com', isOnline: true, lastSeen: '' };
-
 describe('StoryLayout', () => {
   const connectionState = signal<ConnectionState>('connected');
   const logout = vi.fn(async () => undefined);
@@ -28,7 +26,7 @@ describe('StoryLayout', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: { user: signal(user), logout } },
+        { provide: AuthService, useValue: { user: signal(testUser), logout } },
         { provide: SignalRService, useValue: { connectionState } },
       ],
     });

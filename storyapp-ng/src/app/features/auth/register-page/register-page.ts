@@ -12,6 +12,10 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth';
+import { FieldLabel } from '../../../shared/ui/field-label';
+import { FormError } from '../../../shared/ui/form-error/form-error';
+import { SubmitButton } from '../../../shared/ui/submit-button';
+import { TextInput } from '../../../shared/ui/text-input';
 
 interface RegisterModel {
   username: string;
@@ -25,7 +29,7 @@ const PASSWORD_MISMATCH = 'passwordMismatch';
 /** Port of storyapp-web/src/pages/RegisterPage.tsx. */
 @Component({
   selector: 'app-register-page',
-  imports: [FormField, RouterLink],
+  imports: [FieldLabel, FormError, FormField, RouterLink, SubmitButton, TextInput],
   templateUrl: './register-page.html',
 })
 export class RegisterPage {

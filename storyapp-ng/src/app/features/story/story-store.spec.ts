@@ -7,29 +7,11 @@ import { Subject } from 'rxjs';
 import { AuthService } from '../../core/auth/auth';
 import { APP_CONFIG } from '../../core/config/app-config';
 import { User } from '../../core/models/auth.types';
-import { Passage, PassageSegmentInput, Story } from '../../core/models/story.types';
+import { Passage, PassageSegmentInput } from '../../core/models/story.types';
 import { ConnectionState, SignalRService } from '../../core/signalr/signalr';
+import { makePassage, makeStory, testUser } from '../../../testing/fixtures';
+import { deferred } from '../../../testing/helpers';
 import { StoryStore } from './story-store';
-
-const user: User = { id: 1, username: 'aya', email: 'aya@test.com', isOnline: true, lastSeen: '' };
-
-function makeStory(id: number): Story {
-  return { id, name: `Story ${id}`, isPrivate: false, creator: user, createdAt: '', writers: [] };
-}
-
-function makePassage(id: number, storyId: number): Passage {
-  return { id, order: id, segments: [{ id, order: 0, text: `p${id} ` }], user, storyId, createdAt: '' };
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (error: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
 
 describe('StoryStore', () => {
   let store: StoryStore;
@@ -65,7 +47,7 @@ describe('StoryStore', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: APP_CONFIG, useValue: { apiUrl: '', hubUrl: '/storyHub' } },
-        { provide: AuthService, useValue: { user: signal<User | null>(user) } },
+        { provide: AuthService, useValue: { user: signal<User | null>(testUser) } },
         { provide: SignalRService, useValue: signalR },
         StoryStore,
       ],
@@ -84,16 +66,18 @@ describe('StoryStore', () => {
   async function openStory(id: number, passages: Passage[] = []): Promise<void> {
     store.selectStory(id);
     TestBed.tick();
-    http.expectOne(`/api/stories/${id}`).flush(makeStory(id));
-    http.expectOne((r) => r.url === `/api/stories/${id}/passages`).flush({
-      items: passages,
-      page: 1,
-      pageSize: 50,
-      totalCount: passages.length,
-      totalPages: 1,
-      hasNextPage: false,
-      hasPreviousPage: false,
-    });
+    http.expectOne(`/api/stories/${id}`).flush(makeStory({ id }));
+    http
+      .expectOne((r) => r.url === `/api/stories/${id}/passages`)
+      .flush({
+        items: passages,
+        page: 1,
+        pageSize: 50,
+        totalCount: passages.length,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
     await TestBed.inject(ApplicationRef).whenStable();
   }
 
@@ -103,7 +87,7 @@ describe('StoryStore', () => {
   });
 
   it('loads the selected story and joins its hub group', async () => {
-    await openStory(3, [makePassage(10, 3)]);
+    await openStory(3, [makePassage({ id: 10, storyId: 3 })]);
     expect(store.currentStory()?.id).toBe(3);
     expect(store.passages().map((p) => p.id)).toEqual([10]);
     expect(signalR.joinStory).toHaveBeenCalledWith(3);
@@ -117,9 +101,9 @@ describe('StoryStore', () => {
   });
 
   it('appends received passages only for the selected story', async () => {
-    await openStory(3, [makePassage(10, 3)]);
-    passageReceived.next(makePassage(11, 99));
-    passageReceived.next(makePassage(12, 3));
+    await openStory(3, [makePassage({ id: 10, storyId: 3 })]);
+    passageReceived.next(makePassage({ id: 11, storyId: 99 }));
+    passageReceived.next(makePassage({ id: 12, storyId: 3 }));
     expect(store.passages().map((p) => p.id)).toEqual([10, 12]);
   });
 

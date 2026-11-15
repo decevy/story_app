@@ -60,7 +60,9 @@ module.exports = defineConfig([
           partialMatch: false,
         },
         { type: 'environments', pattern: 'src/environments', partialMatch: false },
+        { type: 'testing', pattern: 'src/testing', partialMatch: false },
       ],
+      'boundaries/files': [{ pattern: '**/*.spec.ts', category: 'test' }],
     },
     rules: {
       'boundaries/dependencies': [
@@ -76,6 +78,16 @@ module.exports = defineConfig([
               // Environment files are typed with AppConfig.
               from: { element: { type: 'environments' } },
               allow: { to: { element: { type: 'core' } } },
+            },
+            {
+              // Test fixtures build domain types.
+              from: { element: { type: 'testing' } },
+              allow: { to: { element: { types: ['core', 'testing'] } } },
+            },
+            {
+              // Only specs may use src/testing (fixtures and helpers).
+              from: { file: { categories: 'test' } },
+              allow: { to: { element: { type: 'testing' } } },
             },
             {
               from: { element: { type: 'shared' } },

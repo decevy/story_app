@@ -4,62 +4,55 @@
     <h2 class="text-2xl text-center mb-8 text-gray-600">Create Account</h2>
 
     @if (error()) {
-      <div class="bg-red-50 text-red-600 p-3 arounded-md corner-squircle mb-5 text-sm">
-        {{ error() }}
-      </div>
+      <app-form-error>{{ error() }}</app-form-error>
     }
 
     <form (submit)="onSubmit($event)" class="flex flex-col gap-5">
       <div class="flex flex-col gap-2">
-        <label for="username" class="text-sm font-medium text-gray-800">Username</label>
+        <label for="username" appFieldLabel>Username</label>
         <input
+          appTextInput
           id="username"
           type="text"
           [formField]="registerForm.username"
           placeholder="johndoe"
-          class="p-3 text-base border border-gray-300 arounded-md corner-squircle outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
       </div>
 
       <div class="flex flex-col gap-2">
-        <label for="email" class="text-sm font-medium text-gray-800">Email</label>
+        <label for="email" appFieldLabel>Email</label>
         <input
+          appTextInput
           id="email"
           type="email"
           [formField]="registerForm.email"
           placeholder="your@email.com"
-          class="p-3 text-base border border-gray-300 arounded-md corner-squircle outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
       </div>
 
       <div class="flex flex-col gap-2">
-        <label for="password" class="text-sm font-medium text-gray-800">Password</label>
+        <label for="password" appFieldLabel>Password</label>
         <input
+          appTextInput
           id="password"
           type="password"
           [formField]="registerForm.password"
           placeholder="••••••••"
-          class="p-3 text-base border border-gray-300 arounded-md corner-squircle outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
       </div>
 
       <div class="flex flex-col gap-2">
-        <label for="confirmPassword" class="text-sm font-medium text-gray-800">Confirm Password</label>
+        <label for="confirmPassword" appFieldLabel>Confirm Password</label>
         <input
+          appTextInput
           id="confirmPassword"
           type="password"
           [formField]="registerForm.confirmPassword"
           placeholder="••••••••"
-          class="p-3 text-base border border-gray-300 arounded-md corner-squircle outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
       </div>
 
-      <button
-        type="submit"
-        [disabled]="submitting()"
-        class="p-3 text-base font-semibold text-white arounded-md corner-squircle mt-2 transition-all"
-        [class]="submitting() ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'"
-      >
+      <button appSubmitButton [busy]="submitting()">
         {{ submitting() ? 'Creating account...' : 'Sign Up' }}
       </button>
     </form>

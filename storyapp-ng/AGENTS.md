@@ -47,7 +47,7 @@ Components have no CSS files (Tailwind); `angular.json` sets `style: none` for `
 | `core/logging` | `debugLog()` (dev-mode-only `console.log`) |
 | `core/signalr` | `SignalRService` (connection, hub methods, events as observables, `connectionState`) |
 | `core/models` | Shared domain types copied from `storyapp-web/src/types` |
-| `shared/` | Reusable UI used by more than one feature (created with its first component) |
+| `shared/ui` | Form UI for every form: `appTextInput` and `appFieldLabel` (directives on the native elements, so `[formField]` keeps working), `appSubmitButton` (`[busy]`), `<app-form-error>`. Planned users: profile, create/edit story, add writer |
 | `features/auth` | `login-page/`, `register-page/` (lazy via `loadComponent`) |
 | `features/story` | `story.routes.ts`, `StoryStore` (route-level), `StoriesApi`, fonts; `story-page/`, `story-layout/`, `story-list/`, `story-view/`, `passage-span/` |
 | `features/story/composer` | `passage-composer.ts`, `segment-visuals.ts`, `composer-dom.ts` (copied unchanged), `ComposerHold`; `composer-field/` |
@@ -63,6 +63,8 @@ Config comes from `src/environments/` (dev: `apiUrl: ''`, `hubUrl: '/storyHub'`,
 - Component hosts inside flex layouts use `display: contents` so the React markup structure (and its `h-full` / `flex-1` behaviour) is unchanged.
 
 ## Tests
+
+Shared fixtures (`testUser`, `makeStory`, `makeStorySummary`, `makePassage`) and helpers (`deferred`, `hasClasses`, `unsignedJwt`) live in `src/testing/`. Only spec files may import them (enforced by the boundary rule), and the app build excludes the folder.
 
 Every file with logic has a colocated `*.spec.ts` (Vitest + TestBed, zoneless): services, stores,
 APIs, guards, interceptors, components, pure functions. Files without logic don't: types, config,

@@ -1,18 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 
-import { User } from '../../../core/models/auth.types';
 import { Passage, Seam } from '../../../core/models/story.types';
+import { makePassage } from '../../../../testing/fixtures';
+import { hasClasses } from '../../../../testing/helpers';
 import { PassageSpan } from './passage-span';
 
-const user: User = { id: 1, username: 'aya', email: 'aya@test.com', isOnline: true, lastSeen: '' };
-
 function passage(overrides: Partial<Passage> = {}): Passage {
-  return {
-    id: 1,
-    order: 1,
-    storyId: 1,
-    user,
-    createdAt: '',
+  return makePassage({
     segments: [
       // Deliberately out of order: rendering sorts by `order`.
       { id: 2, order: 1, text: 'second ', seamAfter: Seam.Section },
@@ -20,12 +14,7 @@ function passage(overrides: Partial<Passage> = {}): Passage {
       { id: 3, order: 2, text: 'third ' },
     ],
     ...overrides,
-  };
-}
-
-/** True when the element has every class in `classes` (Angular does not keep class order). */
-function hasClasses(element: Element, classes: string): boolean {
-  return classes.split(' ').every((name) => element.classList.contains(name));
+  });
 }
 
 describe('PassageSpan', () => {

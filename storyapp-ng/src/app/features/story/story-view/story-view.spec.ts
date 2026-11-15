@@ -1,29 +1,22 @@
 import { computed, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { User } from '../../../core/models/auth.types';
-import { Passage, Seam, Story } from '../../../core/models/story.types';
+import { Passage, Seam } from '../../../core/models/story.types';
 import { BOOK_FONTS, FONT_STORAGE_KEY } from '../book-fonts';
 import { StoryStore } from '../story-store';
+import { makePassage, makeStory } from '../../../../testing/fixtures';
+import { hasClasses } from '../../../../testing/helpers';
 import { StoryView } from './story-view';
 
-const user: User = { id: 1, username: 'aya', email: 'aya@test.com', isOnline: true, lastSeen: '' };
-const story = { id: 3, name: 'The Long Night' } as Story;
+const story = makeStory({ id: 3, name: 'The Long Night' });
 
 function passage(id: number, text: string, seamAfter?: Seam): Passage {
-  return {
+  return makePassage({
     id,
-    order: id,
     storyId: story.id,
-    user,
     createdAt: `2026-01-0${id}`,
     segments: [{ id, order: 0, text, seamAfter }],
-  };
-}
-
-/** True when the element has every class in `classes` (Angular does not keep class order). */
-function hasClasses(element: Element, classes: string): boolean {
-  return classes.split(' ').every((name) => element.classList.contains(name));
+  });
 }
 
 describe('StoryView', () => {

@@ -1,34 +1,16 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { User } from '../../../core/models/auth.types';
 import { Passage, Story, StorySummary } from '../../../core/models/story.types';
 import { StoryStore } from '../story-store';
+import { makePassage, makeStorySummary } from '../../../../testing/fixtures';
 import { StoryList } from './story-list';
 
-const user: User = { id: 1, username: 'aya', email: 'aya@test.com', isOnline: true, lastSeen: '' };
-
-function summary(id: number, overrides: Partial<StorySummary> = {}): StorySummary {
-  return {
-    id,
-    name: `Story ${id}`,
-    isPrivate: false,
-    creator: user,
-    createdAt: '',
-    writerCount: 1,
-    ...overrides,
-  };
-}
-
 function lastPassage(text: string, minutesAgo: number): Passage {
-  return {
-    id: 1,
-    order: 1,
-    storyId: 1,
-    user,
+  return makePassage({
     createdAt: new Date(Date.now() - minutesAgo * 60_000).toISOString(),
     segments: [{ id: 1, order: 0, text }],
-  };
+  });
 }
 
 describe('StoryList', () => {
@@ -68,8 +50,8 @@ describe('StoryList', () => {
 
   it('lists stories with writer count, preview and age', async () => {
     stories.set([
-      summary(1, { writerCount: 1, lastPassage: lastPassage('A'.repeat(60), 5) }),
-      summary(2, { writerCount: 3 }),
+      makeStorySummary({ id: 1, writerCount: 1, lastPassage: lastPassage('A'.repeat(60), 5) }),
+      makeStorySummary({ id: 2, writerCount: 3 }),
     ]);
     const { element, items } = await render();
 
@@ -85,7 +67,7 @@ describe('StoryList', () => {
   });
 
   it('highlights the current story', async () => {
-    stories.set([summary(1), summary(2)]);
+    stories.set([makeStorySummary({ id: 1 }), makeStorySummary({ id: 2 })]);
     currentStory.set({ id: 2 } as Story);
     const { items } = await render();
     expect(items()[0]!.classList).not.toContain('bg-blue-50');
@@ -93,7 +75,7 @@ describe('StoryList', () => {
   });
 
   it('selects a story when its option is clicked', async () => {
-    stories.set([summary(1), summary(2)]);
+    stories.set([makeStorySummary({ id: 1 }), makeStorySummary({ id: 2 })]);
     const { fixture, items } = await render();
 
     const option = items()[1]!;

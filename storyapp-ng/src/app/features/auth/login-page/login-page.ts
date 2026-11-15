@@ -4,11 +4,15 @@ import { Router, RouterLink } from '@angular/router';
 
 import { LoginRequest } from '../../../core/models/auth.types';
 import { AuthService } from '../../../core/auth/auth';
+import { FieldLabel } from '../../../shared/ui/field-label';
+import { FormError } from '../../../shared/ui/form-error/form-error';
+import { SubmitButton } from '../../../shared/ui/submit-button';
+import { TextInput } from '../../../shared/ui/text-input';
 
 /** Port of storyapp-web/src/pages/LoginPage.tsx. */
 @Component({
   selector: 'app-login-page',
-  imports: [FormField, RouterLink],
+  imports: [FieldLabel, FormError, FormField, RouterLink, SubmitButton, TextInput],
   templateUrl: './login-page.html',
 })
 export class LoginPage {

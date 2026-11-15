@@ -4,19 +4,24 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { APP_CONFIG } from '../config/app-config';
-import { LoginResponse, User } from '../models/auth.types';
+import { LoginResponse } from '../models/auth.types';
+import { testUser } from '../../../testing/fixtures';
+import { unsignedJwt } from '../../../testing/helpers';
 import { AuthService } from './auth';
 import { SKIP_AUTH_REFRESH } from './http-context';
 import { TokenStore } from './token-store';
 
 const API = 'http://api.test';
-const user: User = { id: 1, username: 'aya', email: 'aya@test.com', isOnline: true, lastSeen: '' };
-const loginResponse: LoginResponse = { accessToken: 'access', refreshToken: 'refresh', user };
+const loginResponse: LoginResponse = {
+  accessToken: 'access',
+  refreshToken: 'refresh',
+  user: testUser,
+};
 
 /** Unsigned JWT that expires `secondsFromNow` from now. */
 function jwtExpiringIn(secondsFromNow: number): string {
   const exp = Math.floor(Date.now() / 1000) + secondsFromNow;
-  return `h.${btoa(JSON.stringify({ exp })).replace(/=+$/, '')}.s`;
+  return unsignedJwt({ exp });
 }
 
 describe('AuthService', () => {
@@ -87,7 +92,7 @@ describe('AuthService', () => {
       req.flush(loginResponse);
       await done;
 
-      expect(auth.user()).toEqual(user);
+      expect(auth.user()).toEqual(testUser);
       expect(tokens.getAccessToken()).toBe('access');
       expect(tokens.getRefreshToken()).toBe('refresh');
     });
@@ -111,7 +116,7 @@ describe('AuthService', () => {
       req.flush(loginResponse);
       await done;
 
-      expect(auth.user()).toEqual(user);
+      expect(auth.user()).toEqual(testUser);
       expect(tokens.hasTokens()).toBe(true);
     });
   });
