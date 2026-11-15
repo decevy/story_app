@@ -40,6 +40,12 @@ For deeper detail, read the **nested `AGENTS.md`** files under each project; pre
 
 The web client’s **SPEC.md** (`storyapp-web/SPEC.md`) describes API shapes and SignalR events in product terms when you need contract-level detail. Both frontends follow it.
 
+## Design decisions
+
+For structural decisions (folder layout, boundaries, state management, abstractions), design for
+the roadmap in `storyapp-web/SPEC.md`, not the current feature set. The `roadmap` skill
+(`.claude/skills/roadmap/SKILL.md`, `/roadmap`) has the full procedure.
+
 ## CI
 
 `.github/workflows/ci.yml` runs on push and pull request: **`web`** (storyapp-ng lint, unit tests, build), **`api`** (dotnet restore/build; `dotnet test` only when test projects exist) and **`e2e`** (Postgres service, API over http, Playwright against storyapp-ng).
