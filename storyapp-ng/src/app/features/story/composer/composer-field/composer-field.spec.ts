@@ -76,7 +76,8 @@ describe('ComposerField', () => {
     });
 
     it('renders block starts as a full-width multiline field', async () => {
-      expect(editable.classList).toContain('inline-block');
+      expect(editable.classList).toContain('inline');
+      expect(editable.classList).not.toContain('inline-block');
       expect(editable.getAttribute('aria-multiline')).toBe('false');
 
       host.startVisual.set('plainAlinea');

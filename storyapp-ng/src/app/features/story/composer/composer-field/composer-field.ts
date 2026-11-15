@@ -66,7 +66,9 @@ export class ComposerField {
       `story-composer break-words whitespace-pre-wrap ${segmentLayoutClass(this.startVisual())} ${
         this.isBlock()
           ? 'min-h-[1.75em] w-full'
-          : 'inline-block min-h-[1.75em] min-w-[1ch] align-baseline'
+          : // `inline`, not `inline-block`: an inline-block wraps as one box, so a long draft
+            // would jump to the next line whole instead of breaking mid-line.
+            'inline'
       } ${this.disabled() ? '' : 'cursor-text'}`,
   );
 
