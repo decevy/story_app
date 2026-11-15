@@ -1,21 +1,18 @@
 <span
-  #editable
+  saPlainTextEditable
   role="textbox"
   aria-label="Story continuation"
   class="story-composer break-words whitespace-pre-wrap"
   [class]="layoutClass()"
   [class.cursor-text]="!disabled()"
   [attr.aria-multiline]="isBlock()"
-  [attr.aria-disabled]="disabled()"
-  [attr.contenteditable]="disabled() ? 'false' : 'true'"
-  spellcheck="true"
-  [attr.tabindex]="disabled() ? -1 : 0"
-  (input)="onInput()"
-  (paste)="onPaste($event)"
-  (compositionstart)="onCompositionStart()"
-  (compositionend)="onCompositionEnd()"
+  [text]="text()"
+  [version]="version()"
+  [active]="isActive()"
+  [disabled]="disabled()"
+  (textChange)="textChange.emit($event)"
   (keydown)="onKeyDown($event)"
   (keyup)="onKeyUp($event)"
-  (focus)="onFocus()"
+  (focus)="focused.emit()"
   (blur)="blurred.emit()"
 ></span>

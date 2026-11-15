@@ -47,15 +47,23 @@ describe('getSegmentStartVisual', () => {
 });
 
 describe('composerFieldLayoutClass', () => {
-  it('keeps an inline field inline, so it wraps mid-line', () => {
-    expect(composerFieldLayoutClass('inline')).toBe('inline');
+  it('makes an inline field with text inline, so it wraps mid-line', () => {
+    expect(composerFieldLayoutClass('inline', false)).toBe('inline');
+  });
+
+  it('gives an empty inline field a minimum size, so it stays visible', () => {
+    expect(composerFieldLayoutClass('inline', true).split(' ')).toEqual(
+      expect.arrayContaining(['inline-block', 'min-w-[1ch]']),
+    );
   });
 
   it('makes a block start a full-width line, on top of its segment layout', () => {
     for (const visual of ['indentedAlinea', 'plainAlinea', 'afterSection'] as const) {
-      const classes = composerFieldLayoutClass(visual).split(' ');
-      expect(classes).toEqual(expect.arrayContaining(segmentLayoutClass(visual).split(' ')));
-      expect(classes).toEqual(expect.arrayContaining(['w-full', 'min-h-[1.75em]']));
+      for (const empty of [true, false]) {
+        const classes = composerFieldLayoutClass(visual, empty).split(' ');
+        expect(classes).toEqual(expect.arrayContaining(segmentLayoutClass(visual).split(' ')));
+        expect(classes).toEqual(expect.arrayContaining(['w-full', 'min-h-[1.75em]']));
+      }
     }
   });
 });

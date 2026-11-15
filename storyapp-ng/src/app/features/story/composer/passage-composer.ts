@@ -54,6 +54,19 @@ export function setActiveSegmentIndex(state: ComposerState, index: number): Comp
   return { ...state, activeIndex: index };
 }
 
+/** A typed segment text: accepted, or rejected with where the caret goes in the previous text. */
+export type SegmentTextCheck = { ok: true } | { ok: false; caret: number };
+
+/**
+ * Segment text may not contain adjacent whitespace (seams carry the spacing between segments).
+ * A rejected edit keeps the previous text, with the caret just after the first whitespace of
+ * the run, where the extra one was typed.
+ */
+export function checkSegmentText(text: string): SegmentTextCheck {
+  const run = text.search(/\s{2,}/);
+  return run < 0 ? { ok: true } : { ok: false, caret: run + 1 };
+}
+
 export function composerHasContent(state: ComposerState): boolean {
   return state.segments.some((segment) => segment.text.trim().length > 0);
 }

@@ -11,10 +11,6 @@ export function writePlainText(element: HTMLElement, text: string): void {
   element.textContent = text.length === 0 ? CARET_ZWSP : text;
 }
 
-export function hasAdjacentWhitespace(text: string): boolean {
-  return /\s{2,}/.test(text);
-}
-
 export function placeCaretAtOffset(element: HTMLElement, offset: number): void {
   element.focus({ preventScroll: true });
 

@@ -1,7 +1,6 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CARET_ZWSP } from '../composer-dom';
 import type { SegmentStartVisual } from '../segment-visuals';
 import { ComposerField } from './composer-field';
 
@@ -34,11 +33,8 @@ describe('ComposerField', () => {
   let fixture: ComponentFixture<Host>;
   let host: Host;
   let editable: HTMLSpanElement;
-  let execCommand: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
-    execCommand = vi.fn();
-    Object.defineProperty(document, 'execCommand', { value: execCommand, configurable: true });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     await fixture.whenStable();
@@ -49,11 +45,6 @@ describe('ComposerField', () => {
     await fixture.whenStable();
   }
 
-  function input(text: string): void {
-    editable.textContent = text;
-    editable.dispatchEvent(new Event('input'));
-  }
-
   describe('rendering', () => {
     it('is an editable textbox', () => {
       expect(editable.getAttribute('contenteditable')).toBe('true');
@@ -62,20 +53,23 @@ describe('ComposerField', () => {
       expect(editable.classList).toContain('cursor-text');
     });
 
-    it('is not editable or focusable while disabled', async () => {
+    it('is not editable while disabled', async () => {
       host.disabled.set(true);
       await render();
       expect(editable.getAttribute('contenteditable')).toBe('false');
-      expect(editable.getAttribute('tabindex')).toBe('-1');
-      expect(editable.getAttribute('aria-disabled')).toBe('true');
       expect(editable.classList).not.toContain('cursor-text');
     });
 
     it('renders block starts as a full-width multiline field', async () => {
       expect(editable.classList).toContain('story-composer');
+      expect(editable.classList).toContain('inline-block');
+      expect(editable.getAttribute('aria-multiline')).toBe('false');
+
+      // With text, an inline field wraps mid-line instead of moving as one box.
+      host.text.set('Hello');
+      await render();
       expect(editable.classList).toContain('inline');
       expect(editable.classList).not.toContain('inline-block');
-      expect(editable.getAttribute('aria-multiline')).toBe('false');
 
       host.startVisual.set('plainAlinea');
       await render();
@@ -83,46 +77,6 @@ describe('ComposerField', () => {
       expect(editable.classList).not.toContain('inline');
       expect(editable.classList).toContain('story-composer');
       expect(editable.getAttribute('aria-multiline')).toBe('true');
-    });
-
-    it('holds a zero-width caret host while empty', () => {
-      expect(editable.textContent).toBe(CARET_ZWSP);
-    });
-
-    it('rewrites the DOM text when the version changes, not on every text change', async () => {
-      host.text.set('Typed');
-      await render();
-      expect(editable.textContent).toBe(CARET_ZWSP);
-
-      host.version.set(1);
-      await render();
-      expect(editable.textContent).toBe('Typed');
-    });
-  });
-
-  describe('typing', () => {
-    it('emits the plain text without caret hosts or non-breaking spaces', () => {
-      input(`${CARET_ZWSP}Hello\u00a0world`);
-      expect(host.events).toContainEqual(['textChange', 'Hello world']);
-    });
-
-    it('rejects adjacent whitespace and restores the previous text', async () => {
-      host.text.set('Hello ');
-      await render();
-      input('Hello  ');
-      expect(host.events.filter(([name]) => name === 'textChange')).toEqual([]);
-      expect(editable.textContent).toBe('Hello ');
-    });
-
-    it('pastes plain text as a single line', () => {
-      const paste = new Event('paste', { cancelable: true }) as ClipboardEvent;
-      Object.defineProperty(paste, 'clipboardData', {
-        value: { getData: () => 'one\r\ntwo\u00a0three' },
-      });
-      editable.dispatchEvent(paste);
-
-      expect(paste.defaultPrevented).toBe(true);
-      expect(execCommand).toHaveBeenCalledWith('insertText', false, 'onetwo three');
     });
   });
 
@@ -194,7 +148,7 @@ describe('ComposerField', () => {
       expect(host.events).toEqual([]);
     });
 
-    it('ignores keys during IME composition and reads the text when it ends', () => {
+    it('ignores keys during IME composition and passes the text on when it ends', () => {
       editable.dispatchEvent(new CompositionEvent('compositionstart'));
       key('keydown', 'Enter');
       key('keyup', 'Enter');
@@ -219,40 +173,5 @@ describe('ComposerField', () => {
       expect(selection.anchorNode).toBe(editable.firstChild);
       expect(selection.anchorOffset).toBe(3);
     });
-  });
-});
-
-// Own block: animation frames are faked before the first render, so no real frame from an
-// earlier render can focus the field halfway through the test.
-describe('ComposerField deferred focus', () => {
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['requestAnimationFrame'] });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  async function renderHost() {
-    const fixture = TestBed.createComponent(Host);
-    await fixture.whenStable();
-    const editable = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
-      '[role="textbox"]',
-    )!;
-    return { fixture, editable };
-  }
-
-  it('focuses the active field on the next frame', async () => {
-    const { editable } = await renderHost();
-    vi.runAllTimers();
-    expect(document.activeElement).toBe(editable);
-  });
-
-  it('does not focus a field that was disabled before that frame', async () => {
-    const { fixture, editable } = await renderHost();
-    fixture.componentInstance.disabled.set(true);
-    await fixture.whenStable();
-    vi.runAllTimers();
-    expect(document.activeElement).not.toBe(editable);
   });
 });

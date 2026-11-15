@@ -58,13 +58,15 @@ export function segmentStartVisualIsBlock(visual: SegmentStartVisual): boolean {
 }
 
 /**
- * Layout of a draft field. An inline field stays `inline` (not `inline-block`), so a long draft
- * breaks mid-line instead of jumping to the next line as one box.
+ * Layout of a draft field. An inline field with text is `inline` (not `inline-block`), so a long
+ * draft breaks mid-line instead of jumping to the next line as one box. An empty one is an
+ * `inline-block` with a minimum size: it has nothing to wrap, and it stays a visible click target.
  */
-export function composerFieldLayoutClass(visual: SegmentStartVisual): string {
-  return segmentStartVisualIsBlock(visual)
-    ? `${segmentLayoutClass(visual)} min-h-[1.75em] w-full`
-    : 'inline';
+export function composerFieldLayoutClass(visual: SegmentStartVisual, empty: boolean): string {
+  if (segmentStartVisualIsBlock(visual)) {
+    return `${segmentLayoutClass(visual)} min-h-[1.75em] w-full`;
+  }
+  return empty ? 'inline-block min-h-[1.75em] min-w-[1ch] align-baseline' : 'inline';
 }
 
 export function segmentLayoutClass(visual: SegmentStartVisual): string {

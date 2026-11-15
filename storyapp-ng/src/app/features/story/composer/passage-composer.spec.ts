@@ -3,6 +3,7 @@ import { Seam } from '@core/models/story';
 import {
   applyBackspace,
   applyEnter,
+  checkSegmentText,
   type ComposerState,
   createEmptyComposer,
   toSegmentInputs,
@@ -138,6 +139,18 @@ describe('passage-composer', () => {
       const current = state({ segments: [{ text: 'A', seamAfter: Seam.Paragraph }, { text: '' }] });
       toSegmentInputs(current);
       expect(current.segments).toEqual([{ text: 'A', seamAfter: Seam.Paragraph }, { text: '' }]);
+    });
+  });
+
+  describe('checkSegmentText', () => {
+    it('accepts text with single spaces', () => {
+      expect(checkSegmentText('')).toEqual({ ok: true });
+      expect(checkSegmentText('Once upon a time ')).toEqual({ ok: true });
+    });
+
+    it('rejects adjacent whitespace, with the caret after the first of the run', () => {
+      expect(checkSegmentText('Hello  ')).toEqual({ ok: false, caret: 6 });
+      expect(checkSegmentText('a \tb')).toEqual({ ok: false, caret: 2 });
     });
   });
 });
