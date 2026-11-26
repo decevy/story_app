@@ -28,7 +28,7 @@ Built incrementally: a modular monolith first, then services are split off where
 
 ## Roadmap
 
-Planning and tasks live in Linear (project **Story App**). In broad strokes:
+Planning and tasks live in Linear ([project Story App](https://linear.app/decevy/project/story-app-d5f72612befc), private). In broad strokes:
 
 1. **Foundation**: repo, solution structure, local dev environment, CI
 2. **First slice**: you and the AI write a story together, round-robin

@@ -12,7 +12,7 @@ This repository is being **rebuilt from scratch**. Read `README.md` for the prod
 
 ## How we work
 
-- **Small steps.** Each step belongs to one Linear issue (project **Story App**, team Decevy). Branch names follow the issue (`dec-123-short-title`).
+- **Small steps.** Each step belongs to one Linear issue (project **Story App**, team Decevy). Use the branch name Linear generates for the issue (for example `laurens/dec-124-net-solution-opzetten`).
 - **The owner of the repo writes the core logic and reviews everything.** When asked for scaffolding, leave clear `TODO`s for the parts the owner implements, each with a short hint. Don't fill them in unless asked.
 - **No commit without approval.** Show the change, explain the choices, and commit only after the owner agrees.
 - **Structural decisions** (service boundaries, broker choice, solution layout, state management) are recorded as an ADR in `docs/adr/NNNN-title.md`: context, decision, consequences. Create the folder with the first ADR.
