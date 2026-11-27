@@ -40,17 +40,29 @@ Every module uses the same layers, each as its own project:
 - **Skipping a layer is allowed, but stated explicitly** in the module table below, with the reason. A skipped layer has no project.
 - **A layer project is created when its first real code arrives,** not ahead of time.
 
+Besides its layers, a module can have up to two **public projects**. These are the only projects of a module that other modules may reference:
+
+| Project | Holds | May depend on |
+|---|---|---|
+| **PublicApi** | Interfaces and DTOs for questions other modules may ask synchronously | nothing |
+| **IntegrationEvents** | Records of the events the module publishes | `StoryApp.Common` |
+
+A module's Application project implements its own PublicApi and publishes its own IntegrationEvents. Like the layers, a public project is created only when another module first needs it.
+
 ### Layout
 
 ```
 src/
   StoryApp.Host/                                composes the modules into one application
+  StoryApp.Common/                              technical building blocks shared by the modules
   Modules/
     <Name>/
       StoryApp.Modules.<Name>.Domain/
       StoryApp.Modules.<Name>.Application/
       StoryApp.Modules.<Name>.Infrastructure/
       StoryApp.Modules.<Name>.Api/
+      StoryApp.Modules.<Name>.PublicApi/
+      StoryApp.Modules.<Name>.IntegrationEvents/
 tests/
   Modules/
     <Name>/
@@ -90,7 +102,21 @@ This keeps the Application layer free of EF Core and separates writes from reads
 
 ### Communication between modules
 
-*To be decided.*
+Modules only talk to each other through their public projects. A module never references another module's Domain, Application, Infrastructure or Api project.
+
+- **Questions go through PublicApi.** When a module needs an answer right away, it calls an interface from the other module's PublicApi (for example `IUserDirectory`). The other module implements it in its Application project. When that module is split off, the same interface gets an HTTP or gRPC client as implementation, and the calling code stays the same. Synchronous calls are strong coupling (if the other module fails, the caller fails too), so we prefer events where an immediate answer is not needed.
+- **Things that happened go through IntegrationEvents.** A module announces what happened as an event record in its IntegrationEvents project (for example `PassageWritten`). Other modules subscribe with a handler. The publishing module does not know who listens.
+- **One kind of event.** We don't separate internal domain events from integration events. The Application layer publishes an event after it has saved the change; the domain itself does not raise events, so Domain keeps depending on nothing.
+- **Events go through our own `IEventBus`.** Modules publish through `IEventBus` and handle events through `IIntegrationEventHandler<T>`, both from `StoryApp.Common`. For now the implementation runs in-process: it calls the handlers directly. Once there is a message broker, an implementation backed by the broker replaces it without changes in the modules. Until then, an event can be lost if the application stops between saving and publishing; an outbox will close that gap together with the broker.
+
+### Shared code
+
+`StoryApp.Common` holds technical building blocks that several modules need: messaging, the current user, module registration and similar plumbing.
+
+- It contains no domain concepts and references no module.
+- Something is added only when a second module needs it; code used by one module stays in that module.
+- Implementations that pull in heavy dependencies, such as a broker client, do not go here, so modules don't get them through Common.
+- Domain projects do not reference Common.
 
 ### Tests
 
