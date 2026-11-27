@@ -78,7 +78,15 @@ The first slice needs `StoryApp.Host`, the four Stories projects and the three I
 
 ### Data ownership
 
-*To be decided.*
+Each module owns its data, and no other module touches it.
+
+- **One database, a schema per module.** All modules share one PostgreSQL database. Each module has its own schema, named after the module (`stories`, `identity`, …), and reads and writes only its own schema. When a module is split off, its schema moves to the service's own database (or stays on a shared server with access limited to that service) without rewriting its queries.
+- **References by ID only.** A module refers to another module's data by ID, without foreign keys across schemas. For example, a writer in Stories stores the `UserId` from Identity, taken from the access token. Data a module needs from another one, such as a display name, is copied into its own schema and kept up to date through events (see *Communication between modules*).
+- **A DbContext per module.** Each module has its own EF Core `DbContext` in its Infrastructure project, with the module's schema as default schema and its own migrations. A module's `DbContext` only maps that module's tables, so other modules' tables are out of reach in code too.
+- **Writes through a repository per aggregate.** The Application project defines a repository interface per aggregate (for example `IStoryRepository`). It loads and persists the whole aggregate, so the domain rules always see a complete object. Infrastructure implements it with EF Core.
+- **Reads through a query interface.** The Application project defines a query interface per module (for example `IStoryQueries`) that returns DTOs shaped for one use, such as a list or a reading view. Infrastructure implements it with EF Core projections, includes or plain SQL, whatever fits the query. Variations in what a screen needs stay on the read side and don't pile up in the repository.
+
+This keeps the Application layer free of EF Core and separates writes from reads (a light form of CQRS: separate code paths, same tables). Separate read models, kept up to date by events, can be added per module later when a screen needs them.
 
 ### Communication between modules
 
