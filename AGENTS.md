@@ -1,49 +1,19 @@
-# Agent instructions — StoryApp monorepo
+# Agent instructions — StoryApp
 
-This folder is the **workspace root** (`story_app`). It contains the backend and the frontend of one collaborative story application (REST + real-time passages):
+This repository is being **rebuilt from scratch**. Read `README.md` for the product idea, the target architecture and the roadmap.
 
-| Folder | Stack | Role |
-|--------|--------|------|
-| **`StoryApp/`** | .NET (ASP.NET Core) | REST API, JWT auth, SignalR hub, PostgreSQL via EF Core |
-| **`storyapp-ng/`** | Angular 22 (zoneless, signals) | SPA: login/register, stories & passages, real-time collaborative UI; follows `storyapp-ng/SPEC.md` |
+## `legacy/` is reference only
 
-For deeper detail, read the **nested `AGENTS.md`** files under each project; prefer the most specific doc for the code you are changing.
+- `legacy/` holds the previous version (also tagged `v0-legacy`). **Do not change, build or extend it.**
+- You may read it to see how something worked before. When you port an idea, rewrite it in the new structure. Don't copy whole files.
+- Parts of the legacy code come from the chat-app era (typing indicators, user search, system passages, writer management, Redis without a function). Don't treat them as requirements. Every feature is reassessed before it comes back.
+- The old docs (`legacy/AGENTS.md`, `legacy/storyapp-ng/SPEC.md`, the `roadmap` skill under `legacy/.claude/`) describe the old code, not the new one.
+- `legacy/` is removed once the new version has taken over everything worth keeping.
 
----
+## How we work
 
-## How the frontend and backend connect
-
-1. **REST** — The web app calls JSON endpoints under **`/api`** (e.g. auth, users, stories). The base is `APP_CONFIG.apiUrl` from the runtime `config.json` (`storyapp-ng/public/config.json`, loaded before bootstrap); `authInterceptor` handles the bearer token and refresh. The JWT is sent on protected requests (Bearer header).
-
-2. **SignalR** — Live passages, typing, and related events use a hub at **`/storyHub`**. The client connects using `APP_CONFIG.hubUrl`. The API accepts the JWT for WebSocket connections via the **`access_token`** query parameter (configured in `StoryApp/StoryApp.Api/Program.cs`).
-
-3. **Local development** — The dev server runs on **port 3000** and **proxies** `/api` and `/storyHub` to the API (default target **`https://localhost:7011`**; see `storyapp-ng/proxy.conf.mjs`, which also reads `API_PROXY_TARGET`). `config.json` uses the dev server origin. Run the API with the **https** profile so it listens on **7011**.
-
-4. **CORS** — The API policy **`AllowReactApp`** allows the dev origin (`localhost:3000`) with credentials so cookies/headers work when not using the proxy.
-
-**Summary:** HTTP + hub share the same host in dev (via proxy) or the same deployed domain in production; auth is **JWT** end-to-end (header for REST, query token for SignalR).
-
----
-
-## Nested agent docs
-
-| Path | Focus |
-|------|--------|
-| `StoryApp/AGENTS.md` | .NET solution layout, layers, EF migrations, commands |
-| `StoryApp/StoryApp.Api/AGENTS.md` | Controllers, `StoryHub`, middleware, pipeline |
-| `StoryApp/StoryApp.Core/AGENTS.md` | Entities, DTOs, interfaces, query builders |
-| `StoryApp/StoryApp.Infrastructure/AGENTS.md` | DbContext, repositories, migrations |
-| `StoryApp/StoryApp.Services/AGENTS.md` | Application services |
-| `storyapp-ng/AGENTS.md` | Angular app structure, conventions, commands, tests |
-
-**`storyapp-ng/SPEC.md`** describes product behaviour, API shapes and SignalR events when you need contract-level detail.
-
-## Design decisions
-
-For structural decisions (folder layout, boundaries, state management, abstractions), design for
-the roadmap in `storyapp-ng/SPEC.md`, not the current feature set. The `roadmap` skill
-(`.claude/skills/roadmap/SKILL.md`, `/roadmap`) has the full procedure.
-
-## CI
-
-`.github/workflows/ci.yml` runs on push and pull request: **`web`** (storyapp-ng format check, lint, unit tests with coverage thresholds, build), **`api`** (dotnet restore/build; `dotnet test` only when test projects exist) and **`e2e`** (Postgres service, API over http, Playwright against storyapp-ng).
+- **Small steps.** Each piece of work belongs to one issue in the tracker. Branches are named `<type>/<slug>` (`feature/health-endpoint`, `bug/token-refresh`), without ticket IDs; the same goes for commits and PRs. The `work` skill links branches and PRs to the issue on the tracker side.
+- **The owner of the repo writes the core logic and reviews everything.** When asked for scaffolding, leave clear `TODO`s for the parts the owner implements, each with a short hint. Don't fill them in unless asked.
+- **No commit without approval.** Show the change, explain the choices, and commit only after the owner agrees.
+- **Structural decisions** (service boundaries, broker choice, solution layout, state management) are recorded as an ADR in `docs/adr/NNNN-title.md`: context, decision, consequences. Create the folder with the first ADR.
+- **No empty scaffolding.** Don't create folders, projects, base classes or abstractions until real code needs them.
