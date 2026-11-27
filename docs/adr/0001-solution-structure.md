@@ -64,13 +64,16 @@ src/
       StoryApp.Modules.<Name>.PublicApi/
       StoryApp.Modules.<Name>.IntegrationEvents/
 tests/
+  StoryApp.Host.Tests/                          the whole application, through the host
+  StoryApp.ArchitectureTests/                   the boundary rules of this ADR
   Modules/
     <Name>/
-      ...                                       see Tests below
+      StoryApp.Modules.<Name>.UnitTests/
+      StoryApp.Modules.<Name>.IntegrationTests/
 ```
 
 - **`StoryApp.Host`** is the composition root. It configures the application and registers the modules, and holds no domain logic. Once the other modules have been split off, what remains is the Story API.
-- **Tests** live under `tests/`, mirroring the source tree.
+- **Tests** live under `tests/`, mirroring the source tree (see *Tests*).
 
 All projects live in one solution. The host references the modules and runs them in a single process, so there is one application to build, debug and deploy.
 
@@ -120,7 +123,20 @@ Modules only talk to each other through their public projects. A module never re
 
 ### Tests
 
-*To be decided.*
+| Project | Tests | Runs against |
+|---|---|---|
+| `StoryApp.Modules.<Name>.UnitTests` | Domain rules and Application use cases | Fakes for repositories, query interfaces and `IEventBus` |
+| `StoryApp.Modules.<Name>.IntegrationTests` | Infrastructure (repositories, queries, migrations) and the module's Api | A real PostgreSQL in a throwaway container (Testcontainers) |
+| `StoryApp.Host.Tests` | The application as a whole: health checks, module registration | The host, started with `WebApplicationFactory` |
+| `StoryApp.ArchitectureTests` | The rules of this ADR | The compiled assemblies |
+
+- **Fast and slow tests are separate projects.** Unit tests need nothing and run in seconds; integration tests need Docker. Both can be run on their own, locally and in CI.
+- **Integration tests use real PostgreSQL**, not SQLite or the EF Core in-memory provider. Schemas per module, migrations and plain SQL in query interfaces only behave as in production on the same engine. Each run starts from an empty database that is thrown away afterwards.
+- **Architecture tests guard the boundaries** that the compiler cannot see on its own, for example:
+  - a module references another module only through its PublicApi or IntegrationEvents;
+  - each layer depends only on what the layer table allows, including the stated exceptions;
+  - `StoryApp.Common` references no module, and no Domain project references Common.
+- Test projects follow the same rule as the rest: a test project is created when its first test arrives.
 
 ## Consequences
 
