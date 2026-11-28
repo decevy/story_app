@@ -1,7 +1,9 @@
 # 0003. Communication between modules
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-28
+
+> **Summary.** In the context of modules that cannot read each other's data and must later run as separate services, facing the need to ask questions and announce changes across modules, we decided for PublicApi and IntegrationEvents projects per module and our own `IEventBus`, in-process for now, and against a single Contracts project, a broker from the start or MediatR, to keep coupling visible and the transport replaceable, accepting that in-process events can be lost until an outbox exists.
 
 ## Context
 
@@ -25,4 +27,13 @@ Modules only talk to each other through their public projects. A module never re
 
 ## Consequences
 
-*To be completed.*
+**Positive**
+- Project references show which modules ask each other questions and which only listen.
+- The transport can change from in-process to a broker without changes in the modules.
+
+**Negative**
+- An event can be lost if the application stops between saving and publishing, until an outbox exists.
+- Calls through PublicApi become network calls after a split, and can fail or be slow.
+
+**Follow-up**
+- An ADR on the message broker and the outbox.

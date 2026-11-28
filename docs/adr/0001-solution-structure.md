@@ -1,7 +1,9 @@
 # 0001. Solution structure for the modular monolith
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-27
+
+> **Summary.** In the context of a backend that starts as a modular monolith and must later split into services, facing the risk that module and layer boundaries erode, we decided for a project per layer per module (Domain, Application, Infrastructure, Api), limited to the layers a module actually has, plus public projects and a thin host, and against one project with folders or a project per module, to let the compiler guard the boundaries and make a split cheap, accepting many projects and more ceremony.
 
 ## Context
 
@@ -86,7 +88,7 @@ These are the boundaries we expect, based on the roadmap. A project is created o
 | **Stories** | Stories, passages, writers, turn order | Domain, Application, Infrastructure, Api | Stays with the Story API |
 | **Identity** | Registration, login, users | Application, Infrastructure, Api; no Domain, because ASP.NET Core Identity provides the user model | Stays with the Story API |
 | **AiWriter** | Writing the AI's turns | Application, Infrastructure; no Domain (no rules of its own) and no Api (it reacts to work, it serves no requests) | Becomes the AiWorker |
-| **Realtime** | Live updates to connected clients | Infrastructure, Api; no Domain or Application, because it only relays updates; Api therefore uses Infrastructure directly | Becomes the Realtime gateway |
+| **Realtime** | Live updates to connected clients | Infrastructure, Api; no Domain or Application, because it only relays updates; Api therefore uses Infrastructure directly, and event handlers live in Infrastructure | Becomes the Realtime gateway |
 | **Lore** *(later)* | Characters, places, objects and their relations across stories | Domain, Application, Infrastructure, Api | Becomes Lore (Api + Worker) |
 
 The first slice needs `StoryApp.Host`, the four Stories projects and the three Identity projects, plus their tests.
@@ -104,4 +106,13 @@ The first slice needs `StoryApp.Host`, the four Stories projects and the three I
 
 - **Splitting a module off does not mean a new solution.** The service gets its own thin host project (for example `StoryApp.AiWorker.Host`) and its own container image, built with `dotnet publish` from that host. In Kubernetes each image is a separate deployment that scales on its own. All of this stays in the same solution and repository; a solution filter (`.slnf`) can narrow the IDE to one service. Separate solutions or repositories only pay off with organisational reasons, such as separate teams or release cycles.
 
-*To be completed once all parts of the decision are settled.*
+**Positive**
+- The compiler guards the boundaries between modules and between layers; architecture tests guard the rest ([ADR-0004](0004-test-strategy.md)).
+- Splitting a module off costs a host project and a container image, not a restructuring.
+- Every module follows the same layer convention, so the code is easy to find.
+
+**Negative**
+- Many projects: eight in the first slice, more with every module.
+
+**Follow-up**
+- Set up the solution according to this ADR.

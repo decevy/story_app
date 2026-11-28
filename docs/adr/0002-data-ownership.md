@@ -1,7 +1,9 @@
 # 0002. Data ownership per module
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-28
+
+> **Summary.** In the context of modules that must be able to leave the monolith with their data, facing the risk of modules reading each other's tables, we decided for a PostgreSQL schema and a `DbContext` per module, references by ID only, repositories for writes and query interfaces for reads, and against a shared schema, cross-schema foreign keys or EF Core in the Application layer, to keep data movable and the Application layer independent of EF Core, accepting eventual consistency for copied data and a growing query interface.
 
 ## Context
 
@@ -28,4 +30,14 @@ This keeps the Application layer free of EF Core and separates writes from reads
 
 ## Consequences
 
-*To be completed.*
+**Positive**
+- A module's schema moves along when the module is split off, without rewriting its queries.
+- The Application layer stays free of EF Core.
+- Variations in what a screen needs stay on the read side.
+
+**Negative**
+- Data copied from another module lags behind until the event that updates it is handled.
+- Every read variation becomes a method on the query interface.
+
+**Follow-up**
+- Decide on a unit of work (the repository saves, or a separate unit of work does) with the first use case.
