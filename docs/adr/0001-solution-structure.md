@@ -47,7 +47,7 @@ Besides its layers, a module can have up to two **public projects**. These are t
 | **PublicApi** | Interfaces and DTOs for questions other modules may ask synchronously | nothing |
 | **IntegrationEvents** | Records of the events the module publishes | `StoryApp.Common` |
 
-A module's Application project implements its own PublicApi and publishes its own IntegrationEvents. Like the layers, a public project is created only when another module first needs it.
+A module's Application project implements its own PublicApi and publishes its own IntegrationEvents. Like the layers, a public project is created only when another module first needs it. How modules use them is described in [ADR-0003](0003-module-communication.md).
 
 ### Layout
 
@@ -65,7 +65,7 @@ src/
       StoryApp.Modules.<Name>.IntegrationEvents/
 tests/
   StoryApp.Host.Tests/                          the whole application, through the host
-  StoryApp.ArchitectureTests/                   the boundary rules of this ADR
+  StoryApp.ArchitectureTests/                   the boundary rules of ADR-0001 to ADR-0003
   Modules/
     <Name>/
       StoryApp.Modules.<Name>.UnitTests/
@@ -73,7 +73,7 @@ tests/
 ```
 
 - **`StoryApp.Host`** is the composition root. It configures the application and registers the modules, and holds no domain logic. Once the other modules have been split off, what remains is the Story API.
-- **Tests** live under `tests/`, mirroring the source tree (see *Tests*).
+- **Tests** live under `tests/`, mirroring the source tree (see [ADR-0004](0004-test-strategy.md)).
 
 All projects live in one solution. The host references the modules and runs them in a single process, so there is one application to build, debug and deploy.
 
@@ -91,27 +91,6 @@ These are the boundaries we expect, based on the roadmap. A project is created o
 
 The first slice needs `StoryApp.Host`, the four Stories projects and the three Identity projects, plus their tests.
 
-### Data ownership
-
-Each module owns its data, and no other module touches it.
-
-- **One database, a schema per module.** All modules share one PostgreSQL database. Each module has its own schema, named after the module (`stories`, `identity`, …), and reads and writes only its own schema. When a module is split off, its schema moves to the service's own database (or stays on a shared server with access limited to that service) without rewriting its queries.
-- **References by ID only.** A module refers to another module's data by ID, without foreign keys across schemas. For example, a writer in Stories stores the `UserId` from Identity, taken from the access token. Data a module needs from another one, such as a display name, is copied into its own schema and kept up to date through events (see *Communication between modules*).
-- **A DbContext per module.** Each module has its own EF Core `DbContext` in its Infrastructure project, with the module's schema as default schema and its own migrations. A module's `DbContext` only maps that module's tables, so other modules' tables are out of reach in code too.
-- **Writes through a repository per aggregate.** The Application project defines a repository interface per aggregate (for example `IStoryRepository`). It loads and persists the whole aggregate, so the domain rules always see a complete object. Infrastructure implements it with EF Core.
-- **Reads through a query interface.** The Application project defines a query interface per module (for example `IStoryQueries`) that returns DTOs shaped for one use, such as a list or a reading view. Infrastructure implements it with EF Core projections, includes or plain SQL, whatever fits the query. Variations in what a screen needs stay on the read side and don't pile up in the repository.
-
-This keeps the Application layer free of EF Core and separates writes from reads (a light form of CQRS: separate code paths, same tables). Separate read models, kept up to date by events, can be added per module later when a screen needs them.
-
-### Communication between modules
-
-Modules only talk to each other through their public projects. A module never references another module's Domain, Application, Infrastructure or Api project.
-
-- **Questions go through PublicApi.** When a module needs an answer right away, it calls an interface from the other module's PublicApi (for example `IUserDirectory`). The other module implements it in its Application project. When that module is split off, the same interface gets an HTTP or gRPC client as implementation, and the calling code stays the same. Synchronous calls are strong coupling (if the other module fails, the caller fails too), so we prefer events where an immediate answer is not needed.
-- **Things that happened go through IntegrationEvents.** A module announces what happened as an event record in its IntegrationEvents project (for example `PassageWritten`). Other modules subscribe with a handler. The publishing module does not know who listens.
-- **One kind of event.** We don't separate internal domain events from integration events. The Application layer publishes an event after it has saved the change; the domain itself does not raise events, so Domain keeps depending on nothing.
-- **Events go through our own `IEventBus`.** Modules publish through `IEventBus` and handle events through `IIntegrationEventHandler<T>`, both from `StoryApp.Common`. For now the implementation runs in-process: it calls the handlers directly. Once there is a message broker, an implementation backed by the broker replaces it without changes in the modules. Until then, an event can be lost if the application stops between saving and publishing; an outbox will close that gap together with the broker.
-
 ### Shared code
 
 `StoryApp.Common` holds technical building blocks that several modules need: messaging, the current user, module registration and similar plumbing.
@@ -120,23 +99,6 @@ Modules only talk to each other through their public projects. A module never re
 - Something is added only when a second module needs it; code used by one module stays in that module.
 - Implementations that pull in heavy dependencies, such as a broker client, do not go here, so modules don't get them through Common.
 - Domain projects do not reference Common.
-
-### Tests
-
-| Project | Tests | Runs against |
-|---|---|---|
-| `StoryApp.Modules.<Name>.UnitTests` | Domain rules and Application use cases | Fakes for repositories, query interfaces and `IEventBus` |
-| `StoryApp.Modules.<Name>.IntegrationTests` | Infrastructure (repositories, queries, migrations) and the module's Api | A real PostgreSQL in a throwaway container (Testcontainers) |
-| `StoryApp.Host.Tests` | The application as a whole: health checks, module registration | The host, started with `WebApplicationFactory` |
-| `StoryApp.ArchitectureTests` | The rules of this ADR | The compiled assemblies |
-
-- **Fast and slow tests are separate projects.** Unit tests need nothing and run in seconds; integration tests need Docker. Both can be run on their own, locally and in CI.
-- **Integration tests use real PostgreSQL**, not SQLite or the EF Core in-memory provider. Schemas per module, migrations and plain SQL in query interfaces only behave as in production on the same engine. Each run starts from an empty database that is thrown away afterwards.
-- **Architecture tests guard the boundaries** that the compiler cannot see on its own, for example:
-  - a module references another module only through its PublicApi or IntegrationEvents;
-  - each layer depends only on what the layer table allows, including the stated exceptions;
-  - `StoryApp.Common` references no module, and no Domain project references Common.
-- Test projects follow the same rule as the rest: a test project is created when its first test arrives.
 
 ## Consequences
 
