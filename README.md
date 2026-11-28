@@ -41,6 +41,7 @@ Planning and tasks live in a private tracker. In broad strokes:
 ## Repository layout
 
 ```
+docs/adr/    architecture decision records
 legacy/      the previous version (read-only, reference)
 README.md    this file
 AGENTS.md    instructions for coding agents

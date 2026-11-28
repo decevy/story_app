@@ -15,5 +15,5 @@ This repository is being **rebuilt from scratch**. Read `README.md` for the prod
 - **Small steps.** Each piece of work belongs to one issue in the tracker. Branches are named `<type>/<slug>` (`feature/health-endpoint`, `bug/token-refresh`), without ticket IDs; the same goes for commits and PRs. The `work` skill links branches and PRs to the issue on the tracker side.
 - **The owner of the repo writes the core logic and reviews everything.** When asked for scaffolding, leave clear `TODO`s for the parts the owner implements, each with a short hint. Don't fill them in unless asked.
 - **No commit without approval.** Show the change, explain the choices, and commit only after the owner agrees.
-- **Structural decisions** (service boundaries, broker choice, solution layout, state management) are recorded as an ADR in `docs/adr/NNNN-title.md`: context, decision, consequences. Create the folder with the first ADR.
+- **Structural decisions** (service boundaries, broker choice, solution layout, state management) are recorded as an ADR in `docs/adr/NNNN-title.md`, following the template in `docs/adr/README.md`.
 - **No empty scaffolding.** Don't create folders, projects, base classes or abstractions until real code needs them.
